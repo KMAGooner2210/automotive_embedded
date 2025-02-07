@@ -6,7 +6,7 @@ Thư viện SPL là một tập hợp các hàm API  . Thay vì phải thao tác
 ### Cấu hình và sử dụng ngoại với thư viện SPL
 * **CẤP CLOCK CHO NGOẠI VI**
   
-Hàm RCC_<bus>ClockCmd giúp cung cấp clock cho ngoại vi nằm trên đường bus tương ứng trong tên hàm
+Hàm `RCC_<bus>ClockCmd` giúp cung cấp clock cho ngoại vi nằm trên đường bus tương ứng trong tên hàm
 
   **Các đường bus là:  AHB,APB1,APB2**
 
@@ -14,7 +14,7 @@ Hàm RCC_<bus>ClockCmd giúp cung cấp clock cho ngoại vi nằm trên đườ
 
  **Tham số đầu tiên:** Xác định ngoại vi muốn cấp/ngắt clock
 
-"RCC_<bus>Periph_<tên ngoại vi>"
+`RCC_<bus>Periph_<tên ngoại vi>`
 
 **Tham số thứ hai:** Xác định trạng thái cấp clock
 
@@ -84,20 +84,21 @@ GPIO_Speed_<tốc độ>
 
  GPIO_Init(Tham số thứ nhất,tham số thứ hai)
 
- **Tham số thứ nhất: Tên ngoại vi muốn cấu hình**                                                           
- **Tham số thứ hai: Tham số thứ hai là con trỏ trỏ đến địa chỉ của struct"GPIO_InitTypeDef"**                                           
+ **Tham số thứ nhất:**   Tên ngoại vi muốn cấu hình                                                         
+ **Tham số thứ hai:**  Tham số thứ hai là con trỏ trỏ đến địa chỉ của struct"GPIO_InitTypeDef"                                          
 `GPIO_Init(GPIOC, &GPIO_InitStruct);`
 
 * **CÁC HÀM ĐIỀU KHIỂN NGOẠI VI**
 
     `uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin); ` 
-     \\\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là INPUT (IDR), có thể đọc nhiều pin nhờ toán tử OR
+
+  \\\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là INPUT (IDR), có thể đọc nhiều pin nhờ toán tử OR
 
     `uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx);`                                
      \\\Đọc giá trị nguyên cổng GPIO được cấu hình là INPUT (IDR)
 
-
     `uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);`
+  
      \\\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là OUTPUT (ODR), có thể đọc nhiều pin nhờ toán tử OR
 
     `uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx); `                               
