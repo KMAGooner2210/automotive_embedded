@@ -10,13 +10,13 @@ Hàm RCC_<bus>ClockCmd giúp cung cấp clock cho ngoại vi nằm trên đườ
 
   **Các đường bus là:  AHB,APB1,APB2**
 
-  Hàm này chứa 2 tham số: 
+  **Hàm này chứa 2 tham số:**  
 
-**Tham số đầu tiên: Xác định ngoại vi muốn cấp/ngắt clock** 
+ **Tham số đầu tiên:** Xác định ngoại vi muốn cấp/ngắt clock
 
 "RCC_<bus>Periph_<tên ngoại vi>"
 
-**Tham số thứ hai: Xác định trạng thái cấp clock**
+**Tham số thứ hai:** Xác định trạng thái cấp clock
 
 Cấp Clock: Enable
 
