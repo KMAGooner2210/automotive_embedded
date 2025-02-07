@@ -86,28 +86,28 @@ GPIO_Speed_<tốc độ>
 
 * **CÁC HÀM ĐIỀU KHIỂN NGOẠI VI**
 
-    uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);   
+    `uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin); ` 
      \\\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là INPUT (IDR), có thể đọc nhiều pin nhờ toán tử OR
 
-    uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx);                                
+    `uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx);`                                
      \\\Đọc giá trị nguyên cổng GPIO được cấu hình là INPUT (IDR)
 
 
-    uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+    `uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);`
      \\\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là OUTPUT (ODR), có thể đọc nhiều pin nhờ toán tử OR
 
-    uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx);                                
+    `uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx); `                               
      \\\Đọc giá trị nguyên cổng GPIO được cấu hình là OUTPUT (ODR)
 
-    void GPIO_SetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);                        
+    `void GPIO_SetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin); `                       
      \\\Cho giá trị 1 bit trong cổng GPIO = 1, có thể ghi nhiều pin nhờ toán tử OR
 
-    void GPIO_ResetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);                      
+    `void GPIO_ResetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);  `                    
     
      \\\Cho giá trị 1 bit trong cổng GPIO = 0, có thể ghi nhiều pin nhờ toán tử OR
 
-    void GPIO_WriteBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, BitAction BitVal);    
+    `void GPIO_WriteBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, BitAction BitVal);  `  
      \\\Ghi giá trị "BitVal" vào 1 bit trong cổng GPIO, có thể ghi nhiều pin nhờ toán tử OR
 
-    void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal);                          
+    `void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal);  `                        
      \\\Ghi giá trị "PortVal" vào nguyên cổng GPIO
