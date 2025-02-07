@@ -5,6 +5,7 @@ Thư viện SPL là một tập hợp các hàm API  . Thay vì phải thao tác
 
 ### Cấu hình và sử dụng ngoại với thư viện SPL
 * **CẤP CLOCK CHO NGOẠI VI**
+  
 Hàm RCC_<bus>ClockCmd giúp cung cấp clock cho ngoại vi nằm trên đường bus tương ứng trong tên hàm
 
   **Các đường bus là:  AHB,APB1,APB2**
