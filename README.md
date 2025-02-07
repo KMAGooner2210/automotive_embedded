@@ -1,5 +1,5 @@
 # Automative_Embedded
-## Bài 1:GPIO
+## Bài 2:GPIO
 ### Thư viện SPL(Standard Peripherals Firmware Library)
 Thư viện SPL là một tập hợp các hàm API  . Thay vì phải thao tác trực tiếp với các thanh ghi (registers) phức tạp, SPL cung cấp một lớp trừu tượng, cho phép cấu hình và điều khiển ngoại vi thông qua các cấu trúc dữ liệu (struct) và kiểu liệt kê (enum). 
 
