@@ -23,10 +23,13 @@ Cấp Clock: Enable
 Ngắt Clock: Disable
 
 `RCC_APB2ClockCmd(RCC_APB2Periph_GPIOC, ENABLE);`
+
 `RCC_APB1ClockCmd(RCC_APB1Periph_TIM2, DISABLE);`
+
 `RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, DISABLE);`
 
 * **CẤU HÌNH NGOẠI VI**
+  
 Khai báo một biến có tên là GPIO_InitStruct, và biến này có kiểu dữ liệu là GPIO_InitTypeDef. GPIO_InitStruct là một biến cấu trúc, có thể chứa các thông tin cấu hình cho GPIO.
 
 `GPIO_InitTypeDef GPIO_InitStruct;`
