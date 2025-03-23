@@ -1,6 +1,6 @@
 
 # Automative_Embedded
-##  GPIO (General Purpose Input Output)
+## Bài 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
 #### **Cấp Clock cho ngoại vi**
