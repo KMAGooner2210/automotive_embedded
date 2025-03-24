@@ -198,7 +198,7 @@
 
   
 # Automative_Embedded
-## Bài 2: Interrupt 
+## Bài 2: Interrupt (Phần 1)
 
 
 #### **Khái niệm**
