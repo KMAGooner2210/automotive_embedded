@@ -361,12 +361,12 @@ NVIC_Init(&NVICInitStruct);
 
 
 
+## Bài 2: Interrupt (Phần 2) 
+
+#### **Ngắt ngoài**
 
 
-#### **Các loại ngắt**
-
-
-* **Ngắt ngoài**
+* **Sơ đồ**
 
 ![Image](https://github.com/user-attachments/assets/b8531dc8-d8a1-4fea-b10b-90365810da53)
 
@@ -376,7 +376,6 @@ NVIC_Init(&NVICInitStruct);
 ```c
   void RCC_Config(){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 ```
@@ -488,6 +487,139 @@ if(EXTI_GetITStatus(EXTI_Line0) != RESET)
 ```
 
 
+#### **Ngắt Timer**
 
+* **Sơ đồ**
+
+
+![Image](https://github.com/user-attachments/assets/b0736d5c-3a49-41bf-95db-063762fdb254)
+
+
+  ◦ Sử dụng ngắt Timer,ta vẫn cấu hình các tham số trong **TIM_TimeBaseInitTypeDef** bình thường
+
+  ◦ Riêng **TIM_Period**,đây là số lần đếm mà sau đó timer sẽ ngắt
+
+
+* **Cấu hình ngắt Timer**
+
+  ◦ Cấu hình **Timer**
+
+     Hàm **TIM_ITConfig(TIMx,TIM_IT_Update,ENABLE)** kích hoạt ngắt cho TIMERx tương ứng
+
+      
+      Yêu cầu: cài đặt Period = 10-1 ứng với ngắt mỗi 1ms
+      void TIM_Config()
+      {
+      TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+
+      TIM_TimeBaseInitStruct.TIM_Prescaler = 7200-1;
+      //Ngắt mỗi 1ms => 1 ms = ?/72MHz => ? = 7200
+
+      TIM_TimeBaseInitStruct.TIM_Period = 10-1;
+      TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+      TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+      TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+      TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+      TIM_Cmd(TIM2, ENABLE);
+      }
+      
+
+  ◦ Cấu hình **NVIC**
+
+     
+     ```c
+      NVIC_InitTypeDef NVIC_InitStruct;
+
+      NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+	  NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+	  NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+	  NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+
+	  NVIC_Init(&NVIC_InitStruct);
+
+     ```
+
+
+
+  ◦ Cấu hình **hàm phục vụ ngắt Timer**
+
+
+    
+Hàm phục vụ ngắt Timer được đặt tên: **TIMx_IRQHandler** với x là timer tương ứng
+     
+ Hàm kiểm tra cờ ngắt của line x tương ứng: **TIM_GetITStatus(TIMx,TIM_IT_Update)**
+
+Hàm xóa cờ ngắt của line x:
+  **TIM_ClearITPendingBit(TIMx,TIM_IT_Update)**
+ 
+     
+
+   
+     uint16_t count;
+     void delay(int time){
+
+	  count = 0; 
+	  while(count < time)
+     
+      {
+
+      }
+
+    }
+
+     void TIM2_IRQHandler(){
+
+      if(TIM_GetITStatus(TIM2, TIM_IT_Update))
+        {
+		  count++;
+		  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+        }
+
+    }
+
+  
+
+
+#### **Ngắt truyền thông**
+
+### Ngắt UART
+
+![Image](https://github.com/user-attachments/assets/9affbbd5-a18d-40d2-9c22-588a47d195df)
+
+* Trước khi cho phép UART hoạt động, cần kích hoạt ngắt UART bằng cách gọi hàm **USART_ITConfig()**;
+
+* Ở NVIC, ta cấu hình tương tự như ngắt ngoài EXTI, tuy nhiên NVIC_IRQChannel được đổi thành **USART_IRQn** để khớp với line ngắt timer.
+
+* Hàm phục vụ ngắt UART được đặt tên : **USARTx_IRQHandler()**
+
+   ◦ Kiểm tra ngắt 
+
+   ◦ Nhận và lưu data từ USART1
+
+   ◦ Kiểm tra cờ ngắt truyền,đảm bảo UART đang rỗi
+
+   ◦ Truyền lại data vừa nhận được sang máy tính
+
+   ◦ Xóa cờ ngắt,thoát khỏi hàm
+
+* Hàm kiểm tra cờ ngắt : **USART_GetITStatus**
+
+* Hàm kiểm tra trạng thái của quá trình truyền dữ liệu : **USART_GetFlagStatus(USART_InitTypeDef * USARTx,uint32_t USART_FLAG)**
+
+   ```c
+   void UART1_IRQHandler(){
+      uint8_t data = 0x00;
+      if(USART_GetITStatus(USART1,USART_IT_RXNE) != RESET){
+         while(!USART_GetFlagStatus(USART1,USART_FLAG_RXNE));
+         data = USART_ReceiveData(USART1);
+           if(USART_GetITStatus(USART1,USART_IT_TXE) != RESET){
+              USART_SendData(USART1,data);
+              while(USART_GetFlagStatus(USART1,USART_FLAG_TC) == RESET) ;
+          }
+      }
+      USART_ClearITPendingBit(USART1,USART_IT_RXNE);  
+   }
+  ```
 
 
