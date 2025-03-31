@@ -623,3 +623,122 @@ Hàm xóa cờ ngắt của line x:
   ```
 
 
+
+## Bài 3: Các chuẩn giao tiếp cơ bản 
+
+#### **SPI**
+
+### **Đặc điểm**
+* Chuẩn giao tiếp nối tiếp,đồng bộ
+* Hoạt động ở chế độ song công
+* Sử dụng 4 dây giao tiếp
+
+### **Sơ đồ chân**
+![Image](https://github.com/user-attachments/assets/9e55733b-bf9f-4d37-912e-84e5faae3086)
+
+
+* **SCK (Serial Clock)**: Thiết bị Master tạo xung tín hiệu SCK và cung cấp cho Slave
+
+* **MISO (Master Input Slave Output)**: Tín hiệu tạo bởi thiết bị Slave và nhận bởi thiết bị Master.
+
+* **MOSI (Master Output Slave Input)**: Tín hiệu tạo bởi thiết bị Master và nhận bởi thiết bị Slave.
+
+* **SS (Slave Select) / CS (Chip Select)**: Chọn thiết bị Slave cụ thể để giao tiếp. Để chọn Slave giao tiếp thiết bị Master chủ động kéo đường SS tương ứng xuống mức 0 (Low).
+
+
+### **Quá trình truyền nhận**  
+
+* Master kéo chân SS của chân Slave muốn giao tiếp xuống mức 0 để báo hiệu muốn truyền nhận
+
+* Clock sẽ được cấp bởi master, tùy vào chế độ được cài, với mỗi xung clock,  1 bit sẽ được truyền từ master đến slave và slave cũng truyền 1 bit cho master.
+
+* Các thanh ghi cập nhật giá trị và dịch 1 bit.
+
+* Lặp lại quá trình trên đến khi truyền xong 8 bit trong thanh ghi.
+
+### **Các chế độ hoạt động**
+
+* Có 4 chế độ hoạt động phụ thuộc **Clock Polarity (CPOL)** và **Clock Phase (CPHA)**.
+
+* CPOL:
+
+  CPOL = 0: Xung clock ban đầu ở mức 0.
+
+  CPOL = 1: Xung clock ban đầu ở mức 1.
+
+* CPHA:
+
+  CPHA = 0: Truyền bit trước rồi mới cấp xung.
+  
+  CPHA = 1: Cấp xung trước rồi mới truyền bit.
+
+  ![Image](https://github.com/user-attachments/assets/7035fcb0-fd0e-4d24-976b-0a56d80a1207)
+
+
+
+#### **I2C**
+
+### **Đặc điểm**
+
+* Chuẩn giao tiếp nối tiếp,đồng bộ
+* Hoạt động ở chế độ bán song công
+* Sử dụng 2 dây giao tiếp
+
+### **Sơ đồ chân**
+
+![Image](https://github.com/user-attachments/assets/34dd609d-2f2e-421d-b416-0cabcbf9670a)
+
+
+* **SCL (Serial Clock)**: Tạo xung tín hiệu để đồng bộ việc truyền/nhận dữ liệu với các Slave.
+
+* **SDA (Serial Data)**: Chân chứa dữ liệu được truyền đi
+
+
+### **Quá trình truyền nhận**
+
+* Start: Điều kiện: Chân SDA xuống mức 0 trước chân SCL.
+* Truyền các bit địa chỉ để tìm Slave muốn giao tiếp.
+
+* Bit R/W: Master gửi dữ liệu đi ứng với bit '0', nhận dữ liệu ứng với bit '1'.
+
+* ACK: Chờ phản hồi, '0' là nhận và '1' là không nhận. Nếu không có Slave nào phản hồi, dùng Timer để thoát ra.
+
+* Sau khi chọn được Slave để giao tiếp, bắt đầu truyền các bit dữ liệu đến Slave.
+* Tương tự cũng có ACK để chờ phản hồi.
+* Stop: Điều kiện: Chân SDA lên mức 1 sau chân SCL.
+
+
+
+#### **UART**
+
+### **Đặc điểm**
+
+* Chuẩn giao tiếp nối tiếp
+* Không đồng bộ
+* Hoạt động ở chế độ song công
+* Sử dụng 2 dây giao tiếp
+* Chỉ 2 thiết bị giao tiếp
+
+### **Sơ đồ chân**
+
+![Image](https://github.com/user-attachments/assets/5d657816-56e4-4871-8c40-7ce476b283c2)
+
+**Tx (Transmit)**: Chân truyền dữ liệu 
+
+**Rx (Receive)**: Chân nhận dữ liệu
+
+### **Quá trình truyền nhận**
+
+![Image](https://github.com/user-attachments/assets/e345c226-4ada-4991-963b-1dcb7e0ae24c)
+
+* Start: 1 bit.
+
+* Bit dữ liệu: 5 đến 9 bit.
+
+* Bit chẵn lẻ:
+
+    Quy luật chẵn: Thêm một bit '0' hoặc '1' để số bit '1' là số chẵn.
+    Quy luật lẻ: Thêm một bit '0' hoặc '1' để số bit '1' là số lẻ.
+* Stop: 1 đến 2 bit.
+
+
