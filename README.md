@@ -29,8 +29,8 @@
 
  
 * **GPIO_Mode:** Chế độ muốn cấu hình
-
-    `typedef enum {`
+    ```
+    typedef enum {
 
         GPIO_Mode_AIN = 0x00,            //Analog Input
         GPIO_Mode_IN_FLOATING = 0x04,    //Input bình thường
@@ -40,8 +40,8 @@
         GPIO_Mode_Out_PP = 0x10,         //Output dạng push-pull
         GPIO_Mode_AF_OD = 0x1C,          //Chế độ ngoại vi khác dạng open-drain
         GPIO_Mode_AF_PP = 0x18           //Chế độ ngoại vi khác dạng push-pull
-    `} GPIOMode_TypeDef;`
-
+    } GPIOMode_TypeDef;
+    ```
 * **GPIO_Speed:** Tốc độ đáp ứng của chân
 
 `GPIO_Speed_<tốc độ muốn cấu hình>`    
@@ -56,21 +56,17 @@
 
   ◦Tham số thứ hai là con trỏ đến struct **"GPIO_InitTypeDef"**
 
-```c
+```
     GPIO_InitTypeDef GPIO_InitStruct;
-
     GPIO_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
-
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-
     GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	
     GPIO_Init(GPIOC, &GPIO_InitStruct);
 ```
 
 * **Các hàm thông dụng để điều khiển GPIO** 
 
-```c
+```
     uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);            \\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là INPUT (IDR), có thể đọc nhiều pin nhờ toán tử OR
     uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx);                                 \\Đọc giá trị nguyên cổng GPIO được cấu hình là INPUT (IDR)
     uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);           \\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là OUTPUT (ODR), có thể đọc nhiều pin nhờ toán tử OR
@@ -252,46 +248,34 @@
 
     ◦Ngắt xảy ra
 
-  
-```c
+     ```
    Quy trình bắt đầu khi một sự kiện ngắt xảy ra.
 
    Sự kiện này có thể đến từ nhiều nguồn khác nhau, ví dụ:
 
-Ngắt ngoại vi: Một module ngoại vi như UART, Timer, ADC, GPIO tạo ra ngắt khi hoàn thành một tác vụ hoặc có một sự kiện cụ thể (ví dụ: UART nhận dữ liệu, Timer tràn, ADC chuyển đổi xong, GPIO pin thay đổi trạng thái).
+   Ngắt ngoại vi: Một module ngoại vi như UART, Timer, ADC, GPIO tạo ra ngắt khi hoàn thành một tác vụ hoặc có một sự kiện cụ thể (ví dụ: UART nhận dữ liệu, Timer tràn, ADC chuyển đổi xong, GPIO pin thay đổi trạng thái).
 
-Ngắt nội bộ: Các ngắt do bộ vi điều khiển tạo ra, ví dụ: SysTick timer ngắt định kỳ, Software Interrupt (SWI), PendSV (Pendable Service Call).
+   Ngắt nội bộ: Các ngắt do bộ vi điều khiển tạo ra, ví dụ: SysTick timer ngắt định kỳ, Software Interrupt (SWI), PendSV (Pendable Service Call).
 
-Ngắt lỗi: Các lỗi phần cứng hoặc phần mềm như HardFault, Memory Management Fault.
-```
+   Ngắt lỗi: Các lỗi phần cứng hoặc phần mềm như HardFault, Memory Management Fault.
+     ```
   
-
-   
     ◦NVIC xác định vector number
 
-   
     ◦Tra cứu VIT bằng cách sử dụng vector number làm offset để tra cứu bảng 
     
-   ```c
-Base_Address of VIT + (n * 4).
-
+      
+      Base_Address of VIT + (n * 4).
       Base_Address of VIT: Đây là địa chỉ bộ nhớ bắt đầu của Vector Interrupt Table. Như đã thảo luận trước đó, địa chỉ này thường cố định và nằm ở đầu bộ nhớ Flash (ví dụ: 0x00000000).
-
       n (vector number): Là số vector mà NVIC đã xác định cho ngắt đang xảy ra.
-
       4: Là kích thước của mỗi mục (vector) trong VIT, tính bằng byte. Trong kiến trúc 32-bit, mỗi địa chỉ bộ nhớ thường là 32-bit (4 byte).
-
       n * 4: Tính toán offset (độ lệch) từ địa chỉ bắt đầu của VIT. Vector number n được nhân với 4 để tính ra độ lệch byte tương ứng trong bảng VIT.
-
-Base_Address of VIT + (n * 4): Kết quả là địa chỉ bộ nhớ trong VIT, nơi chứa địa chỉ của ISR tương ứng với vector number n.
-
-  ```
-
+      Base_Address of VIT + (n * 4): Kết quả là địa chỉ bộ nhớ trong VIT, nơi chứa địa chỉ của ISR tương ứng với vector number n.
+      
 
    ◦Lấy địa chỉ ISR
    
      Giá trị tra cứu được trong VIT chính là địa chỉ của bộ nhớ hàm ISR tương ứng
-
 
    ◦Nhảy đến ISR
    
@@ -338,7 +322,9 @@ Base_Address of VIT + (n * 4): Kết quả là địa chỉ bộ nhớ trong VIT
 
 * **Cấu hình NVIC**
  
-  ◦ **Priority Group:**  xác định cách phân chia bit giữa Preemption Priority và Subpriority. Sử dụng hàm **NVIC_PriorityGroupConfig(uint32_t PriorityGroup)** để chọn priority group cho NVIC
+  ◦ **Priority Group:**  xác định cách phân chia bit giữa Preemption Priority và Subpriority.
+  
+   Sử dụng hàm **NVIC_PriorityGroupConfig(uint32_t PriorityGroup)** để chọn priority group cho NVIC
 
   ◦ **NVIC_IRQChannel:** Xác định mã của kênh ngắt cần được cấu hình
 
@@ -349,7 +335,7 @@ Base_Address of VIT + (n * 4): Kết quả là địa chỉ bộ nhớ trong VIT
   ◦ **NVIC_IRQChannelSubPriority:** Cho phép ngắt
 
 
-```c
+```
 NVIC_InitTypeDef NVICInitStruct;
 NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;
@@ -373,16 +359,16 @@ NVIC_Init(&NVICInitStruct);
 
   ◦ Để sử dụng được ngắt ngoài, ngoài bật clock cho GPIO tương ứng cần bật thêm clock cho **AFIO**.
 
-```c
+```
   void RCC_Config(){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 ```
  ◦ Ngắt ngoài của chip STM32F103 bao gồm có 16 line riêng biệt
- ```c
- 	Line0 sẽ chung cho tất cả chân Px0 ở tất cả các Port, với x là tên của Port A, B…
-     Line0 nếu chúng ta đã chọn chân PA0 (chân 0 ở port A) làm chân ngắt thì tất cả các chân 0 ở các Port khác không được khai báo làm chân ngắt ngoài nữa
+```
+Line0 sẽ chung cho tất cả chân Px0 ở tất cả các Port, với x là tên của Port A, B…
+Line0 nếu chúng ta đã chọn chân PA0 (chân 0 ở port A) làm chân ngắt thì tất cả các chân 0 ở các Port khác không được khai báo làm chân ngắt ngoài nữa
 ```
  
 
@@ -392,20 +378,15 @@ NVIC_Init(&NVICInitStruct);
 
     ◦  Có thể cấu hình thêm trở kéo lên/xuống tùy theo cạnh ngắt được sử dụng.
 
-   ```c
+   ```
     void GPIO_Config(){
+        GPIO_InitTypeDef GPIOInitStruct;
 
-    GPIO_InitTypeDef GPIOInitStruct;
-	
 	GPIOInitStruct.GPIO_Mode = GPIO_Mode_IPU;
-
 	GPIOInitStruct.GPIO_Pin = GPIO_Pin_0;
-
 	GPIOInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-
 	GPIO_Init(GPIOA, &GPIOInitStruct);
     }
-
     ```
 
 
@@ -413,57 +394,49 @@ NVIC_Init(&NVICInitStruct);
       ◦ Hàm **GPIO_EXTILineConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource)** liên kết 1 chân với một EXTI line để cấu hình chân ở chế độ sử dụng ngắt ngoài:
 
 GPIO_PortSource: Chọn Port để sử dụng làm nguồn cho ngắt ngoài.
-
 GPIO_PinSource: Chọn Pin để cấu hình.
 
-
-          ◦ Các tham số ngắt ngoài được cấu hình trong struct EXTI_InitTypeDef, gồm:
+       ◦ Các tham số ngắt ngoài được cấu hình trong struct EXTI_InitTypeDef, gồm:
 
 **EXTI_Line:** Xác định EXTI line cụ thể sẽ được cấu hình.
-
 **EXTI_Mode:** Xác định chế độ hoạt động của EXTI, có hai chế độ là Interrupt hoặc Event.
-
 **EXTI_Trigger:** Xác định loại cạnh xung sẽ kích hoạt ngắt.
-
 **EXTI_LineCmd:** Kích hoạt (ENABLE) hoặc vô hiệu hóa (DISABLE) EXTI line.
 
 
-   ```c
+    
     void EXTI_Config(){
 	EXTI_InitTypeDef EXTIInitStruct;
 
-    EXTIInitStruct.EXTI_Line = EXTI_Line0;
+        EXTIInitStruct.EXTI_Line = EXTI_Line0;
 	EXTIInitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTIInitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
 	EXTIInitStruct.EXTI_LineCmd = ENABLE;
 	
 	EXTI_Init(&EXTIInitStruct);
 }
-```
+      ```
 
 
 ◦ Tiếp đến cấu hình NVIC:
 
-    ```c
-    NVIC_InitTypeDef NVICInitStruct;
+    
+        NVIC_InitTypeDef NVICInitStruct;
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	
 	NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;
 	NVICInitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+        NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
 	NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
 	
 	NVIC_Init(&NVICInitStruct);
-    ```      
-
-
 
 ◦ Các hàm quan trọng trong EXTI:
 
    Ngắt trên từng line có hàm phục riêng của từng line. Có tên cố định: **EXTIx_IRQHandler()** (x là line ngắt tương ứng).
-     
+   
    Hàm **EXTI_GetITStatus(EXTI_Linex)**, Kiểm tra cờ ngắt của line x tương ứng. 
-
+   
    Hàm **EXTI_ClearITPendingBit(EXTI_Linex)**: Xóa cờ ngắt ở line x.
 
 
@@ -475,13 +448,10 @@ GPIO_PinSource: Chọn Pin để cấu hình.
 
    Xóa cờ ngắt ở line.
 
-```c
-void EXTI0_IRQHandler()
-{	
-if(EXTI_GetITStatus(EXTI_Line0) != RESET)
-	{
-
-	}
+```
+void EXTI0_IRQHandler(){	
+        if(EXTI_GetITStatus(EXTI_Line0) != RESET)
+        {}
 	EXTI_ClearITPendingBit(EXTI_Line0);
 }
 ```
@@ -528,16 +498,15 @@ if(EXTI_GetITStatus(EXTI_Line0) != RESET)
   ◦ Cấu hình **NVIC**
 
      
-     ```c
-      NVIC_InitTypeDef NVIC_InitStruct;
+     ```
+          NVIC_InitTypeDef NVIC_InitStruct;
 
-      NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+          NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
 	  NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
 	  NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
 	  NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 
 	  NVIC_Init(&NVIC_InitStruct);
-
      ```
 
 
@@ -546,36 +515,25 @@ if(EXTI_GetITStatus(EXTI_Line0) != RESET)
 
 
     
-Hàm phục vụ ngắt Timer được đặt tên: **TIMx_IRQHandler** với x là timer tương ứng
+ Hàm phục vụ ngắt Timer được đặt tên: **TIMx_IRQHandler** với x là timer tương ứng
      
  Hàm kiểm tra cờ ngắt của line x tương ứng: **TIM_GetITStatus(TIMx,TIM_IT_Update)**
 
-Hàm xóa cờ ngắt của line x:
-  **TIM_ClearITPendingBit(TIMx,TIM_IT_Update)**
- 
-     
-
+ Hàm xóa cờ ngắt của line x: **TIM_ClearITPendingBit(TIMx,TIM_IT_Update)**
    
      uint16_t count;
      void delay(int time){
-
 	  count = 0; 
 	  while(count < time)
-     
-      {
-
-      }
-
+      {}
     }
 
      void TIM2_IRQHandler(){
-
       if(TIM_GetITStatus(TIM2, TIM_IT_Update))
         {
 		  count++;
 		  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
         }
-
     }
 
   
@@ -607,7 +565,7 @@ Hàm xóa cờ ngắt của line x:
 
 * Hàm kiểm tra trạng thái của quá trình truyền dữ liệu : **USART_GetFlagStatus(USART_InitTypeDef * USARTx,uint32_t USART_FLAG)**
 
-   ```c
+   ```
    void UART1_IRQHandler(){
       uint8_t data = 0x00;
       if(USART_GetITStatus(USART1,USART_IT_RXNE) != RESET){
