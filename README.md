@@ -700,3 +700,173 @@ void EXTI0_IRQHandler(){
 * Stop: 1 đến 2 bit.
 
 
+
+
+## Bài 4: GIAO TIẾP SPI 
+
+## **SPI Software**
+
+### **Xác định các chân GPIO**
+* Định nghĩa 4 chân sử dụng SPI
+
+  ```
+  #define SPI_SCK_Pin    GPIO_Pin_0
+  #define SPI_MISO_Pin   GPIO_Pin_1
+  #define SPI_MOSI_Pin   GPIO_Pin_2
+  #define SPI_CS_Pin     GPIO_Pin_3
+  #define SPI_GPIO       GPIO_A
+  ```
+ 
+
+### **Cấu hình GPIO**
+
+
+* **Master**: 
+◦ Các chân **SCK, CS, MOSI** để chế độ Out Push Pull
+
+```
+GPIO_InitStructure.GPIO_Pin = SPI_SCK_Pin | SPI_CS_Pin | SPI_MOSI_Pin;
+
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+```
+
+◦ Chân **MISO** để chế độ IN FLOATING
+
+```
+GPIO_InitStructure.GPIO_Pin = SPI_MISO_Pin;
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+```
+
+* **Slave**:
+
+◦ Chân **MISO** để chế độ Out Push Pull
+```
+GPIO_InitStructure.GPIO_Pin = SPI_MISO_Pin;
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+```
+◦ Chân **MOSI,SCK,CS** để chế độ IN FLOATING
+```
+GPIO_InitStructure.GPIO_Pin = SPI_SCK_Pin | SPI_CS_Pin | SPI_MOSI_Pin;
+
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+```
+
+* **Tạo xung Clock**
+
+```
+void Clock(){
+  GPIO_WriteBit(SPI_GPIO,SPI_SCK_Pin,Bit_SET);
+  Delay_ms(4);
+  GPIO_WriteBit(SPI_GPIO,SPI_SCK_Pin,Bit_RESET);
+  Delay_ms(4);
+}
+```
+
+### **Khởi tạo các chân cho SPI**
+
+```
+void SPI_Init(){
+  GPIO_WriteBit(SPI_GPIO,SPI_SCK_Pin,Bit_RESET);
+  GPIO_WriteBit(SPI_GPIO,SPI_CS_Pin,Bit_SET);
+  GPIO_WriteBit(SPI_GPIO,SPI_MISO_Pin,Bit_RESET);
+  GPIO_WriteBit(SPI_GPIO,SPI_MOSI_Pin,Bit_RESET);
+}
+
+```
+
+### **Hàm truyền(Master)**
+
+* Kéo **CS** xuống **0**
+
+    ◦ Dịch 1 bit
+
+    ◦ Truyền 1 bit
+
+    ◦ Gửi clock() 
+
+* Kéo **CS** lên **1**
+
+```
+void SPI_Master_Transmit(uint8_t u8Data){
+
+uint8_t u8Mask = 0x80;
+uint8_t tempData;
+
+GPIO_WriteBit(SPI_GPIO,SPI_CS_Pin,Bit_RESET);
+Delay_ms(1);
+
+  for (int i=0; i<8; i++){
+  tempData = u8Data & u8Mask
+      if(tempData){
+        GPIO_WriteBit(SPI_GPIO,SPI_MOSI_Pin,Bit_SET);
+        Delay_ms(1);
+      }
+      else{
+        GPIO_WriteBit(SPI_GPIO,SPI_MOSI_Pin,Bit_RESET);
+        Delay_ms(1);
+      }
+
+  u8Data = u8Data << 1;
+  Clock();
+ }
+
+GPIO_WriteBit(SPI_GPIO,SPI_CS_Pin,Bit_SET);
+Delay_ms(1);
+}
+```
+### **Hàm nhận (Slave)**
+
+* Kiểm tra **CS** bằng **0** 
+
+   ◦ Kiểm tra Clock = 1;
+
+   ◦ Đọc data trên MOSI,ghi vào biến;
+
+   ◦ Dịch 1 bit
+
+* Kiểm tra **CS** bằng **1**
+
+```
+uint8_t Slave_Receive(void){
+  uint8_t dataReceive = 0x00;
+  uint8_t temp = 0x00;
+
+  while(GPIO_ReadInputDataBit(SPI_GPIO, SPI_CS_Pin)); --Chờ CS lên cao
+  while(!GPIO_ReadInputDataBit(SPI_GPIO,SPI_CS_Pin)); --Chờ CS xuống thấp bắt đầu Truyền
+  while(!GPIO_ReadInputDataBit(SPI_GPIO,SPI_SCK_Pin)); --Chờ SCK xuống thấp( ở trạng thái nghỉ);
+    
+    for(int i=0; i<8; i++){
+  
+      while(!GPIO_ReadInputDataBit(SPI_GPIO,SPI_SCK_Pin)); --Chờ SCK xuống thấp
+      while(GPIO_ReadInputDataBit(SPI_GPIO,SPI_SCK_Pin)); --Chờ SCK lên cao bắt đầu Truyền
+
+      temp = GPIO_ReadInputDataBit(SPI_GPIO,SPI_MOSI_Pin);
+      dataReceive = dataReceive << 1;
+      dataReceive = dataReceive | temp;
+
+      while(GPIO_ReadInputDataBit(SPI_GPIO,SPI_SCK_Pin)); --Chờ SCK xuống thấp (kết thúc khung truyền)
+
+    }
+  while(GPIO_ReadInputDataBit(SPI_GPIO,SPI_CS_Pin)); --Chờ CS lên cao kết thúc khung Truyền
+  return dataReceive;
+}
+
+```
+
+### **Hàm main**
+
+```
+uint8_t DataTrans[] = {1,3,4,5,6,7,8,9};
+int main (){
+RCC_Config();
+GPIO_Config();
+TIM_Config();
+SPI_Config();
+while(1){
+   for(int i=0; i<7;i++){
+     SPI_Master_Transmit(DataTrans);
+     Delay_ms(1);
+   }
+ }
+}
+```
