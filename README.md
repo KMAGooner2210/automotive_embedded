@@ -197,7 +197,7 @@
 
 
   
-# Automative_Embedded
+
 ## BÀI 2: INTERRUPT (Phần 1)
 
 
