@@ -1,9 +1,9 @@
 
-# Automative_Embedded
-## Bài 1: GPIO (General Purpose Input Output)
+# AUTOMOTIVE_EMBEDDED
+## BÀI 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
-#### **Cấp Clock cho ngoại vi**
+## **Cấp Clock cho ngoại vi**
 
 * **Module RCC** cung cấp các hàm để cấu hình xung clock
 
@@ -19,7 +19,7 @@
 
  ◦ ENABLE/DISABLE
 
-#### **Cấu hình ngoại vi**
+## **Cấu hình ngoại vi**
 
 
 * **GPIO_Pin:** Chân cần được cấu hình 
@@ -46,7 +46,7 @@
 
 `GPIO_Speed_<tốc độ muốn cấu hình>`    
 
-#### **Sử dụng ngoại vi**
+## **Sử dụng ngoại vi**
 
 
 * **Để gắn các giá trị muốn cấu hình vào các thanh ghi** thì ta sử dụng hàm "GPIO_Init" có 2 tham số cung cấp các hàm để cấu hình xung clock
@@ -89,7 +89,7 @@
 
 
 
-#### **Pull-Up vs Pull-Down ???**
+## **Pull-Up vs Pull-Down ???**
 
 
 ![Image](https://github.com/user-attachments/assets/2e06645d-579f-4b64-970c-f09a46cf949f)
@@ -134,7 +134,7 @@
 
 
 
-#### **Các chế độ input khác**
+## **Các chế độ input khác**
 
 * **Input-Floating:**
 
@@ -158,7 +158,7 @@
     ◦ **Lưu ý:** Dễ bị nhiễu
     
 
-#### **Các chế độ output**
+## **Các chế độ output**
 
 * **Output Push-Pull:**
 
@@ -179,7 +179,7 @@
 
 
 
-#### **Các chế độ Alternate Function**
+## **Các chế độ Alternate Function**
 
 
 * **AF-Push Pull:**
@@ -198,10 +198,10 @@
 
   
 # Automative_Embedded
-## Bài 2: Interrupt (Phần 1)
+## BÀI 2: INTERRUPT (Phần 1)
 
 
-#### **Khái niệm**
+## **Khái niệm**
 
 ![Image](https://github.com/user-attachments/assets/eb1762a6-057e-4212-91cd-7d216830df0d)
 
@@ -210,7 +210,7 @@
 
 
 
-#### **Interrupt Service Routine (Trình phục vụ ngắt)**
+## **Interrupt Service Routine (Trình phục vụ ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/90c8c28e-edea-4755-b2b3-8c84be788a61)
 
@@ -221,7 +221,7 @@
 
 
 
-#### **Vector Interrupt Table (Bảng vector ngắt)**
+## **Vector Interrupt Table (Bảng vector ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/038312e2-516d-4eb2-8125-438cf5885fc6)
 
@@ -301,7 +301,7 @@ Base_Address of VIT + (n * 4): Kết quả là địa chỉ bộ nhớ trong VIT
 
 
 
-#### **NVIC (Nested Vectored Interrupt Controller)**
+## **NVIC (Nested Vectored Interrupt Controller)**
 
 * **Khái niệm**
 
@@ -361,9 +361,9 @@ NVIC_Init(&NVICInitStruct);
 
 
 
-## Bài 2: Interrupt (Phần 2) 
+## BÀI 2: INTERRUPT (PHẦN 2) 
 
-#### **Ngắt ngoài**
+## **Ngắt ngoài**
 
 
 * **Sơ đồ**
@@ -487,7 +487,7 @@ if(EXTI_GetITStatus(EXTI_Line0) != RESET)
 ```
 
 
-#### **Ngắt Timer**
+## **Ngắt Timer**
 
 * **Sơ đồ**
 
@@ -581,7 +581,7 @@ Hàm xóa cờ ngắt của line x:
   
 
 
-#### **Ngắt truyền thông**
+## **Ngắt truyền thông**
 
 ### Ngắt UART
 
@@ -624,9 +624,9 @@ Hàm xóa cờ ngắt của line x:
 
 
 
-## Bài 3: Các chuẩn giao tiếp cơ bản 
+## BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN 
 
-#### **SPI**
+## **SPI**
 
 ### **Đặc điểm**
 * Chuẩn giao tiếp nối tiếp,đồng bộ
@@ -676,7 +676,7 @@ Hàm xóa cờ ngắt của line x:
 
 
 
-#### **I2C**
+## **I2C**
 
 ### **Đặc điểm**
 
@@ -709,7 +709,7 @@ Hàm xóa cờ ngắt của line x:
 
 
 
-#### **UART**
+## **UART**
 
 ### **Đặc điểm**
 
