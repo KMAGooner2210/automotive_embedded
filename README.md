@@ -870,3 +870,136 @@ while(1){
  }
 }
 ```
+
+
+## **SPI Hardware**
+
+### **Xác định chân GPIO**
+
+![Image](https://github.com/user-attachments/assets/6c977197-08fb-4993-9e0b-ce7e83ba6d6d)
+
+```
+#define SPI1_NSS     GPIO_Pin_4
+#define SPI1_SCK     GPIO_Pin_5
+#define SPI1_MISO    GPIO_Pin_6
+#define SPI1_MOSI    GPIO_Pin_7
+#define SPI1_GPIO    GPIOA
+
+```
+
+### **Cấu hình chân GPIO**
+
+* NSS: **Input,Output,AF**
+
+* MISO,MOSI,SCK: **AF**
+
+* Phần cứng SPI đã được thiết kế để tự động xử lý giao tiếp theo chuẩn SPI nên chế độ không phải điều chỉnh nhiều
+
+### **Cấu hình SPI**
+
+* **SPI_Mode**: Quy định chế độ hoạt động SPI
+* **SPI_Direction**: Quy định kiểu truyền của thiết bị
+* **SPI_BaudRatePrescaler**: Hệ số chia clock cấp cho module SPI
+* **SPI_CPOL**: Cấu hình cực tính của SCK
+  
+    ◦ **SPI_CPOL_LOW**: cực tính mức **0** khi SCK **không** truyền xung
+
+    ◦ **SPI_CPOL_HIGH**: cực tính mức **1** khi SCK truyền xung
+
+* **SPI_CPHA**: Cấu hình chế độ hoạt động của SCK
+
+    ◦ **SPI_CPHA_1Edge**: tín hiệu truyền đi ở cạnh xung đầu tiên
+    
+    ◦ **SPI_CPHA_2Edge**: tín hiệu truyền đi ở cạnh xung thứ hai
+
+* **SPI_DataSize**: Cấu hình số bit truyền (8/16 bit)
+* **SPI_FirstBit**: Cấu hình chiều truyền đi là MSB hay LSB
+* **SPI_CRCPolynominal** : Cấu hình số bit checksum cho SPI
+* **SPI_NSS**: cấu hình chân SS điều khiển bằng phần cứng hay phần mềm
+
+```
+void SPI_Config(){
+	SPI_InitTypeDef SPI_InitStructure;
+
+	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+	SPI_InitStructure.SPI_Direction =    SPI_Direction_2Lines_FullDuplex;
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_LSB;
+	SPI_InitStructure.SPI_CRCPolynomial = 7;
+	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+	
+	SPI_Init(SPI1, &SPI_InitStructure);
+	SPI_Cmd(SPI1, ENABLE);
+}
+
+```
+
+### **Các hàm thông dụng**
+
+* `SPI_I2S_SendData(SPI_TypeDef* SPIx,uint16_t Data)` nhận 2 tham số là bộ SPI sử dụng và data cần truyền
+
+* `SPI_I2S_ReceiveData(SPI_TypeDef* SPIx)` trả về giá trị đọc được trên SPI
+
+* `SPI_I2S_GetFlagStatus(SPI_TypeDef* SPIx,uint16_t SPI_I2S_FLAG)` trả về giá trị 1 cờ trong thanh ghi của SPI
+
+     ◦ **SPI_I2S_FLAG_TXE** : Cờ báo truyền,cờ này sẽ set lên 1 khi truyền xong data trong buffer
+
+     ◦ **SPI_I2S_FLAG_RXNE** : Cờ báo nhận,cờ nãy sẽ set lên 1 khi nhận xong data
+
+     ◦ **SPI_I2S_FLAG_BSY**: Cờ báo bận,cờ này sẽ set lên 1 khi đang bận truyền nhận
+
+### **Hàm truyền (Master)**
+
+```
+void SPI_Send1Byte(uint8_t data){
+  GPIO_ResetBits(SPI1_GPIO,SPI_NSS);
+  while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)==RESET){}
+
+  SPI_I2S_SendData(SPI1,data);
+
+  while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_BSY)==SET){}
+  GPIO_SetBits(SPI1_GPIO,SPI1_NSS);
+
+}
+
+
+```
+
+### **Hàm nhận(Slave)**
+
+```
+uint8_t SPI_Receive1Byte(void){
+while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_BSY)==SET);
+
+uint8_t temp=(uint8_t)SPI_I2S_ReceiveData(SPI1);
+
+while(SPI_I2S_GetFlagStatus(SPI_I2S_FLAG_RXNE)==RESET);
+return temp;
+}
+
+
+}
+
+```
+
+### **Hàm main**
+
+```
+uint8_t dataSend[]={1,2,3,4,5,6,7};
+int main(){
+  GPIO_Config();
+  TIM_Config();
+  SPI_Config();
+  while(1){
+    for(int i=0;i<7;i++){
+      SPI_Send1Byte(dataSend);
+      Delay_ms(1);
+    }
+  }
+}
+
+
+```
