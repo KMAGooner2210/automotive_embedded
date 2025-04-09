@@ -191,7 +191,7 @@
 ## BÀI 2: INTERRUPT (Phần 1)
 
 
-## **Khái niệm**
+### **2.1.Khái niệm**
 
 ![Image](https://github.com/user-attachments/assets/eb1762a6-057e-4212-91cd-7d216830df0d)
 
@@ -200,7 +200,7 @@
 
 
 
-## **Interrupt Service Routine (Trình phục vụ ngắt)**
+### **2.2.Interrupt Service Routine (Trình phục vụ ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/90c8c28e-edea-4755-b2b3-8c84be788a61)
 
@@ -211,7 +211,7 @@
 
 
 
-## **Vector Interrupt Table (Bảng vector ngắt)**
+### **2.3.Vector Interrupt Table (Bảng vector ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/038312e2-516d-4eb2-8125-438cf5885fc6)
 
@@ -279,7 +279,7 @@
 
 
 
-## **NVIC (Nested Vectored Interrupt Controller)**
+### **2.4.NVIC (Nested Vectored Interrupt Controller)**
 
 * **Khái niệm**
 
@@ -343,7 +343,7 @@ NVIC_Init(&NVICInitStruct);
 
 ## BÀI 2: INTERRUPT (PHẦN 2) 
 
-## **Ngắt ngoài**
+### **2.5.Ngắt ngoài**
 
 
 * **Sơ đồ**
@@ -451,7 +451,7 @@ void EXTI0_IRQHandler(){
 ```
 
 
-## **Ngắt Timer**
+### **2.5.Ngắt Timer**
 
 * **Sơ đồ**
 
@@ -533,9 +533,9 @@ void EXTI0_IRQHandler(){
   
 
 
-## **Ngắt truyền thông**
+### **2.6.Ngắt truyền thông**
 
-### Ngắt UART
+#### Ngắt UART
 
 ![Image](https://github.com/user-attachments/assets/9affbbd5-a18d-40d2-9c22-588a47d195df)
 
@@ -578,14 +578,15 @@ void EXTI0_IRQHandler(){
 
 ## BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN 
 
-## **SPI**
+## **3.1.SPI**
 
-### **Đặc điểm**
+
+### **3.1.1.Đặc điểm**
 * Chuẩn giao tiếp nối tiếp,đồng bộ
 * Hoạt động ở chế độ song công
 * Sử dụng 4 dây giao tiếp
 
-### **Sơ đồ chân**
+### **3.1.2.Sơ đồ chân**
 ![Image](https://github.com/user-attachments/assets/9e55733b-bf9f-4d37-912e-84e5faae3086)
 
 
@@ -598,7 +599,7 @@ void EXTI0_IRQHandler(){
 * **SS (Slave Select) / CS (Chip Select)**: Chọn thiết bị Slave cụ thể để giao tiếp. Để chọn Slave giao tiếp thiết bị Master chủ động kéo đường SS tương ứng xuống mức 0 (Low).
 
 
-### **Quá trình truyền nhận**  
+### **3.1.3.Quá trình truyền nhận**  
 
 * Master kéo chân SS của chân Slave muốn giao tiếp xuống mức 0 để báo hiệu muốn truyền nhận
 
@@ -608,7 +609,7 @@ void EXTI0_IRQHandler(){
 
 * Lặp lại quá trình trên đến khi truyền xong 8 bit trong thanh ghi.
 
-### **Các chế độ hoạt động**
+### **3.1.4.Các chế độ hoạt động**
 
 * Có 4 chế độ hoạt động phụ thuộc **Clock Polarity (CPOL)** và **Clock Phase (CPHA)**.
 
@@ -628,15 +629,15 @@ void EXTI0_IRQHandler(){
 
 
 
-## **I2C**
+## **3.2.I2C**
 
-### **Đặc điểm**
+### **3.2.1Đặc điểm**
 
 * Chuẩn giao tiếp nối tiếp,đồng bộ
 * Hoạt động ở chế độ bán song công
 * Sử dụng 2 dây giao tiếp
 
-### **Sơ đồ chân**
+### **3.2.2.Sơ đồ chân**
 
 ![Image](https://github.com/user-attachments/assets/34dd609d-2f2e-421d-b416-0cabcbf9670a)
 
@@ -646,7 +647,7 @@ void EXTI0_IRQHandler(){
 * **SDA (Serial Data)**: Chân chứa dữ liệu được truyền đi
 
 
-### **Quá trình truyền nhận**
+### **3.2.3.Quá trình truyền nhận**
 
 * Start: Điều kiện: Chân SDA xuống mức 0 trước chân SCL.
 * Truyền các bit địa chỉ để tìm Slave muốn giao tiếp.
@@ -661,9 +662,9 @@ void EXTI0_IRQHandler(){
 
 
 
-## **UART**
+## **3.3.UART**
 
-### **Đặc điểm**
+### **3.3.1Đặc điểm**
 
 * Chuẩn giao tiếp nối tiếp
 * Không đồng bộ
@@ -671,7 +672,7 @@ void EXTI0_IRQHandler(){
 * Sử dụng 2 dây giao tiếp
 * Chỉ 2 thiết bị giao tiếp
 
-### **Sơ đồ chân**
+### **3.3.2.Sơ đồ chân**
 
 ![Image](https://github.com/user-attachments/assets/5d657816-56e4-4871-8c40-7ce476b283c2)
 
@@ -679,7 +680,7 @@ void EXTI0_IRQHandler(){
 
 **Rx (Receive)**: Chân nhận dữ liệu
 
-### **Quá trình truyền nhận**
+### **3.3.3.Quá trình truyền nhận**
 
 ![Image](https://github.com/user-attachments/assets/e345c226-4ada-4991-963b-1dcb7e0ae24c)
 
@@ -698,9 +699,9 @@ void EXTI0_IRQHandler(){
 
 ## Bài 4: GIAO TIẾP SPI 
 
-## **SPI Software**
+## **4.1.SPI Software**
 
-### **Xác định các chân GPIO**
+### **4.1.1.Xác định các chân GPIO**
 * Định nghĩa 4 chân sử dụng SPI
 
   ```
@@ -712,7 +713,7 @@ void EXTI0_IRQHandler(){
   ```
  
 
-### **Cấu hình GPIO**
+### **4.1.2.Cấu hình GPIO**
 
 
 * **Master**: 
@@ -745,7 +746,7 @@ GPIO_InitStructure.GPIO_Pin = SPI_SCK_Pin | SPI_CS_Pin | SPI_MOSI_Pin;
 GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 ```
 
-* **Tạo xung Clock**
+* **4.1.3.Tạo xung Clock**
 
 ```
 void Clock(){
@@ -756,7 +757,7 @@ void Clock(){
 }
 ```
 
-### **Khởi tạo các chân cho SPI**
+### **4.1.4.Khởi tạo các chân cho SPI**
 
 ```
 void SPI_Init(){
@@ -768,7 +769,7 @@ void SPI_Init(){
 
 ```
 
-### **Hàm truyền(Master)**
+### **4.1.5.Hàm truyền(Master)**
 
 * Kéo **CS** xuống **0**
 
@@ -808,7 +809,7 @@ GPIO_WriteBit(SPI_GPIO,SPI_CS_Pin,Bit_SET);
 Delay_ms(1);
 }
 ```
-### **Hàm nhận (Slave)**
+### **4.1.6.Hàm nhận (Slave)**
 
 * Kiểm tra **CS** bằng **0** 
 
@@ -847,7 +848,7 @@ uint8_t Slave_Receive(void){
 
 ```
 
-### **Hàm main**
+### **4.1.7.Hàm main**
 
 ```
 uint8_t DataTrans[] = {1,3,4,5,6,7,8,9};
@@ -866,9 +867,9 @@ while(1){
 ```
 
 
-## **SPI Hardware**
+## **4.2.SPI Hardware**
 
-### **Xác định chân GPIO**
+### **4.2.1.Xác định chân GPIO**
 
 ![Image](https://github.com/user-attachments/assets/6c977197-08fb-4993-9e0b-ce7e83ba6d6d)
 
@@ -881,7 +882,7 @@ while(1){
 
 ```
 
-### **Cấu hình chân GPIO**
+### **4.2.2.Cấu hình chân GPIO**
 
 * NSS: **Input,Output,AF**
 
@@ -889,7 +890,7 @@ while(1){
 
 * Phần cứng SPI đã được thiết kế để tự động xử lý giao tiếp theo chuẩn SPI nên chế độ không phải điều chỉnh nhiều
 
-### **Cấu hình SPI**
+### **4.2.3.Cấu hình SPI**
 
 * **SPI_Mode**: Quy định chế độ hoạt động SPI
 * **SPI_Direction**: Quy định kiểu truyền của thiết bị
@@ -931,7 +932,7 @@ void SPI_Config(){
 
 ```
 
-### **Các hàm thông dụng**
+### **4.2.4.Các hàm thông dụng**
 
 * `SPI_I2S_SendData(SPI_TypeDef* SPIx,uint16_t Data)` nhận 2 tham số là bộ SPI sử dụng và data cần truyền
 
@@ -945,7 +946,7 @@ void SPI_Config(){
 
      ◦ **SPI_I2S_FLAG_BSY**: Cờ báo bận,cờ này sẽ set lên 1 khi đang bận truyền nhận
 
-### **Hàm truyền (Master)**
+### **4.2.5.Hàm truyền (Master)**
 
 ```
 void SPI_Send1Byte(uint8_t data){
@@ -962,7 +963,7 @@ void SPI_Send1Byte(uint8_t data){
 
 ```
 
-### **Hàm nhận(Slave)**
+### **4.2.6.Hàm nhận(Slave)**
 
 ```
 uint8_t SPI_Receive1Byte(void){
@@ -979,7 +980,7 @@ return temp;
 
 ```
 
-### **Hàm main**
+### **4.2.7.Hàm main**
 
 ```
 uint8_t dataSend[]={1,2,3,4,5,6,7};
