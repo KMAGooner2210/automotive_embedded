@@ -77,7 +77,7 @@
     void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal);                           \\Ghi giá trị "PortVal" vào nguyên cổng GPIO
 ```
 
-### **Kiến thức cần chú ý**
+### **1.4.Kiến thức cần chú ý**
 
 #### **1.4.1.Pull-Up vs Pull-Down ???**
 
