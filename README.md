@@ -716,7 +716,8 @@ void EXTI0_IRQHandler(){
 ### **4.1.2.Cấu hình GPIO**
 
 
-* **Master**: 
+* **Master**:
+  
 ◦ Các chân **SCK, CS, MOSI** để chế độ Out Push Pull
 
 ```
@@ -746,7 +747,7 @@ GPIO_InitStructure.GPIO_Pin = SPI_SCK_Pin | SPI_CS_Pin | SPI_MOSI_Pin;
 GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 ```
 
-* **4.1.3.Tạo xung Clock**
+### **4.1.3.Tạo xung Clock**
 
 ```
 void Clock(){
