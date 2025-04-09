@@ -3,7 +3,7 @@
 ## BÀI 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
-## **1.1.Cấp Clock cho ngoại vi**
+### **1.1.Cấp Clock cho ngoại vi**
 
 * **Module RCC** cung cấp các hàm để cấu hình xung clock
 
@@ -19,7 +19,7 @@
 
  ◦ ENABLE/DISABLE
 
-## **Cấu hình ngoại vi**
+### **1.2.Cấu hình ngoại vi**
 
 
 * **GPIO_Pin:** Chân cần được cấu hình 
@@ -46,7 +46,7 @@
 
 `GPIO_Speed_<tốc độ muốn cấu hình>`    
 
-## **Sử dụng ngoại vi**
+### **1.3.Sử dụng ngoại vi**
 
 
 * **Để gắn các giá trị muốn cấu hình vào các thanh ghi** thì ta sử dụng hàm "GPIO_Init" có 2 tham số cung cấp các hàm để cấu hình xung clock
@@ -77,15 +77,9 @@
     void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal);                           \\Ghi giá trị "PortVal" vào nguyên cổng GPIO
 ```
 
+### **Kiến thức cần chú ý**
 
-
-
-
-
-
-
-
-## **Pull-Up vs Pull-Down ???**
+#### **1.4.1.Pull-Up vs Pull-Down ???**
 
 
 ![Image](https://github.com/user-attachments/assets/2e06645d-579f-4b64-970c-f09a46cf949f)
@@ -130,7 +124,7 @@
 
 
 
-## **Các chế độ input khác**
+#### **1.4.2.Các chế độ input khác**
 
 * **Input-Floating:**
 
@@ -154,7 +148,7 @@
     ◦ **Lưu ý:** Dễ bị nhiễu
     
 
-## **Các chế độ output**
+#### **1.4.3.Các chế độ output**
 
 * **Output Push-Pull:**
 
@@ -175,7 +169,7 @@
 
 
 
-## **Các chế độ Alternate Function**
+#### **1.4.4.Các chế độ Alternate Function**
 
 
 * **AF-Push Pull:**
