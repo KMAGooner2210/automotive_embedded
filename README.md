@@ -576,7 +576,7 @@ void EXTI0_IRQHandler(){
 
 
 
-## BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN 
+## **BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN**
 
 ## **3.1.SPI**
 
@@ -697,7 +697,7 @@ void EXTI0_IRQHandler(){
 
 
 
-## Bài 4: GIAO TIẾP SPI 
+## **Bài 4: GIAO TIẾP SPI** 
 
 ## **4.1.SPI Software**
 
@@ -999,3 +999,375 @@ int main(){
 
 
 ```
+
+
+## **Bài 5: GIAO TIẾP I2C**
+
+## **5.1.I2C Software**
+
+### **5.1.1.Xác định các chân GPIO**
+* Định nghĩa 2 chân sử dụng I2C: **SCL,SDA**
+
+  ```
+  #define I2C_SCL    GPIO_Pin_6
+  #define I2C_SDA    GPIO_Pin_7
+
+  ```
+ 
+
+### **5.1.2.Cấu hình GPIO**
+
+
+
+```
+void GPIO_Config(){
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+	GPIO_InitStructure.GPIO_Pin = I2C_SDA| I2C_SCL;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	
+	GPIO_Init(I2C_GPIO, &GPIO_InitStructure);
+}
+
+```
+### **5.1.3.Cấu hình I2C**
+
+```
+#define WRITE_SDA_0 	GPIO_ResetBits(I2C_GPIO, I2C_SDA)		// Kéo chân SDA xuống 0
+#define WRITE_SDA_1 	GPIO_SetBits(I2C_GPIO, I2C_SDA)			// Kéo chân SDA lên 1
+#define WRITE_SCL_0 	GPIO_ResetBits(I2C_GPIO, I2C_SCL)		// Kéo chân SCL xuống 0
+#define WRITE_SCL_1 	GPIO_SetBits(I2C_GPIO, I2C_SCL)			// Kéo chân SDA lên 1
+#define READ_SDA_VAL 	GPIO_ReadInputDataBit(I2C_GPIO, I2C_SDA)	// Đọc chân SDA
+
+
+```
+
+* **Khởi tạo I2C**
+
+```
+// Ban đầu kéo 2 chân SDA và SCL lên mức 1
+void I2C_Config()
+{
+	WRITE_SDA_1;
+	delay_us(1);
+	WRITE_SCL_1;
+	delay_us(1);
+}
+```
+
+* **Hàm Start**
+```
+// Điều kiện Start: Chân SDA xuống mức 0 trước chân SCL
+void I2C_Start(){	
+	WRITE_SCL_1;  	
+	delay_us(3);	
+	WRITE_SDA_1;
+	delay_us(3);
+
+	WRITE_SDA_0;	
+	delay_us(3);
+	WRITE_SCL_0;
+	delay_us(3);
+}
+```
+
+* **Hàm Stop**
+```
+// Điều kiện Stop: Chân SCL lên mức 1 trước chân SDA
+void I2C_Stop()
+{
+	WRITE_SDA_0;
+	delay_us(3);
+
+	WRITE_SCL_1; 	
+	delay_us(3);
+	WRITE_SDA_1;
+	delay_us(3);
+}
+```
+### **5.1.4.Hàm truyền**
+
+* Hàm truyền sẽ truyền lần lượt 8 bit trong byte dữ liệu
+  
+  ◦ Truyền 1 bit
+
+  ◦ Tạo clock
+
+  ◦ Dịch 1 bit
+
+```
+status I2C_Write(uint8_t u8Data){	
+	uint8_t i;
+	status stRet;
+	for (int i = 0; i < 8; i++){
+		// Ghi dữ liệu vào chân SDA		
+		if (u8Data & 0x80) {
+			WRITE_SDA_1;
+		} else {
+			WRITE_SDA_0;
+		}
+		delay_us(3);
+
+		// Tạo một tín hiệu xung
+		WRITE_SCL_1;
+		delay_us(5);
+		WRITE_SCL_0;
+		delay_us(2);
+
+		u8Data <<= 1; // Dịch 1 bit
+	}
+	WRITE_SDA_1;					
+	delay_us(3);
+	WRITE_SCL_1;					
+	delay_us(3);
+	
+	if (READ_SDA_VAL) {	
+		stRet = NOT_OK;				
+	} else {
+		stRet = OK;					
+	}
+
+	delay_us(2);
+	WRITE_SCL_0;
+	delay_us(5);
+	
+	return stRet;
+}
+```
+### **5.1.5.Hàm nhận**
+
+
+* Kéo SDA lên 1
+
+   ◦ Đọc data trên SDA, ghi vào biến.
+
+   ◦ Dịch 1 bit
+
+* Gửi lại 1 tín hiệu ACK ở xung thứ 9.
+
+
+```
+uint8_t I2C_Read(ACK_Bit _ACK)
+{	
+	uint8_t i;						
+	uint8_t u8Ret = 0x00;
+	WRITE_SDA_1;
+	delay_us(3);	
+	for (i = 0; i < 8; ++i) {
+		u8Ret <<= 1;
+		WRITE_SCL_1;
+		delay_us(3);
+
+		// Đọc dữ liệu từ chân SDA và ghi vào biến
+		if (READ_SDA_VAL) {
+			u8Ret |= 0x01;
+		}
+		delay_us(2);
+		WRITE_SCL_0;
+		delay_us(5);
+	}
+
+	if (_ACK) {	
+		WRITE_SDA_0;
+	} else {
+		WRITE_SDA_1;
+	}
+	delay_us(3);
+	
+	WRITE_SCL_1;
+	delay_us(5);
+	WRITE_SCL_0;
+	delay_us(5);
+
+	return u8Ret;
+}
+
+```
+
+
+
+## **5.2.I2C Hardware**
+
+### **5.2.1.Xác định chân GPIO**
+
+![Image](https://github.com/user-attachments/assets/b80e6194-eab7-4f07-bb89-a4e85871ee0f)
+
+```
+#define I2C1_SCL     GPIO_Pin_6
+#define I2C1_SDA     GPIO_Pin_7
+#define I2C1_GPIO    GPIOB
+
+```
+
+### **5.2.2.Cấu hình chân GPIO**
+
+```
+void GPIO_Config(void)
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    GPIO_InitStructure.GPIO_Pin = I2C1_SCL | I2C1_SDA; 
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+}
+```
+
+### **5.2.3.Cấu hình I2C**
+
+* **I2C_Mode**: Quy định chế độ hoạt động I2C
+   
+    ◦ **I2C_Mode_I2C**: Chế độ I2C FM(Fast Mode)
+
+    ◦ **I2C_Mode_SMBusDevice & I2C_Mode_SMBusHost** : Chế độ I2C SM(Slow Mode)
+
+* **I2C_ClockSpeed**: Cấu hình clock cho I2C
+    
+    ◦ **100**khz với chế độ SM
+
+    ◦ **400**khz với chế độ FM
+    
+* **I2C_DutyCycle**: Cấu hình chu kỳ nhiệm vụ của xung
+
+    ◦ **I2C_DutyCycle_2** : Thời gian xung thấp / xung cao = 2
+
+    ◦ **I2C_DutyCycle_16_9** : Thời gian xung thấp / xung cao = 16 / 9
+
+    ![Image](https://github.com/user-attachments/assets/f4e38372-5f4d-47a1-8c77-4e5aafde213d)
+
+
+* **I2C_OwnAddress1**: Cấu hình địa chỉ của thiết bị đang cấu hình
+
+* **I2C_Ack**: Cấu hình ACK, có sử dụng ACK hay không
+
+* **I2C_AcknowledgedAddress**: Cấu hình số bit địa chỉ (7/10 bit)
+
+
+```
+void I2C_Config(){
+	I2C_InitTypeDef I2C_InitStructure;
+
+    I2C_InitStructure.I2C_ClockSpeed = 400000;    
+	I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
+	I2c_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
+	I2C_InitStructure.I2C_OwnAddress1 = 0x33;
+	I2C_InitStructure.I2C_Ack = I2C_Ack_ENABLE;
+	I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit ;
+	
+	I2C_Init(I2C1, &I2C_InitStructure);
+	I2C_Cmd(I2C1, ENABLE);
+}
+
+```
+
+### **5.2.4.Các hàm  thông dụng**
+
+* `I2C_Send7bitAddress(I2C_TypeDef* I2Cx,uint8_t Address,uint8_t Direction)` gửi đi 7 bit Address để xác định Slave cần giao tiếp.Hướng truyền đi được xác định I2C_Direction để  thêm bit RW
+
+* `I2C_SendData(I2C_TypeDef* I2Cx,uint8_t Data)` gửi đi 8 bit data
+
+* `I2C_ReceiveData(I2C_TypeDef* I2Cx)` trả về 8 bit data
+
+* `I2C_AcknowledgeConfig(I2C_TypeDef* I2Cx, FunctionalState NewState)` kích hoạt việc master có gửi ack hay không
+
+* `I2C_CheckEvent(I2C_TypeDef* I2Cx, uint32_t I2C_EVENT)`trả về kết quả kiểm tra I2C_EVENT tương ứng:
+
+    ◦ **I2C_EVENT_MASTER_MODE_SELECT**: Đợi bus I2C về chế độ rảnh,xác nhận phần cứng hoàn thành tín hiệu START
+
+       > Liên quan tới cờ I2C_FLAG_SB(Start Bit): Cờ báo rằng tín hiệu START đã được tạo thành công trên bus
+       > Nếu SB = 0 (START chưa hoàn tất) → I2C_CheckEvent trả về FALSE → !FALSE = TRUE → vòng lặp tiếp tục.
+       > Nếu SB = 1 (START đã hoàn tất) → I2C_CheckEvent trả về TRUE → !TRUE = FALSE → vòng lặp dừng.
+
+    ◦ **I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED**: Đợi xác nhận của slave với yêu cầu transmit của Master
+
+       > Liên quan tới cờ I2C_FLAG_ADDR và I2C_FLAG_TXE
+       > Nếu ADDR = 0 hoặc TXE = 0 (Gửi địa chỉ chưa hoàn tất hoặc chưa nhận ACK):I2C_CheckEvent trả về FALSE,!FALSE = TRUE,Vòng lặp tiếp tục chạy
+       > Nếu ADDR = 1 và TXE = 1 (Địa chỉ đã gửi thành công, Slave ACK, thanh ghi trống):I2C_CheckEvent trả về TRUE,!TRUE = FALSE,Vòng lặp dừng
+       
+
+
+    ◦ **I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED**: Đợi xác nhận của slave với yêu cầu receive của Master
+
+    ◦ **I2C_EVENT_MASTER_BYTE_TRANSMITTED**: Đợi truyền xong 1 byte data từ Master
+
+    ◦ **I2C_EVENT_MASTER_BYTE_RECEIVED**: Đợi Master nhận đủ 1 byte data 
+
+### **5.2.5.Hàm truyền**
+
+* Bắt đầu truyền nhận ,bộ I2C sẽ tạo 1 tín hiệu START,đợi tín hiệu báo bus sẵn sàng
+
+* Gửi 7 bit địa chỉ để xác định slave,đợi slave xác nhận
+
+* Gửi/đọc các byte data,đợi truyền xong
+
+* Sau đó kết thúc bằng tín hiệu STOP
+```
+void I2C_Write(uint8_t address,uint8_t * data,uint8_t length){
+  
+  //Tạo tín hiệu START
+  I2C_GenerateSTART(I2C1,ENABLE);
+  while(!I2C_CheckEvent(I2C_EVENT_MASTER_MODE_SELECT));
+
+  //Gửi địa chỉ slave(7 bit address + Write Bit)
+  I2C_Send7bitAddress(I2C1,address<<1,I2C_Direction_Transmitter);
+  while(!(I2C_CheckEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
+
+  //Gửi dữ liệu
+  for(uint8_t i=0; i< lenght; i++){
+    I2C_SendData(I2C1,data[i]);
+    while(!I2C_CheckEvent(I2C1,I2C_EVENT_MASTER_BYTE_TRANSMITTED));
+  }
+
+  //Tạo tín hiệu STOP
+  I2C_GenerateSTOP(I2C1,ENABLE);
+  
+}
+
+
+```
+
+### **5.2.6.Hàm nhận**
+
+
+```
+void I2C_Read(uint8_t address,uint8_t * data,uint8_t length){
+
+  
+  I2C_GenerateSTART(I2C1,ENABLE);
+  while(!I2C_CheckEvent(I2C_EVENT_MASTER_MODE_SELECT));
+
+  I2C_Send7bitAddress(I2C1,address <<1, I2C_Direction_Receiver);
+  while(!I2C_CheckEvent(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED));
+
+  for(uint8_t i=0; i<length;i++){
+    if(i==length - 1){
+      I2C_AcknowledgeConfig(I2C1,DISABLE); //Tắt ACK cho byte cuối
+    }
+    while(!I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_RECEIVED));
+    data[i]=I2C_ReceiveData(I2C1);
+  }
+   I2C_GenerateSTOP(I2C1, ENABLE);
+   I2C_AcknowledgeConfig(I2C1, ENABLE);
+}
+```
+
+### **5.2.7.Hàm main**
+
+```
+int main(void){
+
+I2C_Config();
+
+uint8_t writeData[]={0x01,0x02,0x03};
+uint8_t readData[3];
+// Ghi 3 byte vào slave có địa chỉ 0x50
+    I2C_Write(0x50, writeData, 3);
+    
+    // Đọc 3 byte từ slave có địa chỉ 0x50
+    I2C_Read(0x50, readData, 3);
+    
+    while(1) {
+        // Chương trình chính
+    }
+}
