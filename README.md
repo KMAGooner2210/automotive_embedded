@@ -3,7 +3,7 @@
 ## BÀI 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
-## **Cấp Clock cho ngoại vi**
+## **1.1.Cấp Clock cho ngoại vi**
 
 * **Module RCC** cung cấp các hàm để cấu hình xung clock
 
