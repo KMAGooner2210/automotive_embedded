@@ -613,22 +613,35 @@ void EXTI0_IRQHandler(){
 
 * Có 4 chế độ hoạt động phụ thuộc **Clock Polarity (CPOL)** và **Clock Phase (CPHA)**.
 
-* CPOL:
+* **CPOL:**
 
-  CPOL = 0: Xung clock ban đầu ở mức 0.
+  **CPOL = 0:** Xung clock ban đầu ở mức 0.
 
-  CPOL = 1: Xung clock ban đầu ở mức 1.
+  **CPOL = 1:** Xung clock ban đầu ở mức 1.
 
-* CPHA:
+* **CPHA:**
 
-  CPHA = 0: Truyền bit trước rồi mới cấp xung.
+  CPHA = 0 (1Edge):
   
-  CPHA = 1: Cấp xung trước rồi mới truyền bit.
-
+         Dữ liệu được **lấy mẫu (sampled) trên cạnh đầu tiên (leading edge)** của chu kỳ đồng hồ và được **thay đổi (shifted) trên cạnh thứ hai (trailing edge)**.
+         Dữ liệu phải sẵn sàng trên đường truyền (MOSI/MISO) trước khi chu kỳ đồng hồ bắt đầu.**
+  
+  CPHA = 1 (2Edge):
+  
+         Dữ liệu được **thay đổi (shifted) trên cạnh đầu tiên (leading edge)** và được **lấy mẫu (sampled) trên cạnh thứ hai (trailing edge)**.
+         Dữ liệu chỉ xuất hiện trên đường truyền sau khi chu kỳ đồng hồ bắt đầu.
+  
   ![Image](https://github.com/user-attachments/assets/7035fcb0-fd0e-4d24-976b-0a56d80a1207)
+  
+```
+CPOL = 0 (đồng hồ nghỉ ở mức thấp):
+      1Edge (CPHA = 0): Lấy mẫu trên rising edge (cạnh tăng), thay đổi trên falling edge (cạnh giảm).
+      2Edge (CPHA = 1): Thay đổi trên rising edge, lấy mẫu trên falling edge.
 
-
-
+CPOL = 1 (đồng hồ nghỉ ở mức cao):
+      1Edge (CPHA = 0): Lấy mẫu trên falling edge (cạnh giảm), thay đổi trên rising edge (cạnh tăng).
+      2Edge (CPHA = 1): Thay đổi trên falling edge, lấy mẫu trên rising edge.
+```
 ## **3.2.I2C**
 
 ### **3.2.1Đặc điểm**
