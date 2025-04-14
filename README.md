@@ -1,4 +1,6 @@
-
+<details>
+	<summary><strong>BÀI 1: GPIO</strong></summary>
+	
 # AUTOMOTIVE_EMBEDDED
 ## BÀI 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
@@ -186,7 +188,8 @@
     ◦ **Sử dụng:** GPIO cho giao tiếp I2C (SCL,SDA) ,UART (truyền nhận)
 
 
-  
+<details>
+	<summary><strong>BÀI 2: INTERRUPT (PHẦN 1)</strong></summary>  
 
 ## BÀI 2: INTERRUPT (Phần 1)
 
@@ -339,7 +342,8 @@ NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
 NVIC_Init(&NVICInitStruct);
 ```
 
-
+<details>
+	<summary><strong>BÀI 2: INTERRUPT (PHẦN 2)</strong></summary> 
 
 ## BÀI 2: INTERRUPT (PHẦN 2) 
 
@@ -573,7 +577,9 @@ void EXTI0_IRQHandler(){
       USART_ClearITPendingBit(USART1,USART_IT_RXNE);  
    }
   ```
-
+   
+<details>
+	<summary><strong>BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN </strong></summary> 
 
 
 ## **BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN**
@@ -708,7 +714,8 @@ CPOL = 1 (đồng hồ nghỉ ở mức cao):
 * Stop: 1 đến 2 bit.
 
 
-
+<details>
+	<summary><strong>BÀI 4: GIAO TIẾP SPI</strong></summary> 
 
 ## **Bài 4: GIAO TIẾP SPI** 
 
@@ -1012,6 +1019,9 @@ int main(){
 
 
 ```
+
+<details>
+	<summary><strong>BÀI 5: GIAO TIẾP I2C </strong></summary> 
 
 
 ## **Bài 5: GIAO TIẾP I2C**
