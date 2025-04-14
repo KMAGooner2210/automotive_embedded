@@ -1,7 +1,10 @@
+
+	
+# AUTOMOTIVE_EMBEDDED
+
 <details>
 	<summary><strong>BÀI 1: GPIO</strong></summary>
 	
-# AUTOMOTIVE_EMBEDDED
 ## BÀI 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
@@ -186,7 +189,7 @@
     ◦ **Mục đích:** Sử dụng cho các giao thức yêu cầu đường truyền 2 chiều
 
     ◦ **Sử dụng:** GPIO cho giao tiếp I2C (SCL,SDA) ,UART (truyền nhận)
-
+</details>
 
 <details>
 	<summary><strong>BÀI 2: INTERRUPT (PHẦN 1)</strong></summary>  
@@ -341,6 +344,7 @@ NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
 NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
 NVIC_Init(&NVICInitStruct);
 ```
+</details>
 
 <details>
 	<summary><strong>BÀI 2: INTERRUPT (PHẦN 2)</strong></summary> 
@@ -577,7 +581,9 @@ void EXTI0_IRQHandler(){
       USART_ClearITPendingBit(USART1,USART_IT_RXNE);  
    }
   ```
-   
+</details>
+
+
 <details>
 	<summary><strong>BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN </strong></summary> 
 
@@ -712,6 +718,7 @@ CPOL = 1 (đồng hồ nghỉ ở mức cao):
     Quy luật chẵn: Thêm một bit '0' hoặc '1' để số bit '1' là số chẵn.
     Quy luật lẻ: Thêm một bit '0' hoặc '1' để số bit '1' là số lẻ.
 * Stop: 1 đến 2 bit.
+</details>
 
 
 <details>
@@ -1019,6 +1026,8 @@ int main(){
 
 
 ```
+</details>
+
 
 <details>
 	<summary><strong>BÀI 5: GIAO TIẾP I2C </strong></summary> 
@@ -1394,3 +1403,4 @@ uint8_t readData[3];
         // Chương trình chính
     }
 }
+</details>
