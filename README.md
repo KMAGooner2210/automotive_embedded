@@ -192,9 +192,9 @@
 </details>
 
 <details>
-	<summary><strong>BÀI 2: INTERRUPT (PHẦN 1)</strong></summary>  
+	<summary><strong>BÀI 2: INTERRUPT </strong></summary>  
 
-## BÀI 2: INTERRUPT (Phần 1)
+## BÀI 2: INTERRUPT 
 
 
 ### **2.1.Khái niệm**
@@ -344,243 +344,6 @@ NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
 NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
 NVIC_Init(&NVICInitStruct);
 ```
-</details>
-
-<details>
-	<summary><strong>BÀI 2: INTERRUPT (PHẦN 2)</strong></summary> 
-
-## BÀI 2: INTERRUPT (PHẦN 2) 
-
-### **2.5.Ngắt ngoài**
-
-
-* **Sơ đồ**
-
-![Image](https://github.com/user-attachments/assets/b8531dc8-d8a1-4fea-b10b-90365810da53)
-
-
-  ◦ Để sử dụng được ngắt ngoài, ngoài bật clock cho GPIO tương ứng cần bật thêm clock cho **AFIO**.
-
-```
-  void RCC_Config(){
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-}
-```
- ◦ Ngắt ngoài của chip STM32F103 bao gồm có 16 line riêng biệt
-```
-Line0 sẽ chung cho tất cả chân Px0 ở tất cả các Port, với x là tên của Port A, B…
-Line0 nếu chúng ta đã chọn chân PA0 (chân 0 ở port A) làm chân ngắt thì tất cả các chân 0 ở các Port khác không được khai báo làm chân ngắt ngoài nữa
-```
- 
-
- * **Cấu hình ngắt ngoài**
-
-    ◦ Cấu hình chân ngắt ngoài là Input. 
-
-    ◦  Có thể cấu hình thêm trở kéo lên/xuống tùy theo cạnh ngắt được sử dụng.
-
-   ```
-    void GPIO_Config(){
-        GPIO_InitTypeDef GPIOInitStruct;
-
-	GPIOInitStruct.GPIO_Mode = GPIO_Mode_IPU;
-	GPIOInitStruct.GPIO_Pin = GPIO_Pin_0;
-	GPIOInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA, &GPIOInitStruct);
-    }
-    ```
-
-
-
-      ◦ Hàm **GPIO_EXTILineConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource)** liên kết 1 chân với một EXTI line để cấu hình chân ở chế độ sử dụng ngắt ngoài:
-
-GPIO_PortSource: Chọn Port để sử dụng làm nguồn cho ngắt ngoài.
-GPIO_PinSource: Chọn Pin để cấu hình.
-
-       ◦ Các tham số ngắt ngoài được cấu hình trong struct EXTI_InitTypeDef, gồm:
-
-**EXTI_Line:** Xác định EXTI line cụ thể sẽ được cấu hình.
-**EXTI_Mode:** Xác định chế độ hoạt động của EXTI, có hai chế độ là Interrupt hoặc Event.
-**EXTI_Trigger:** Xác định loại cạnh xung sẽ kích hoạt ngắt.
-**EXTI_LineCmd:** Kích hoạt (ENABLE) hoặc vô hiệu hóa (DISABLE) EXTI line.
-
-
-    
-    void EXTI_Config(){
-	EXTI_InitTypeDef EXTIInitStruct;
-
-        EXTIInitStruct.EXTI_Line = EXTI_Line0;
-	EXTIInitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTIInitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
-	EXTIInitStruct.EXTI_LineCmd = ENABLE;
-	
-	EXTI_Init(&EXTIInitStruct);
-}
-      ```
-
-
-◦ Tiếp đến cấu hình NVIC:
-
-    
-        NVIC_InitTypeDef NVICInitStruct;
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	
-	NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;
-	NVICInitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-        NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
-	NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
-	
-	NVIC_Init(&NVICInitStruct);
-
-◦ Các hàm quan trọng trong EXTI:
-
-   Ngắt trên từng line có hàm phục riêng của từng line. Có tên cố định: **EXTIx_IRQHandler()** (x là line ngắt tương ứng).
-   
-   Hàm **EXTI_GetITStatus(EXTI_Linex)**, Kiểm tra cờ ngắt của line x tương ứng. 
-   
-   Hàm **EXTI_ClearITPendingBit(EXTI_Linex)**: Xóa cờ ngắt ở line x.
-
-
-◦ Ngắt ngoài sẽ được thực hiện theo:
-
-   Kiểm tra ngắt đến từ line nào, có đúng là line cần thực thi hay không?
-
-   Thực hiện các lệnh, các hàm.
-
-   Xóa cờ ngắt ở line.
-
-```
-void EXTI0_IRQHandler(){	
-        if(EXTI_GetITStatus(EXTI_Line0) != RESET)
-        {}
-	EXTI_ClearITPendingBit(EXTI_Line0);
-}
-```
-
-
-### **2.5.Ngắt Timer**
-
-* **Sơ đồ**
-
-
-![Image](https://github.com/user-attachments/assets/b0736d5c-3a49-41bf-95db-063762fdb254)
-
-
-  ◦ Sử dụng ngắt Timer,ta vẫn cấu hình các tham số trong **TIM_TimeBaseInitTypeDef** bình thường
-
-  ◦ Riêng **TIM_Period**,đây là số lần đếm mà sau đó timer sẽ ngắt
-
-
-* **Cấu hình ngắt Timer**
-
-  ◦ Cấu hình **Timer**
-
-     Hàm **TIM_ITConfig(TIMx,TIM_IT_Update,ENABLE)** kích hoạt ngắt cho TIMERx tương ứng
-
-      
-      Yêu cầu: cài đặt Period = 10-1 ứng với ngắt mỗi 1ms
-      void TIM_Config()
-      {
-      TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
-
-      TIM_TimeBaseInitStruct.TIM_Prescaler = 7200-1;
-      //Ngắt mỗi 1ms => 1 ms = ?/72MHz => ? = 7200
-
-      TIM_TimeBaseInitStruct.TIM_Period = 10-1;
-      TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
-      TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
-      TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
-
-      TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-      TIM_Cmd(TIM2, ENABLE);
-      }
-      
-
-  ◦ Cấu hình **NVIC**
-
-     
-     ```
-          NVIC_InitTypeDef NVIC_InitStruct;
-
-          NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
-	  NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-	  NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
-	  NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-
-	  NVIC_Init(&NVIC_InitStruct);
-     ```
-
-
-
-  ◦ Cấu hình **hàm phục vụ ngắt Timer**
-
-
-    
- Hàm phục vụ ngắt Timer được đặt tên: **TIMx_IRQHandler** với x là timer tương ứng
-     
- Hàm kiểm tra cờ ngắt của line x tương ứng: **TIM_GetITStatus(TIMx,TIM_IT_Update)**
-
- Hàm xóa cờ ngắt của line x: **TIM_ClearITPendingBit(TIMx,TIM_IT_Update)**
-   
-     uint16_t count;
-     void delay(int time){
-	  count = 0; 
-	  while(count < time)
-      {}
-    }
-
-     void TIM2_IRQHandler(){
-      if(TIM_GetITStatus(TIM2, TIM_IT_Update))
-        {
-		  count++;
-		  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-        }
-    }
-
-  
-
-
-### **2.6.Ngắt truyền thông**
-
-#### Ngắt UART
-
-![Image](https://github.com/user-attachments/assets/9affbbd5-a18d-40d2-9c22-588a47d195df)
-
-* Trước khi cho phép UART hoạt động, cần kích hoạt ngắt UART bằng cách gọi hàm **USART_ITConfig()**;
-
-* Ở NVIC, ta cấu hình tương tự như ngắt ngoài EXTI, tuy nhiên NVIC_IRQChannel được đổi thành **USART_IRQn** để khớp với line ngắt timer.
-
-* Hàm phục vụ ngắt UART được đặt tên : **USARTx_IRQHandler()**
-
-   ◦ Kiểm tra ngắt 
-
-   ◦ Nhận và lưu data từ USART1
-
-   ◦ Kiểm tra cờ ngắt truyền,đảm bảo UART đang rỗi
-
-   ◦ Truyền lại data vừa nhận được sang máy tính
-
-   ◦ Xóa cờ ngắt,thoát khỏi hàm
-
-* Hàm kiểm tra cờ ngắt : **USART_GetITStatus**
-
-* Hàm kiểm tra trạng thái của quá trình truyền dữ liệu : **USART_GetFlagStatus(USART_InitTypeDef * USARTx,uint32_t USART_FLAG)**
-
-   ```
-   void UART1_IRQHandler(){
-      uint8_t data = 0x00;
-      if(USART_GetITStatus(USART1,USART_IT_RXNE) != RESET){
-         while(!USART_GetFlagStatus(USART1,USART_FLAG_RXNE));
-         data = USART_ReceiveData(USART1);
-           if(USART_GetITStatus(USART1,USART_IT_TXE) != RESET){
-              USART_SendData(USART1,data);
-              while(USART_GetFlagStatus(USART1,USART_FLAG_TC) == RESET) ;
-          }
-      }
-      USART_ClearITPendingBit(USART1,USART_IT_RXNE);  
-   }
-  ```
 </details>
 
 
@@ -1740,4 +1503,241 @@ while(1){
 }
 
 ```
+</details>
+
+<details>
+	<summary><strong>BÀI 7: CÁC LOẠI NGẮT </strong></summary> 
+
+## BÀI 7: CÁC LOẠI NGẮT
+
+### **7.1.Ngắt ngoài**
+
+
+* **Sơ đồ**
+
+![Image](https://github.com/user-attachments/assets/b8531dc8-d8a1-4fea-b10b-90365810da53)
+
+
+  ◦ Để sử dụng được ngắt ngoài, ngoài bật clock cho GPIO tương ứng cần bật thêm clock cho **AFIO**.
+
+```
+  void RCC_Config(){
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+}
+```
+ ◦ Ngắt ngoài của chip STM32F103 bao gồm có 16 line riêng biệt
+```
+Line0 sẽ chung cho tất cả chân Px0 ở tất cả các Port, với x là tên của Port A, B…
+Line0 nếu chúng ta đã chọn chân PA0 (chân 0 ở port A) làm chân ngắt thì tất cả các chân 0 ở các Port khác không được khai báo làm chân ngắt ngoài nữa
+```
+ 
+
+ * **Cấu hình ngắt ngoài**
+
+    ◦ Cấu hình chân ngắt ngoài là Input. 
+
+    ◦  Có thể cấu hình thêm trở kéo lên/xuống tùy theo cạnh ngắt được sử dụng.
+
+   ```
+    void GPIO_Config(){
+        GPIO_InitTypeDef GPIOInitStruct;
+
+	GPIOInitStruct.GPIO_Mode = GPIO_Mode_IPU;
+	GPIOInitStruct.GPIO_Pin = GPIO_Pin_0;
+	GPIOInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIOInitStruct);
+    }
+    ```
+
+
+
+      ◦ Hàm **GPIO_EXTILineConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource)** liên kết 1 chân với một EXTI line để cấu hình chân ở chế độ sử dụng ngắt ngoài:
+
+GPIO_PortSource: Chọn Port để sử dụng làm nguồn cho ngắt ngoài.
+GPIO_PinSource: Chọn Pin để cấu hình.
+
+       ◦ Các tham số ngắt ngoài được cấu hình trong struct EXTI_InitTypeDef, gồm:
+
+**EXTI_Line:** Xác định EXTI line cụ thể sẽ được cấu hình.
+**EXTI_Mode:** Xác định chế độ hoạt động của EXTI, có hai chế độ là Interrupt hoặc Event.
+**EXTI_Trigger:** Xác định loại cạnh xung sẽ kích hoạt ngắt.
+**EXTI_LineCmd:** Kích hoạt (ENABLE) hoặc vô hiệu hóa (DISABLE) EXTI line.
+
+
+    
+    void EXTI_Config(){
+	EXTI_InitTypeDef EXTIInitStruct;
+
+        EXTIInitStruct.EXTI_Line = EXTI_Line0;
+	EXTIInitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTIInitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
+	EXTIInitStruct.EXTI_LineCmd = ENABLE;
+	
+	EXTI_Init(&EXTIInitStruct);
+}
+      ```
+
+
+◦ Tiếp đến cấu hình NVIC:
+
+    
+        NVIC_InitTypeDef NVICInitStruct;
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	
+	NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;
+	NVICInitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+        NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+	NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
+	
+	NVIC_Init(&NVICInitStruct);
+
+◦ Các hàm quan trọng trong EXTI:
+
+   Ngắt trên từng line có hàm phục riêng của từng line. Có tên cố định: **EXTIx_IRQHandler()** (x là line ngắt tương ứng).
+   
+   Hàm **EXTI_GetITStatus(EXTI_Linex)**, Kiểm tra cờ ngắt của line x tương ứng. 
+   
+   Hàm **EXTI_ClearITPendingBit(EXTI_Linex)**: Xóa cờ ngắt ở line x.
+
+
+◦ Ngắt ngoài sẽ được thực hiện theo:
+
+   Kiểm tra ngắt đến từ line nào, có đúng là line cần thực thi hay không?
+
+   Thực hiện các lệnh, các hàm.
+
+   Xóa cờ ngắt ở line.
+
+```
+void EXTI0_IRQHandler(){	
+        if(EXTI_GetITStatus(EXTI_Line0) != RESET)
+        {}
+	EXTI_ClearITPendingBit(EXTI_Line0);
+}
+```
+
+
+### **7.2.Ngắt Timer**
+
+* **Sơ đồ**
+
+
+![Image](https://github.com/user-attachments/assets/b0736d5c-3a49-41bf-95db-063762fdb254)
+
+
+  ◦ Sử dụng ngắt Timer,ta vẫn cấu hình các tham số trong **TIM_TimeBaseInitTypeDef** bình thường
+
+  ◦ Riêng **TIM_Period**,đây là số lần đếm mà sau đó timer sẽ ngắt
+
+
+* **Cấu hình ngắt Timer**
+
+  ◦ Cấu hình **Timer**
+
+     Hàm **TIM_ITConfig(TIMx,TIM_IT_Update,ENABLE)** kích hoạt ngắt cho TIMERx tương ứng
+
+      
+      Yêu cầu: cài đặt Period = 10-1 ứng với ngắt mỗi 1ms
+      void TIM_Config()
+      {
+      TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+
+      TIM_TimeBaseInitStruct.TIM_Prescaler = 7200-1;
+      //Ngắt mỗi 1ms => 1 ms = ?/72MHz => ? = 7200
+
+      TIM_TimeBaseInitStruct.TIM_Period = 10-1;
+      TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+      TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+      TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+      TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+      TIM_Cmd(TIM2, ENABLE);
+      }
+      
+
+  ◦ Cấu hình **NVIC**
+
+     
+     ```
+          NVIC_InitTypeDef NVIC_InitStruct;
+
+          NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+	  NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+	  NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+	  NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+
+	  NVIC_Init(&NVIC_InitStruct);
+     ```
+
+
+
+  ◦ Cấu hình **hàm phục vụ ngắt Timer**
+
+
+    
+ Hàm phục vụ ngắt Timer được đặt tên: **TIMx_IRQHandler** với x là timer tương ứng
+     
+ Hàm kiểm tra cờ ngắt của line x tương ứng: **TIM_GetITStatus(TIMx,TIM_IT_Update)**
+
+ Hàm xóa cờ ngắt của line x: **TIM_ClearITPendingBit(TIMx,TIM_IT_Update)**
+   
+     uint16_t count;
+     void delay(int time){
+	  count = 0; 
+	  while(count < time)
+      {}
+    }
+
+     void TIM2_IRQHandler(){
+      if(TIM_GetITStatus(TIM2, TIM_IT_Update))
+        {
+		  count++;
+		  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+        }
+    }
+
+  
+
+
+### **7.3.Ngắt truyền thông**
+
+#### Ngắt UART
+
+![Image](https://github.com/user-attachments/assets/9affbbd5-a18d-40d2-9c22-588a47d195df)
+
+* Trước khi cho phép UART hoạt động, cần kích hoạt ngắt UART bằng cách gọi hàm **USART_ITConfig()**;
+
+* Ở NVIC, ta cấu hình tương tự như ngắt ngoài EXTI, tuy nhiên NVIC_IRQChannel được đổi thành **USART_IRQn** để khớp với line ngắt timer.
+
+* Hàm phục vụ ngắt UART được đặt tên : **USARTx_IRQHandler()**
+
+   ◦ Kiểm tra ngắt 
+
+   ◦ Nhận và lưu data từ USART1
+
+   ◦ Kiểm tra cờ ngắt truyền,đảm bảo UART đang rỗi
+
+   ◦ Truyền lại data vừa nhận được sang máy tính
+
+   ◦ Xóa cờ ngắt,thoát khỏi hàm
+
+* Hàm kiểm tra cờ ngắt : **USART_GetITStatus**
+
+* Hàm kiểm tra trạng thái của quá trình truyền dữ liệu : **USART_GetFlagStatus(USART_InitTypeDef * USARTx,uint32_t USART_FLAG)**
+
+   ```
+   void UART1_IRQHandler(){
+      uint8_t data = 0x00;
+      if(USART_GetITStatus(USART1,USART_IT_RXNE) != RESET){
+         while(!USART_GetFlagStatus(USART1,USART_FLAG_RXNE));
+         data = USART_ReceiveData(USART1);
+           if(USART_GetITStatus(USART1,USART_IT_TXE) != RESET){
+              USART_SendData(USART1,data);
+              while(USART_GetFlagStatus(USART1,USART_FLAG_TC) == RESET) ;
+          }
+      }
+      USART_ClearITPendingBit(USART1,USART_IT_RXNE);  
+   }
+  ```
 </details>
