@@ -1408,7 +1408,7 @@ uint8_t readData[3];
 
 
 <details>
-	<summary><strong>BÀI 6: GIAO TIẾP I2C </strong></summary> 
+	<summary><strong>BÀI 6: GIAO TIẾP UART </strong></summary> 
 
 
 ## Bài 6: GIAO TIẾP UART 
