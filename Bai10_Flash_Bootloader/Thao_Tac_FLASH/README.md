@@ -13,7 +13,6 @@ Ghi 1 mảng 14 byte vào FLASH
 Đọc 12 byte từ FLASH và hiển thị qua UART
 
 * **Ghi 2 byte** :
-
 Ghi 1 giá trị 16 bit (0xAAAA) vào 1 địa chỉ cụ thể FLASH
 
 
