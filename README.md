@@ -1947,3 +1947,222 @@ while(1){
 }
 ```
 </details>
+
+<details>
+	<summary><strong>BÀI 9: DMA và PWM </strong></summary> 
+
+## Bài 9: DMA và PWM
+
+## **9.1.Hoạt động của MCU**
+
+![Image](https://github.com/user-attachments/assets/248243ef-2eac-4d56-b746-2ffa3fb54799)
+
+* **(1) CPU** lấy lệnh chương trình từ FLASH để xử lý
+
+* **(2) CPU** đọc/ghi những dữ liệu từ/vào các ngoại vi thông qua đường bus ngoại vi
+
+* **(3) Lưu** các dữ liệu vừa đọc được vào RAM 
+
+* **(4) Giao tiếp** với RAM (đọc/ghi các dữ liệu) thông qua đường bus bộ nhớ
+
+**=> CPU bị chiếm dụng quá nhiều, giảm hiệu suất chương trình** 
+ 
+
+
+## **9.2.Giới thiệu về DMA**
+
+### **9.2.1.Định nghĩa**
+
+**DMA (Direct Memory Access)** là 1 cơ chế cho phép các thiết bị ngoại vi truyền dữ liệu trực tiếp đến bộ nhớ mà không cần CPU và thực hiện từng bước truyền dữ liệu
+
+![Image](https://github.com/user-attachments/assets/2cf6eb88-05b1-4fe0-b95d-8fb6d5ce901a)
+
+* **CPU** cấu hình và kích hoạt **DMA** hoạt động
+
+* Ngoại vi sẽ sử dụng **DMA Request** để yêu cầu **DMA** gửi/nhận dữ liệu ngoại vi
+
+* **DMA** tiến hành thực hiện yêu cầu từ **DMA Request**
+
+* Lấy dữ liệu từ **SRAM** thông qua bus matrix ,đi qua các đường bus ngoại vi rồi truy cập các thanh ghi của ngoại vi
+
+* Khi **kết thúc**, **DMA** kích hoạt ngắt báo cho **CPU** biết là quá trình hoàn tất
+
+### **9.2.2.DMA trong STM32**
+
+* STM32F1 có 2 bộ DMA, **DMA1** bao gồm **7** kênh, **DMA2** bao gồm **5** kênh
+
+
+   ◦ Có 2 chế độ hoạt động
+
+   ◦ Mỗi kênh có thể cấu hình riêng
+
+   ◦ Mỗi kênh có thể phục vụ **nhiều ngoại vi** khác nhau nhưng **không đồng thời**
+
+   ◦ Có mức ưu tiên để lập trình cho các kênh
+
+   ◦ Có thể sử dụng DMA với 5 cờ báo ngắt **(DMA Half Transfer, DMA Transfer complete, DMA Transfer Error, DMA FIFO Error, Direct Mode Error)** 
+
+   ![Image](https://github.com/user-attachments/assets/1fd23a47-dda9-4bc1-b4d5-66752f038651)
+
+
+* **DMA** có 2 chế độ hoạt động alf **normal** và **circular**
+
+  ◦ **Normal Mode:** 
+
+    DMA truyền dữ liệu cho tới khi truyền đủ 1 lượng dữ liệu giới hạn đã khai báo DMA sẽ dừng hoạt động.
+
+    Muốn nó tiếp tục phải khởi động lại
+
+   ◦ **Circular Mode:**
+
+   DMA truyền đủ dữ liệu giới hạn đã khai báo thì nó sẽ truyền tiếp về vị trí ban đầu, không dừng lại
+
+
+### **9.2.3.Cấu hình DMA trong STM32**
+
+* DMA được cấp xung từ AHB
+
+```
+void RCC_Config(void){
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
+}
+```
+
+* Các tham số cần được cấu hình
+
+  ◦ **DMA_PeripheralBaseAddr:** Cấu hình địa chỉ ngoại vi cho DMA.Đây là địa chỉ mà DMA sẽ lấy data hoặc truyền data tới ngoại vi
+
+
+  ◦ **DMA_MemoryBaseAddr:** Cấu hình địa chỉ vùng nhớ cần ghi/đọc data
+
+
+  ◦ **DMA_DIR:** Cấu hình hướng truyền DMA, từ ngoại vi tới vùng nhớ hay từ vùng nhớ tới ngoại vi
+
+  ◦ **DMA_BufferSize:** Cấu hình kích cỡ buffer.Số liệu dữ liệu muốn gửi/nhận qua DMA
+
+  ◦ **DMA_PeripheralInc:** Cấu hình địa chỉ ngoại vi có tăng sau tăng hay không
+
+  ◦ **DMA_MemoryInc:** Cấu hình địa chỉ bộ nhớ có tăng hay không
+
+  ◦ **DMA_PeripheralDataSize:** Cấu hình độ lớn data của ngoại vi
+
+  ◦ **DMA_MemoryDataSize:** Cấu hình độ lớn data của bộ nhớ
+
+  ◦ **DMA_Mode:** Cấu hình chế độ hoạt động
+
+  ◦ **DMA_Priority:** Cấu hình độ ưu tiên cho kênh DMA
+
+  ◦ **DMA_M2M:** Cấu hình sử dụng truyền từ bộ nhớ đếm bộ nhớ cho kênh DMA
+
+  ```
+  void DMA_Config(void){
+
+	DMA_InitTypeDef DMA_InitStructure;
+
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+	DMA_InitStructure.DMA_BufferSize = 35;
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)buffer;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&SPI->DR;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_Priority = DMA_Priority_Medium
+
+	DMA_Init(DMA1_Channel2, &DMA_InitStructure);
+	DMA_Cmd(DMA1,ENABLE);
+	SPI_I2S_DMACmd(SPI1,SPI_I2S_DMAReq_Rx, ENABLE);
+  }
+  ```
+
+### **9.2.4.Các hàm thông dụng**
+
+* Sau khi lưu những cấu hình DMA_Init() và cho phép bộ DMA hoạt động DMA_Cmd(), ta tiến hành cho phép DMA làm việc với ngoại vi bằng hàm <Periph>_DMACmd() 
+
+`void SPI_I2S_DMACmd(SPI_TypeDef* SPIx, uint16_t SPI_I2S_DMAReq, FunctionState NewState)`
+
+`void I2C_DMACmd(I2C_TypeDef* I2Cx, FunctionalState NewState)`
+
+`void USART_DMACmd(USART_TypeDef* USARTx, uint16_t USART_DMAReq, FunctionalState NewState)`
+
+`void ADC_DMACmd(ADC_TypeDef* ADCx, FunctionalState NewState)`
+
+
+## **9.3.Giới thiệu về PWM**
+
+### **9.3.1.Định nghĩa**
+
+* **PWM (Pulse Width Modulation)** được sử dụng để chỉ định góc mà động cơ Servo sẽ quay đến.Tín hiệu PWM có 2 yếu tố quyết Định
+
+  ◦ Tần số: Số lần tín hiệu lặp lại 1 giây.Với servo,tần số thông thường là 50HZ
+
+  ◦ Độ rộng xung: Là thời gian tín hiệu ở mức cao trong mỗi chu kỳ. Độ rộng xung thường được đo bằng microsecond và quyết định góc mà servo sẽ xoay đến. **Tỉ lệ độ rộng xung với chu kỳ xung được gọi là Duty Cycle**
+
+  
+![Image](https://github.com/user-attachments/assets/4e235026-e41a-4169-87bb-c254b332b343)
+
+### **9.3.2.Đặc điểm**
+
+* Độ rộng xung PWM để xoay từ góc 0-180 độ là khoảng 1000µs -> 2000µs
+
+
+![Image](https://github.com/user-attachments/assets/d05e1663-c5c9-4627-9f8c-53957de8b4f9)
+
+* Công thức tính độ rộng xung
+
+pulseWidth = MIN_PULSE_WIDTH + (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) * angle / 180;
+
+**MIN_PULSE_WIDTH** là độ rộng xung cho góc 0 độ
+
+**MAX_PULSE_WIDTH** là độ rộng xung cho góc 180 độ
+
+**angle** là góc mà servo quay đến
+
+
+### **9.3.3.Cấu hình**
+
+* Ngõ ra của xung PWM sẽ được xuất trên các chân GPIO. Ta phải cấu hình chân chế độ AF_PP
+
+```
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0; //PA0 là TIM2_CH1
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+```
+
+* Xung với chu kỳ là 20ms, độ rộng xung là 1000us đến 2000us
+
+  ◦ Cấu hình timer mỗi 1us đếm lên 1 lần và tràn mỗi 20ms
+
+* Cấu hình timer chế độ PWM trong struct **TIM_OCInitTypeDef**:
+
+  ◦ **TIM_OCMode:** Chế độ hoạt động cho Output Compare.**PWM1** thì kênh timer sẽ ở **mức 1** khi nhỏ hơn **TIM_Pulse** và **mức 0** khi lớn hơn. **PWM2** sẽ ngược lại
+
+  ◦ **TIM_OutputState:** cho phép tín hiệu PWM được xuất ra từ chân tương ứng của MCU
+
+  ◦ **TIM_Pulse:** Đặt giá trị đầu cho bộ rộng xung(giá trị timer dùng để so sánh)
+
+  ◦ **TIM_OCPolarity:**
+  
+   Đặt cực tính của tín hiệu ngõ ra.
+
+   TIM_OCPolarity_High sẽ làm xung ở mức 1(HIGH) khi giá trị đếm nhỏ hơn TIM_Pulse
+
+   TIM_OCPolarity_Low sẽ làm xung ở mức 0(LOW) khi giá trị đếm lớn hơn TIM_Pulse
+
+
+* Một số hàm thông dụng 
+
+  Gọi hàm **TIM_OCxInit();** để cấu hình cho kênh x tương ứng.
+
+  Hàm **TIM_OCxPreloadConfig()**; cấu hình Timer hoạt động với tính năng Preload                  
+		
+    ◦ Tính năng Preload là tính năng mà hệ thống sẽ chờ cho tới khi timer tạo ra sự kiện Update Event thì mới nạp lại giá trị so sánh mới (TIM_Pulse)
+
+	◦ Sự kiện Update Event là sự kiện xảy ra khi timer đã đếm đến giá trị tối đa được cấu hình và sẽ quay lại 0 để bắt đầu chuu kỳ mới.
+
+ Gọi hàm **TIM_Cmd();** để cho phép Timer hoạt động.
+
+ Để thay đổi độ rộng xung xuất ra, sử dụng hàm **TIM_SetComparex(TIMx, pulseWidth);** với Timer sử dụng là TIMx và độ rộng pulseWidth.
+</details>
+ 
