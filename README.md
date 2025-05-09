@@ -2423,4 +2423,378 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 
 </details>
+
+<details>
+	<summary><strong>BÀI 11: CAN</strong></summary>
+
+## Bài 11: CAN
+
+## **11.1.Giới thiệu**
+
+
+* **CAN (Controller Area Network):**
  
+    ◦ Là giao thức **nối tiếp**, cho phép các vi điều khiển và các thiết bị khác nhau giao tiếp với nhau mà **không cần máy tính chủ**
+    
+    ◦ CAN cho phép **nhiều hệ thống điều khiển (ECU)** giao tiếp với nhau trên 1 bus truyền thông chung
+
+    ◦ Giúp **giảm** số lượng dây dẫn
+
+    ◦ Có thể phát hiện lỗi thông qua cơ chế **kiểm tra và sửa lỗi**
+
+
+
+## **11.2.Kiến trúc**
+
+### **11.2.1.Bus topology**
+
+* CAN sử dụng **topo-bus** để kết nối các thiết bị với nhau
+
+  => Tất cả các node được nối **song song** vào 1 cặp dây chung gọi là **CAN Bus**
+
+* CAN bus gồm 2 dây tín hiệu chính
+
+  ◦ **CANH:** Dây tín hiệu cao
+  
+  ◦ **CANL:** Dây tín hiệu thấp
+
+* Tín hiệu truyền qua CAN bus là **tín hiệu vi sai**
+
+  => Thông tin được mã hóa dựa trên sự chênh lệch điện áp giữa 2 dây CANH và CANL
+
+* Mỗi đầu của bus CAN cần 1 **điện trở kết cuối 120 Ohm** để ngăn chặn hiện tượng phản xạ tín hiệu
+
+
+### **11.2.2.Các thiết bị trên bus CAN**
+
+![Image](https://github.com/user-attachments/assets/1caaac10-6b1f-43df-ba3a-9e2033cceb5f)
+
+* **Sensors**
+
+* **Actuator(Thiết bị kích động):** nhận lệnh từ MCU qua bus CAN để thực hiện các hành động vật lý như (mở van, điều khiển động cơ, bật đèn) 
+
+* **CAN Controller:** 
+
+  ◦ Gửi và nhận thông điệp CAN
+
+  ◦ Điều khiển truy cập vào bus CAN (arbitration)
+
+  ◦ Phát hiện và xử lý các lỗi truyền thông CAN
+
+  ◦ Kiểm soát việc truyền lại thông điệp khi gặp lỗi
+
+  ◦ Cung cấp giao diện giữa MCU và bus CAN
+
+* **CAN Transceiver:** 
+
+  ◦ Chuyển đổi tín hiệu số từ bộ điều khiển CAN thành tín hiệu điện áp dạng vi sai để gửi lên bus CAN và ngược loại
+
+* **MCU:**
+
+  ◦ Đọc và xử lý thông điệp CAN
+
+  ◦ Tạo ra thông điệp CAN để truyền đi
+
+  ◦ Quản lý các khung dữ liệu,bit arbitration và quá trình xử lý lỗi
+
+  ◦ Điều khiển hành vi của node
+
+### **11.2.3.Đặc điểm giao tiếp**
+
+* **Không cần máy tính chủ**
+
+* **Truyền thông quảng bá**
+   
+   ◦ Khi một node gửi thông điệp, node đó sẽ được phát sóng đến tất cả các node khác trên bus
+
+   ◦ Không phải tất cả các node sử dụng thông điệp này mà nó sẽ dùng bộ lọc để kiểm tra thông điệp có phù hợp với mình hay không
+
+* **Tranh chấp quyền gửi(Arbitration), khi có nhiều cùng muốn gửi dữ liệu lên Bus cùng một lúc**
+
+   ◦ Mỗi thông điệp CAN có một ID ưu tiên. Node nào có ID ưu tiên thấp hơn (tức độ ưu tiên cao hơn) sẽ chiếm quyền truy cập bus và gửi thông điệp trước
+
+   ◦ Những Node có ID ưu tiên cao hơn thì tự động dừng lại và chờ đợi lượt tiếp theo để gửi thông điệp
+
+   ◦ Quá trình này không gây mất dữ liệu hay làm gián đoạn đến các thiết bị khác => **non-destructive**
+
+* **Giao tiếp song công**
+
+* **Phát hiện và sửa lỗi tự động**
+
+   ◦ Nếu một node phát hiện lỗi trong quá trình truyền hoặc nhận dữ liệu thì nó gửi một Error Frame để thông báo các node khác rằng dữ liệu đang bị lỗi
+
+   ◦ Sau đó, thông điệp sẽ được truyền lại
+
+## **11.3.Khung dữ liệu CAN**
+
+### **11.3.1.Các loại khung dữ liệu**
+
+* **Data Frame**
+
+   ◦ **Chứa thông tin về ID** của node gửi và dữ liệu được truyền.Khung có thể chứa **8 byte dữ liệu**
+
+   ◦ **Cấu trúc:**
+      
+      ID(Identifier):Thể hiện mức độ ưu tiên của thông điệp.ID càng thấp,ưu tiên càng cao
+
+      Payload: Phần dữ liệu chính của thông điệp chứa từ 0 đến 8 byte
+
+
+* **Remote Frame**
+
+   ◦ Sử dụng khi một node trên mạng CAN **yêu cầu dữ liệu** từ node khác
+
+   ◦ **Remote Frame** chứa **ID** của node cần yê cầu và **bit điều khiển RTR**  
+
+* **Error Frame**
+
+   ◦ Được sử dụng khi một node phát hiện ra lỗi trong quá trình truyền dữ liệu
+
+   ◦ Được gửi để thông báo cho các node khác rằng có lỗi xảy ra trên Bus
+
+   ◦ Gồm 2 phần: **Error Flag** và **Error Delimiter**. 
+   
+   **Error Flag** là chuỗi từ 6 đến 12 bit dominant, báo hiệu lỗi
+
+   **Error Delimiter** là chuỗi 8 bit recessive, kết thúc Error Frame
+
+* **Overload Frame**
+
+   ◦ Được sử dụng để báo hiệu rằng một node đang trong trạng thái bận và không thể xử lý thêm thông điệp nào ngay lập tức
+
+   ◦ Xảy ra khi một node chưa xử lý xong thông điệp trước đó hoặc hệ thống quá tải
+
+   ◦ Khi Frame nay được gửi, nó báo hiệu cho việc cần dừng truyền thông trong một thời gian ngắn để giảm tải trong node đó
+
+
+### **11.3.2.Cấu trúc một khung dữ liệu**
+
+#### **11.3.2.1.Start of Frame(SOF)** 
+
+* Là bit bắt đầu của khung dữ liệu, chỉ có giá trị dominant(0)
+
+* Node mạng nhận biết rằng đây là thời điểm để bắt đầu đọc dữ liệu
+
+#### **11.3.2.2.Arbitration Field**
+
+* **ID:** Chứa định danh thông điệp
+
+* **RTR:** 
+
+Đối với **Remote Frame** => bit này là bit **dominant**
+
+Đối với **Remote Frame** => bit này là bit **recessive** 
+
+#### **11.3.2.3.Control Field**
+
+* Chứa thông tin kích thước của phần dữ liệu
+
+* **DLC:** xác định độ dài của dữ liệu(0 đến 8 byte)
+
+#### **11.3.2.4.Data Field**
+
+* Chứa thông tin mà node muốn truyền tải
+
+#### **11.3.2.5.CRC Field**
+
+* Node nhận sử dụng CRC Field để kiểm tra được truyền chính xác hay chưa.Nếu phát hiện, một Error Frame sẽ được gửi
+
+#### **11.3.2.6.ACK Field**
+
+* Xác nhận thông điệp đã được nhận thành công
+ => Gửi bit ACK dominant 
+
+* Nếu không có node nào gửi ACK,báo hiệu rằng có lỗi xảy ra / truyền không đúng cách
+ => Truyền lại thông điệp 
+
+#### **11.3.2.7.EOF**
+
+* Chứa một chuỗi các bit recessive báo hiệu toàn bộ khung dữ liệu đã được truyền và quá trình truyền này kết thúc
+
+## **11.4. Arbitration**
+
+### **11.4.1.Cơ chế ưu tiên**
+
+#### **Node có ID thấp hơn tương ứng với mức độ ưu tiên cao hơn sẽ thắng Arbitration**
+
+#### **Mỗi bit ID có thể ở trạng thái dominant (trạng thái ưu tiên - 0) hoặc recessive (trạng thái không ưu tiên - 1). Khi nhiều node cùng gửi dữ liệu CAN sẽ sử dụng quy tắc AND để xem NODE nào được ưu tiên**
+
+
+![Image](https://github.com/user-attachments/assets/7f8c7fbf-4fb1-4353-98ef-528b624ef2d7)
+
+* **Nguyên lý hoạt động**
+
+  ◦	Khi nhiều node muốn truyền dữ liệu, chúng đều bắt đầu gửi thông điệp của mình lên bus. Tín hiệu được gửi đồng thời và mỗi node sẽ kiểm tra từng bit của dữ liệu trên bus.
+
+  ◦ Mỗi bit truyền từ MSB-LSB.Nếu một node gửi **bit recessive(1)** mà nhận thấy trên bus có **bit dominant(0)** 
+
+  => **Node ngừng truyền và chuyển sang chế độ nghe**
+
+  ◦ Node có **ID thấp hơn(tức có nhiều bit dominant ở đầu)** sẽ tiếp tục truyền cho đến khi toàn bộ ID được gửi, trong khi các node khác ngừng gửi và chuyển sang chế độ chờ
+
+  ◦ Các node **không thắng Arbitration chờ đợi và đợi lượt tiếp theo truyền lại thông điệp của mình**
+
+### **11.4.2.Non-destructive Arbitration**
+
+* Cơ chế có nghĩa là quá trình Arbitrage diễn ra mà **không làm mất dữ liệu** của các node thua nhờ vào **multi-master** và **AND Logic**
+  
+  ◦ Khi một node thua trong quá trình arbitration, nó sẽ **tạm dừng việc truyền nhưng không xóa dữ liệu** của mình.
+
+  ◦ Node thua sẽ chuyển sang **trạng thái chờ và lắng nghe bus**. Khi bus không còn bận (tức là node thắng đã gửi xong thông điệp), node thua sẽ **thử lại** và tham gia tranh chấp quyền gửi ở lần tiếp theo.
+
+## **11.5.Lỗi trong giao thức CAN**
+
+### **11.5.1.Các loại lỗi trong CAN**
+
+#### **11.5.1.1.Bit Error**
+
+* Xảy ra khi một node **gửi một bit** (dominant hay recessive) lên bus mà **không nhận lại giá trị mong đợi**
+
+* Mỗi node không chỉ gửi dữ liệu mà còn lắng nghe tín hiệu để kiểm tra sự đồng bộ
+
+* Điều này có thể xảy ra khi một node khác có ưu tiên cao hơn đang truyền trên bus dữ liệu hoặc do nhiễu
+
+#### **11.5.1.2.Stuff Error**
+
+* Xảy ra khi **có hơn 5 bit liên tiếp cùng giá trị (0 hoặc 1)**
+=> Vi phạm quy tắc **bit stuffing**
+
+* **Bit stuffing:** Trong mạng CAN,sau mỗi chuỗi 5 bit giống nhau liên tiếp,một bit ngược giá trị phải được thêm vào
+
+#### **11.5.1.3.CRC Error**
+
+* Xảy ra khi có **sai lệch trong quá trình kiểm tra CRC**
+
+* Node nhận sẽ tính toán lại giá trị CRC của dữ liệu và so sánh với CRC trong trường CRC Field.Nếu 2 giá trị này này không khớp, lỗi sẽ được phát hiện
+
+#### **11.5.1.4.Form Error**
+
+* Xảy ra khi **cấu trúc khung dữ liệu** không tuân theo quy chuẩn của giao thức CAN
+
+#### **11.5.1.5.ACK Error**
+
+* Xảy ra khi node gửi thông điệp lên bus CAN mà **không nhận được bit ACK** từ bất kỳ node trên mạng
+
+* Khi một node gửi thành công 1 khung dữ liệu, node **nhận** phải gửi 1 bit **ACK dominant** để xác nhận dữ liệu đã được nhận chính xác
+
+* Nếu không có node nào gửi bit ACK => ACK Error => Truyền lại thông điệp
+
+### **11.5.2.Cơ chế phát hiện lỗi**
+
+* **Kiểm tra Bit**
+
+* **Kiểm tra CRC**
+
+* **Kiểm tra Form**
+
+* **Xác nhận**
+
+### **11.5.3.Cơ chế sửa lỗi**
+
+* **CAN có khả năng tự sửa lỗi một cách tự động thông quá quá trình phát Error Frame và truyền lại thông điệp**
+
+  ◦ **Error Frame:** Khi một node phát hiện lỗi (bit error, CRC error, form error, stuff error, hoặc ACK error), nó sẽ gửi một Error Frame để thông báo cho tất cả các node khác trên bus rằng có lỗi đã xảy ra.
+
+  ◦ **Truyền lại thông điệp:** Sau khi Error Frame được phát, các node sẽ dừng giao tiếp và node gửi ban đầu sẽ cố gắng truyền lại thông điệp bị lỗi. Việc này sẽ tiếp tục cho đến khi thông điệp được truyền đi thành công hoặc node gửi bị đưa vào trạng thái bus off nếu lỗi quá nhiều.
+
+### **11.5.4.Các trạng thái lỗi của node**
+
+ **Phát hiện lỗi => tự chuyển đổi giữa 3 trạng thái => đảm bảo ổn định và không gián đoạn**
+
+#### **11.5.4.1. Error Active**
+
+* Node vẫn có khả năng tham gia đầy đủ vào quá trình truyền thông và có thể phát hiện lỗi. Nếu node phát hiện lỗi, nó sẽ gửi một Error Frame để thông báo cho các node khác trên bus rằng đã xảy ra lỗi.
+
+#### **11.5.4.2. Error Passive**
+
+* Trong trạng thái này, node vẫn có thể tham gia truyền thông, nhưng nếu phát hiện lỗi, nó sẽ không gửi Error Frame mạnh mẽ như trong trạng thái Error Active. 
+
+#### **11.5.4.3. Error Passive**
+
+* Khi một node gặp **quá nhiều lỗi** nghiêm trọng, nó sẽ chuyển sang trạng thái Bus Off. Trong trạng thái này, node sẽ hoàn toàn **ngắt kết nối khỏi bus** CAN và không thể tham gia vào quá trình truyền hay nhận dữ liệu. Node chỉ có thể được kết nối lại vào bus sau khi được **khởi động lại (restart) hoặc reset bởi phần mềm.**
+
+## **11.6.Cấu hình và thiết lập CAN**
+
+### **11.6.1.Thiết lập tốc độ Baud**
+
+* **Được tính bằng số bit truyền trên giây(bps)**
+
+![Image](https://github.com/user-attachments/assets/2913e085-b302-4c3b-899f-66400a3a34e4)
+
+* **Sample Point:** 
+
+  ◦ Là thời điểm mà tín hiệu trên bus CAN được đọc để xác định giá trị của 1 bit
+
+  ◦ Mẫu thường được lấy ở vị trí cuối mỗi bit
+
+  ◦ Vị trí của sample point được tính tính toán dựa trên tỷ lệ phần trăm trong 1 khoảng thời gian bit. Lý tương là từ **75% đến 90%**
+
+* **Time Segment:**
+
+  ◦ Là một thành phần quan trọng để đồng bộ hóa và điều chỉnh thời gian truyền thông giữa các node trên bus CAN
+
+  ◦ **Sync Segment:** 
+  
+  Là đoạn đầu tiên, độ dài cố định là **1 TQ(time quanta)**
+
+  => Đồng bộ hóa tất cả các node trên bus
+
+  => Node nhận sẽ phát hiện ra cạnh thay đổi (rising edge hoặc falling edge) của tín hiệu CAN tại đoạn này để điều chỉnh thời gian của chính nó
+
+  ◦ **Propagation Segment:** 
+  
+  **Bù đắp thời gian** cần thiết để tín hiệu lan truyền qua bus CAN từ node gửi đến node nhận.Tín hiệu cần thời gian để di chuyển từ một node đến một node khác, và thời gian này **phụ thuộc vào chiều dài của bus và tốc độ truyền**. Propagation Segment được cấu hình sao cho nó bao gồm **độ trễ lan truyền và thời gian trễ xử lý** của cả phần cứng CAN.
+
+  ◦ **Phase Segment 1 (PS1) và Phase Segment 2 (PS2):**
+
+    ■	PS1 là đoạn thời gian trước điểm lấy mẫu
+
+    ■	PS2 là đoạn thời gian sau điểm lấy mẫu
+
+**Bit Time = Sync Segment + Propagation Segment + PS1 + PS2**
+
+
+### **11.6.2.Bộ lọc CAN**
+
+* Cho phép các node lựa chọn và chỉ nhận những thông điệp cần thiết, dựa trên ID của thông điệp hoặc các tiêu chí khác
+
+* Hoạt động dựa trên 2 phần chính
+
+  ◦ **Mask:** Quy định những bit nào **trong ID của thông điệp** cần được kiểm tra
+
+  ◦ **Filter:** Được dùng để so sánh các bit của **ID thông điệp** với giá trị quy định trong bộ lọc.Nếu các bit này khớp với **Mask**, thông điệp sẽ được chấp nhận và xử Lý
+
+#### **11.6.2.1.Mask**
+
+* **Mask** là 1 dãy bit mà các bit có giá trị **1** sẽ được **kiểm tra**, **0** sẽ bị bỏ qua
+
+ **=> Xác định phạm vi ID mà node quan tâm**
+
+#### **11.6.2.2.Filter**
+
+* Nếu ID thông điệp **trùng khớp** với giá trị bộ lọc(sau khi đã áp dụng mask),thông điệp sẽ được chấp nhận
+
+* Nếu **không trùng khớp**,thông điệp sẽ bị bỏ qua,node sẽ không xử lý nó
+
+* **Cấu hình bộ lọc**
+
+  ●	**Mask (Mặt nạ):** 0x700-chỉ kiểm tra **3 bit đầu tiên** của ID
+
+  ●	**Filter (Bộ lọc):** 0x100- chỉ nhận thông điệp có ID bắt đầu bằng 0x001
+
+* **Phân tích cấu hình**
+
+  ●	**Mask:** 0x700 (111 0000 0000) có nghĩa là **3 bit đầu tiên** của ID thông điệp sẽ được so sánh với **filter**.Các bit khác(bit từ 8 trở xuống) sẽ không được kiểm tra
+
+  ●	**Filter:** 0x100 (001 0000 0000) có nghĩa là node sẽ chấp nhận những thông điệp có **3 bit đầu tiên là 001**,tức thông điệp có ID nằm trong khoảng từ **0x100** đến **0x1FF**
+
+```
+●	ID 0x0F0: Bị bỏ qua vì 3 bit đầu tiên là 000, không trùng khớp với 001 trong filter.
+●	ID 0x100: Được chấp nhận vì 3 bit đầu tiên là 001, trùng khớp với filter.
+●	ID 0x180: Được chấp nhận vì 3 bit đầu tiên là 001, trùng khớp với filter.
+●	ID 0x200: Bị bỏ qua vì 3 bit đầu tiên là 010, không trùng khớp với filter.
+
+
+```
+</details>
+  
