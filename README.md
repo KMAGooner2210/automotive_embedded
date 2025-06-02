@@ -2136,35 +2136,97 @@ GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 
 * Cấu hình timer chế độ PWM trong struct **TIM_OCInitTypeDef**:
 
-  ◦ **TIM_OCMode:** Chế độ hoạt động cho Output Compare.**PWM1** thì kênh timer sẽ ở **mức 1** khi nhỏ hơn **TIM_Pulse** và **mức 0** khi lớn hơn. **PWM2** sẽ ngược lại
+  ◦ **TIM_OCMode:** Chế độ hoạt động cho Output Compare.
 
-  ◦ **TIM_OutputState:** cho phép tín hiệu PWM được xuất ra từ chân tương ứng của MCU
+         + TIM_OCMode_PWM1: Tín hiệu ở mức cao (1) khi giá trị đếm nhỏ hơn TIM_Pulse, mức thấp (0) khi lớn hơn.
 
-  ◦ **TIM_Pulse:** Đặt giá trị đầu cho bộ rộng xung(giá trị timer dùng để so sánh)
+         + TIM_OCMode_PWM2: Ngược lại với PWM1 
+
+  ◦ **TIM_OutputState:** 
+
+         + Kích hoạt hoặc vô hiệu hóa đầu ra PWM trên chân GPIO tương ứng.
+
+  ◦ **TIM_Pulse:** 
+
+         + Giá trị so sánh (CCR) , xác định độ rộng xung PWM (duty cycle).
+
+         + Phạm vi: 0 đến TIM_Period
+
+         + Công thức duty cycle: Duty cycle = [TIM_Pulse / (TIM_Period + 1)] x 100%
 
   ◦ **TIM_OCPolarity:**
   
-   Đặt cực tính của tín hiệu ngõ ra.
+         + Xác định cực tính tín hiệu đầu ra. 
 
-   TIM_OCPolarity_High sẽ làm xung ở mức 1(HIGH) khi giá trị đếm nhỏ hơn TIM_Pulse
+         + TIM_OCPolarity_High: Tín hiệu ở mức **cao** khi giá trị đếm **nhỏ hơn TIM_Pulse** (trong PWM1).
 
-   TIM_OCPolarity_Low sẽ làm xung ở mức 0(LOW) khi giá trị đếm lớn hơn TIM_Pulse
+         + TIM_OCPolarity_Low: Tín hiệu ở mức **thấp** khi giá trị đếm **nhỏ hơn TIM_Pulse**.
 
+  ◦ **TIM_OCIdleState:** (quan trọng cho Timer nâng cao như TIM1)
 
-* Một số hàm thông dụng 
+         + Xác định trạng thái tín hiệu PWM khi Timer ở trạng thái "Idle" (không hoạt động, thường dùng trong điều khiển động cơ).
 
-  Gọi hàm **TIM_OCxInit();** để cấu hình cho kênh x tương ứng.
+         + TIM_OCIdleState_Set: Mức cao khi Idle.
 
-  Hàm **TIM_OCxPreloadConfig()**; cấu hình Timer hoạt động với tính năng Preload                  
-		
-    ◦ Tính năng Preload là tính năng mà hệ thống sẽ chờ cho tới khi timer tạo ra sự kiện Update Event thì mới nạp lại giá trị so sánh mới (TIM_Pulse)
+         + TIM_OCIdleState_Reset: Mức thấp khi Idle (mặc định).
 
-	◦ Sự kiện Update Event là sự kiện xảy ra khi timer đã đếm đến giá trị tối đa được cấu hình và sẽ quay lại 0 để bắt đầu chuu kỳ mới.
+  ◦ **TIM_OutputNState:** (quan trọng cho Timer nâng cao như TIM1)
 
- Gọi hàm **TIM_Cmd();** để cho phép Timer hoạt động.
+         + Kích hoạt hoặc vô hiệu hóa tín hiệu bổ sung (complementary output, ví dụ: TIM1_CH1N)
 
- Để thay đổi độ rộng xung xuất ra, sử dụng hàm **TIM_SetComparex(TIMx, pulseWidth);** với Timer sử dụng là TIMx và độ rộng pulseWidth.
-</details>
+         + TIM_OutputNState_Enable: Bật tín hiệu bổ sung.
+
+         + TIM_OutputNState_Disable: Tắt tín hiệu bổ sung
+
+  ◦ **TIM_OCNIdleState:** (chỉ áp dụng cho Timer nâng cao)
+
+         + Xác định trạng thái tín hiệu bổ sung khi Timer ở trạng thái Idle.
+
+         + Giá trị: TIM_OCNIdleState_Set hoặc TIM_OCNIdleState_Reset.
+
+* Ngoài các hàm bạn đã đề cập (TIM_OCxInit, TIM_OCxPreloadConfig, TIM_Cmd, TIM_SetComparex), dưới đây là các hàm SPL bổ sung cần chú ý khi làm việc với PWM:
+
+  ◦ **TIM_ARRPreloadConfig(TIMx, FunctionalState):**
+
+         + Bật/tắt tính năng preload cho thanh ghi ARR
+
+         + Khi bật, giá trị TIM_Period chỉ được cập nhật khi xảy ra Update Event, giúp tránh giật tín hiệu PWM khi thay đổi chu kỳ
+
+  
+  ◦ **TIM_CtrlPWMOutputs(TIMx, FunctionalState) (chỉ áp dụng cho TIM1):**
+
+         + Kích hoạt đầu ra PWM cho Timer nâng cao (TIM1).
+
+         + Cần gọi TIM_CtrlPWMOutputs(TIM1, ENABLE) để đảm bảo tín hiệu PWM được xuất ra chân GPIO.
+
+         + Nếu không gọi, PWM sẽ không hoạt động trên TIM1.
+
+  
+  ◦ **TIM_SetCounter(TIMx, value):**
+
+         + Đặt giá trị hiện tại của bộ đếm Timer. Dùng để đồng bộ hóa hoặc đặt lại Timer trong các ứng dụng PWM đặc biệt.
+
+  ◦ **TIM_GetCapturex(TIMx):**
+
+         + Lấy giá trị hiện tại của thanh ghi so sánh (CCR) cho kênh x. Hữu ích để kiểm tra duty cycle hiện tại.
+
+  ◦ **TIM_BDTRConfig(TIMx, TIM_BDTRInitTypeDef) (chỉ áp dụng cho TIM1):**
+
+         +  Cấu hình các tính năng nâng cao như Break and Dead-time (dùng trong điều khiển động cơ hoặc inverter).
+
+         + Các tham số quan trọng trong TIM_BDTRInitTypeDef:
+
+           TIM_DeadTime: Thời gian chết giữa tín hiệu chính và bổ sung.
+
+           TIM_Break: Bật/tắt chức năng Break (ngắt tín hiệu PWM khi có lỗi)
+
+           IM_AutomaticOutput: Tự động khôi phục đầu ra PWM sau sự kiện Break.
+  
+  ◦ **TIM_ClearOCxRef(TIMx, TIM_OCx):**
+
+         + Xóa tín hiệu PWM trên kênh x, dùng để tạm dừng PWM mà không tắt Timer.
+
+  </details>
 
  
 <details>
