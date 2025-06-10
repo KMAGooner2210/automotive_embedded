@@ -1518,7 +1518,29 @@ while(1){
 ![Image](https://github.com/user-attachments/assets/b8531dc8-d8a1-4fea-b10b-90365810da53)
 
 
-  ◦ Để sử dụng được ngắt ngoài, ngoài bật clock cho GPIO tương ứng cần bật thêm clock cho **AFIO**.
+#### **7.1.1.Tổng Quan**
+
+* **Số lượng line ngắt:** STM32F103 hỗ trợ 16 line ngắt ngoài (EXTI Line 0 đến EXTI Line 15)
+
+* **Kết nối với GPIO:** 
+
+  ◦ Mỗi EXTI line có thể được liên kết với các chân GPIO có cùng số thứ tự
+
+  ◦ Tuy nhiên, chỉ một chân duy nhất trong số các chân cùng thứ tự được chọn làm nguồn ngắt cho một EXTI line.
+
+```
+Ví dụ: Nếu PB0 được chọn cho EXTI Line 0, các chân như PA0, PC0,... không thể được sử dụng đồng thời cho ngắt ngoài trên cùng Line 0.
+```
+
+* **Mục đích:** Ngắt ngoài được sử dụng để phát hiện các sự kiện từ bên ngoài (ví dụ: nhấn nút, tín hiệu từ cảm biến) và kích hoạt xử lý tức thời.
+
+#### **7.1.2.Cấu hình ngắt ngoài**
+
+* **Bật clock**
+
+  ◦ **GPIO:** Port chứa chân được chọn làm nguồn ngắt (ví dụ: GPIOB cho PB0).
+
+  ◦ **AFIO:** Hệ thống Alternate Function Input/Output (AFIO) để liên kết chân GPIO với EXTI line.
 
 ```
   void RCC_Config(){
@@ -1526,97 +1548,141 @@ while(1){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 ```
- ◦ Ngắt ngoài của chip STM32F103 bao gồm có 16 line riêng biệt
+
+* **Cấu hình chân GPIO**
+
+  ◦ Chân GPIO được sử dụng cho ngắt ngoài cần được cấu hình ở **chế độ Input**.
+
+  ◦ Tùy thuộc vào loại cạnh ngắt (rising, falling, hoặc cả hai), có thể cấu hình thêm trở kéo lên (pull-up) hoặc kéo xuống (pull-down) để đảm bảo trạng thái ổn định.
+
 ```
-Line0 sẽ chung cho tất cả chân Px0 ở tất cả các Port, với x là tên của Port A, B…
-Line0 nếu chúng ta đã chọn chân PA0 (chân 0 ở port A) làm chân ngắt thì tất cả các chân 0 ở các Port khác không được khai báo làm chân ngắt ngoài nữa
+GPIO_InitTypeDef GPIOInitStructure;
+GPIOInitStructure.GPIO_Pin = GPIO_Pin_0;        // Chọn chân PB0
+GPIOInitStructure.GPIO_Mode = GPIO_Mode_IPU;    // Input với pull-up
+GPIO_Init(GPIOB, &GPIOInitStructure);
+
 ```
- 
 
- * **Cấu hình ngắt ngoài**
+* **Liên kết chân GPIO với EXTI Line**
 
-    ◦ Cấu hình chân ngắt ngoài là Input. 
+  ◦ Sử dụng hàm **GPIO_EXTILineConfig** để liên kết một chân GPIO với một EXTI line
+  
+  ◦ Tham số:
 
-    ◦  Có thể cấu hình thêm trở kéo lên/xuống tùy theo cạnh ngắt được sử dụng.
-
-   ```
-    void GPIO_Config(){
-        GPIO_InitTypeDef GPIOInitStruct;
-
-	GPIOInitStruct.GPIO_Mode = GPIO_Mode_IPU;
-	GPIOInitStruct.GPIO_Pin = GPIO_Pin_0;
-	GPIOInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA, &GPIOInitStruct);
-    }
+    ```
+    GPIO_PortSource: Chọn port GPIO
+    GPIO_PinSource: Chọn số thứ tự của chân   
     ```
 
+* **Cấu hình EXTI**
 
+Các tham số của ngắt ngoài được định nghĩa trong struct EXTI_InitTypeDef:
 
-      ◦ Hàm **GPIO_EXTILineConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource)** liên kết 1 chân với một EXTI line để cấu hình chân ở chế độ sử dụng ngắt ngoài:
+  ◦ **EXTI_Line:** Xác định EXTI line cụ thể (EXTI_Line0 đến EXTI_Line15).
 
-GPIO_PortSource: Chọn Port để sử dụng làm nguồn cho ngắt ngoài.
-GPIO_PinSource: Chọn Pin để cấu hình.
+  ◦ **EXTI_Mode:** Chế độ hoạt động của EXTI
+```
+EXTI_Mode_Interrupt: Kích hoạt ngắt để gọi hàm xử lý ngắt.
+EXTI_Mode_Event: Kích hoạt sự kiện (thường dùng cho các mục đích khác, không gọi ngắt).
+```
+  ◦ **EXTI_Trigger:** Loại cạnh xung kích hoạt ngắt
 
-       ◦ Các tham số ngắt ngoài được cấu hình trong struct EXTI_InitTypeDef, gồm:
+EXTI_Trigger_Rising: Cạnh lên (tín hiệu từ thấp lên cao).
+```
+Khi nào nên dùng Trigger Rising???
 
-**EXTI_Line:** Xác định EXTI line cụ thể sẽ được cấu hình.
-**EXTI_Mode:** Xác định chế độ hoạt động của EXTI, có hai chế độ là Interrupt hoặc Event.
-**EXTI_Trigger:** Xác định loại cạnh xung sẽ kích hoạt ngắt.
-**EXTI_LineCmd:** Kích hoạt (ENABLE) hoặc vô hiệu hóa (DISABLE) EXTI line.
+Nút nhấn với pull-down:
+Tình huống: Nút nhấn được nối với VDD (3.3V hoặc 5V) và chân GPIO được cấu hình với trở kéo xuống (pull-down) nội hoặc ngoại. Khi không nhấn, chân GPIO ở mức thấp (LOW); khi nhấn, chân GPIO lên mức cao (HIGH).
 
+Lý do chọn Trigger Rising: Ngắt sẽ kích hoạt khi nhấn nút, vì tín hiệu chuyển từ LOW sang HIGH (cạnh lên).
 
-    
-    void EXTI_Config(){
-	EXTI_InitTypeDef EXTIInitStruct;
+Ví dụ ứng dụng: 
+Các hệ thống yêu cầu nút nhấn active-high, như một số bảng điều khiển công nghiệp.
 
-        EXTIInitStruct.EXTI_Line = EXTI_Line0;
-	EXTIInitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTIInitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
-	EXTIInitStruct.EXTI_LineCmd = ENABLE;
-	
-	EXTI_Init(&EXTIInitStruct);
-}
-      ```
+Cảm biến hoặc thiết bị xuất tín hiệu active-high:
+Tình huống: Một số cảm biến hoặc mô-đun (như cảm biến ánh sáng, cảm biến nhiệt độ) xuất tín hiệu mức cao (HIGH) khi phát hiện sự kiện.
 
-
-◦ Tiếp đến cấu hình NVIC:
-
-    
-        NVIC_InitTypeDef NVICInitStruct;
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	
-	NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;
-	NVICInitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-        NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
-	NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
-	
-	NVIC_Init(&NVICInitStruct);
-
-◦ Các hàm quan trọng trong EXTI:
-
-   Ngắt trên từng line có hàm phục riêng của từng line. Có tên cố định: **EXTIx_IRQHandler()** (x là line ngắt tương ứng).
-   
-   Hàm **EXTI_GetITStatus(EXTI_Linex)**, Kiểm tra cờ ngắt của line x tương ứng. 
-   
-   Hàm **EXTI_ClearITPendingBit(EXTI_Linex)**: Xóa cờ ngắt ở line x.
-
-
-◦ Ngắt ngoài sẽ được thực hiện theo:
-
-   Kiểm tra ngắt đến từ line nào, có đúng là line cần thực thi hay không?
-
-   Thực hiện các lệnh, các hàm.
-
-   Xóa cờ ngắt ở line.
+Lý do chọn Trigger Rising: Để phát hiện sự kiện khi tín hiệu từ LOW (trạng thái nghỉ) chuyển sang HIGH (trạng thái hoạt động).
+Ví dụ ứng dụng: Hệ thống giám sát môi trường, phát hiện ánh sáng hoặc nhiệt độ vượt ngưỡng.
+```
+EXTI_Trigger_Falling: Cạnh xuống (tín hiệu từ cao xuống thấp).
+EXTI_Trigger_Rising_Falling: Cả hai cạnh.
 
 ```
-void EXTI0_IRQHandler(){	
-        if(EXTI_GetITStatus(EXTI_Line0) != RESET)
-        {}
-	EXTI_ClearITPendingBit(EXTI_Line0);
-}
+Khi nào nên dùng Trigger Falling???
+
+Nút nhấn với pull-up:
+Tình huống: Nút nhấn được nối với GND (0V) và chân GPIO được cấu hình với trở kéo lên (pull-up) nội hoặc ngoại. Khi không nhấn, chân GPIO ở mức cao (HIGH); khi nhấn, chân GPIO xuống mức thấp (LOW).
+
+Lý do chọn Trigger Falling: Ngắt sẽ kích hoạt khi nhấn nút, vì tín hiệu chuyển từ HIGH sang LOW (cạnh xuống).
+
+Ví dụ ứng dụng: Điều khiển bật/tắt LED, phát hiện nhấn nút trong các thiết bị như điều khiển từ xa, bảng điều khiển.
+Cảm biến hoặc thiết bị xuất tín hiệu active-low
+
+Tình huống: Một số cảm biến (như cảm biến hồng ngoại, cảm biến khoảng cách) xuất tín hiệu mức thấp (LOW) khi phát hiện sự kiện (ví dụ: vật cản, chuyển động).
+
+Lý do chọn Trigger Falling: Để phát hiện sự kiện khi tín hiệu từ HIGH (trạng thái nghỉ) chuyển sang LOW (trạng thái hoạt động).
+Ví dụ ứng dụng: Hệ thống báo động, phát hiện vật cản.
 ```
 
+  ◦ **EXTI_LineCmd:** Kích hoạt hoặc vô hiệu hóa EXTI line
+
+```
+ENABLE: Bật ngắt
+DISABLE: Tắt ngắt.
+```
+```
+EXTI_InitTypeDef EXTIInitStruct;
+EXTIInitStruct.EXTI_Line = EXTI_Line0;           // Chọn EXTI Line 0
+EXTIInitStruct.EXTI_Mode = EXTI_Mode_Interrupt;  // Chế độ ngắt
+EXTIInitStruct.EXTI_Trigger = EXTI_Trigger_Falling; // Cạnh xuống
+EXTIInitStruct.EXTI_LineCmd = ENABLE;            // Kích hoạt
+EXTI_Init(&EXTIInitStruct);
+```
+
+* **Cấu hình NVIC**
+
+NVIC (Nested Vectored Interrupt Controller) cần được cấu hình để xử lý ngắt từ EXTI
+
+Sử dụng struct NVIC_InitTypeDef với các tham số:
+
+  ◦  **NVIC_IRQChannel:** Kênh ngắt tương ứng với EXTI line (ví dụ: EXTI0_IRQn cho Line 0).
+
+  ◦ **NVIC_IRQChannelPreemptionPriority:** Độ ưu tiên chiếm quyền
+
+  ◦ **NVIC_IRQChannelSubPriority:** Độ ưu tiên phụ
+
+  ◦
+  **NVIC_IRQChannelCmd:** Bật hoặc tắt kênh ngắt
+
+```
+NVIC_InitTypeDef NVICInitStruct;
+NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // Cấu hình nhóm ưu tiên
+NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;    // Kênh ngắt cho EXTI Line 0
+NVICInitStruct.NVIC_IRQChannelPreemptionPriority = 0x00; // Ưu tiên cao
+NVICInitStruct.NVIC_IRQChannelSubPriority = 0x00;        // Ưu tiên phụ
+NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;              // Kích hoạt
+NVIC_Init(&NVICInitStruct);
+```
+
+* **Xử lý ngắt ngoài**
+
+ ◦ Mỗi EXTI line có một hàm xử lý ngắt riêng, với tên cố định: EXTIx_IRQHandler() (x là số của line, từ 0 đến 15).
+
+ ◦ Quy trình xử lý ngắt:
+ ```
+ 1.Kiểm tra cờ ngắt: Dùng hàm EXTI_GetITStatus(EXTI_Linex) để xác định ngắt có thực sự đến từ line tương ứng hay không.
+2.Thực thi lệnh: Thực hiện các tác vụ mong muốn (ví dụ: đảo trạng thái LED).
+3.Xóa cờ ngắt: Dùng hàm EXTI_ClearITPendingBit(EXTI_Linex) để xóa cờ ngắt, tránh ngắt lặp lại liên tục.
+ ```
+ ```
+ void EXTI0_IRQHandler(void) {
+    if (EXTI_GetITStatus(EXTI_Line0) != RESET) { //SET:NGẮT
+        // Thực hiện tác vụ, ví dụ: đảo trạng thái LED
+        EXTI_ClearITPendingBit(EXTI_Line0); // Xóa cờ ngắt
+    }
+}
+ ```
 
 ### **7.2.Ngắt Timer**
 
