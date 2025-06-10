@@ -1692,78 +1692,121 @@ NVIC_Init(&NVICInitStruct);
 ![Image](https://github.com/user-attachments/assets/b0736d5c-3a49-41bf-95db-063762fdb254)
 
 
-  ◦ Sử dụng ngắt Timer,ta vẫn cấu hình các tham số trong **TIM_TimeBaseInitTypeDef** bình thường
+#### **7.2.1.Tổng quan**
 
-  ◦ Riêng **TIM_Period**,đây là số lần đếm mà sau đó timer sẽ ngắt
+* **Timer** trên STM32F103 được sử dụng để tạo các sự kiện định thời, chẳng hạn như tạo ngắt định kỳ, đo thời gian, hoặc điều khiển PWM.
 
+* **Ngắt Timer:** Khi Timer đếm đến một giá trị xác định (gọi là Period), nó có thể kích hoạt ngắt để thực hiện các tác vụ được lập trình trong hàm xử lý ngắt.
 
-* **Cấu hình ngắt Timer**
+* Ngắt Timer thường được dùng để: 
 
-  ◦ Cấu hình **Timer**
+  ◦ Tạo độ trễ chính xác (thay thế cho các hàm delay thô sơ).
 
-     Hàm **TIM_ITConfig(TIMx,TIM_IT_Update,ENABLE)** kích hoạt ngắt cho TIMERx tương ứng
+  ◦ Đếm thời gian hoặc số lần xảy ra sự kiện.
 
-      
-      Yêu cầu: cài đặt Period = 10-1 ứng với ngắt mỗi 1ms
-      void TIM_Config()
-      {
-      TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
-
-      TIM_TimeBaseInitStruct.TIM_Prescaler = 7200-1;
-      //Ngắt mỗi 1ms => 1 ms = ?/72MHz => ? = 7200
-
-      TIM_TimeBaseInitStruct.TIM_Period = 10-1;
-      TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
-      TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
-      TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
-
-      TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-      TIM_Cmd(TIM2, ENABLE);
-      }
-      
-
-  ◦ Cấu hình **NVIC**
-
-     
-     ```
-          NVIC_InitTypeDef NVIC_InitStruct;
-
-          NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
-	  NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-	  NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
-	  NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-
-	  NVIC_Init(&NVIC_InitStruct);
-     ```
+  ◦ Điều khiển các tác vụ định kỳ (ví dụ: gửi dữ liệu qua UART mỗi 1 giây).
 
 
+#### **7.2.2.Cấu hình**
 
-  ◦ Cấu hình **hàm phục vụ ngắt Timer**
+* Sử dụng cấu trúc TIM_TimeBaseInitTypeDef để cấu hình các tham số cơ bản của Timer, bao gồm:
 
 
+  ◦ **TIM_Prescaler:** Chia tần số clock của Timer để xác định tần số đếm (tick frequency)
+
+  ```
+  Công thức: Timer tick frequency = Timer clock / (TIM_Prescaler + 1).
+
+  Ví dụ: Với clock hệ thống 72 MHz, TIM_Prescaler = 7199 => tick frequency = 72 MHz / (7199 + 1) = 10 kHz (1 tick = 0.1 ms).
+  ```
+
+  ◦ **TIM_Period:** Xác định số lần đếm trước khi Timer tạo ngắt (khi bộ đếm đạt giá trị này, sự kiện update xảy ra).
+
+  ```
+  Ví dụ: TIM_Period = 9 với tick frequency 10 kHz => ngắt mỗi 10 ticks = 10 * 0.1 ms = 1 ms.
+  ```
+
+  ◦ **TIM_ClockDivision:** Phân chia clock trước khi vào Timer (thường đặt TIM_CKD_DIV1 để không chia).
+
+  ◦ **TIM_CounterMode:** Chế độ đếm
+
+* **Kích hoạt ngắt:** Sử dụng hàm `TIM_ITConfig(TIMx, TIM_IT_Update, ENABLE)` để bật ngắt khi Timer đạt giá trị TIM_Period.
+
+* **Bật Timer:** Sử dụng hàm TIM_Cmd(TIMx, ENABLE) để khởi động Timer.
+```
+void TIM_Config(void) {
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
     
- Hàm phục vụ ngắt Timer được đặt tên: **TIMx_IRQHandler** với x là timer tương ứng
-     
- Hàm kiểm tra cờ ngắt của line x tương ứng: **TIM_GetITStatus(TIMx,TIM_IT_Update)**
+    // Bật clock cho TIM2
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    
+    // Cấu hình Timer 2: ngắt mỗi 1ms
+    // Timer clock = 72 MHz, Prescaler = 7200-1 => tick = 72 MHz / 7200 = 10 kHz (0.1ms)
+    // Period = 10-1 => 10 ticks = 10 * 0.1ms = 1ms
+    TIM_TimeBaseInitStruct.TIM_Prescaler = 7200 - 1;
+    TIM_TimeBaseInitStruct.TIM_Period = 10 - 1;
+    TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+    TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+    
+    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+    
+    // Bật ngắt cho Timer 2
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+    
+    // Khởi động Timer
+    TIM_Cmd(TIM2, ENABLE);
+}
+```
 
- Hàm xóa cờ ngắt của line x: **TIM_ClearITPendingBit(TIMx,TIM_IT_Update)**
-   
-     uint16_t count;
-     void delay(int time){
-	  count = 0; 
-	  while(count < time)
-      {}
+* **Cấu hình NVIC:**
+```
+void NVIC_Config(void) {
+    NVIC_InitTypeDef NVIC_InitStruct;
+    
+    NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    
+    NVIC_Init(&NVIC_InitStruct);
+}
+```
+
+* **Hàm xử lý ngắt Timer:**
+
+  ◦ Mỗi Timer có một hàm xử lý ngắt cố định, đặt tên là `TIMx_IRQHandler` (với x là số Timer, ví dụ: TIM2_IRQHandler).
+
+  ◦ Quy trình xử lý ngắt
+
+```
+1. Kiểm tra cờ ngắt: Sử dụng hàm TIM_GetITStatus(TIMx, TIM_IT_Update) để xác định ngắt có thực sự xảy ra từ sự kiện update của Timer hay không.
+Trả về SET nếu có ngắt, RESET nếu không.
+
+2.Thực thi tác vụ: Thực hiện các công việc cần thiết trong hàm xử lý ngắt (ví dụ: tăng biến đếm, đặt cờ).
+
+3.Xóa cờ ngắt: Sử dụng hàm TIM_ClearITPendingBit(TIMx, TIM_IT_Update) để xóa cờ ngắt, tránh ngắt lặp lại liên tục.
+```
+```
+volatile uint16_t count = 0;
+
+void TIM2_IRQHandler(void) {
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+        count++; // Tăng biến đếm mỗi 1ms
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update); // Xóa cờ ngắt
     }
+}
+```
 
-     void TIM2_IRQHandler(){
-      if(TIM_GetITStatus(TIM2, TIM_IT_Update))
-        {
-		  count++;
-		  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-        }
+* **Hàm delay sử dụng Timer**
+```
+void delay_ms(uint16_t time) {
+    count = 0; // Reset biến đếm
+    while (count < time) {
+        // Chờ ngắt Timer tăng biến count mỗi 1ms
     }
-
-  
+}
+```
+Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count tăng lên 1 mỗi lần ngắt. Hàm delay_ms chờ cho đến khi count đạt giá trị time (tính bằng mili-giây).
 
 
 ### **7.3.Ngắt truyền thông**
