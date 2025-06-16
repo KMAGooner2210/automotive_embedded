@@ -1198,8 +1198,11 @@ uint8_t readData[3];
 
 ### **6.1.2.Cấu hình GPIO**
 
+* **TX:** Cấu hình Output Push-Pull, tốc độ cao (50 MHz).
 
+* **RX:** Cấu hình Input Floating để đọc tín hiệu từ thiết bị gửi.
 
+* TX cần điều khiển mức logic (0/1), RX cần đọc trạng thái mà không kéo lên/xuống.
 ```
 void GPIO_Config(){
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -1209,7 +1212,7 @@ void GPIO_Config(){
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(UART_GPIO, &GPIO_InitStructure);
 
-    GPIO_InitStructure.GPIO_Pin = RX_Pin;
+        GPIO_InitStructure.GPIO_Pin = RX_Pin;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(UART_GPIO, &GPIO_InitStructure);
@@ -1248,25 +1251,25 @@ void UART_Config()
 ![Image](https://github.com/user-attachments/assets/b96946d0-8eba-4382-b469-97e1eac2c14a)
 
 ```
-void UART_Transmitt(unsigned char c) {
+	void UART_Transmitt(unsigned char c) {
 	
 	//Start Bit
 	GPIO_ResetBits(UART_GPIO,TX_Pin);
 	Delay_us(BaudrateTime);
 
 	//Truyền các bit dữ liệu (LSB->MSB)
-    for(int i=0;i<8;i++){
+          for(int i=0;i<8;i++){
 		if(c & (1 << i)){
-           GPIO_SetBits(UART_GPIO,TX_Pin);
+                   GPIO_SetBits(UART_GPIO,TX_Pin);
 		}else{
 		   GPIO_ResetBits(UART_GPIO,TX_Pin);	
 		}
-	Delay_us(BaudrateTime);
-	}
+		Delay_us(BaudrateTime);
+	   }
 
 	//Stop Bit
 	GPIO_SetBits(UART_GPIO,TX_Pin);
-	Delay_us(BaudrateTime);
+        Delay_us(BaudrateTime);
 
 }
 ```
@@ -1355,10 +1358,14 @@ typedef enum{
 
 ### **6.2.2.Cấu hình chân GPIO**
 
+* **TX:** Alternate Function Push-Pull (AF_PP) để kết nối với UART phần cứng
+
+* **RX:** Input Floating để nhận tín hiệu
+
 ```
 void GPIO_Config(void)
 {
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
     GPIO_InitTypeDef GPIO_InitStructure;
 
     GPIO_InitStructure.GPIO_Pin = TX_Pin; 
@@ -1366,7 +1373,7 @@ void GPIO_Config(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(USART1_GPIO, &GPIO_InitStructure);
 
-	GPIO_InitStructure.GPIO_Pin = RX_Pin; 
+    GPIO_InitStructure.GPIO_Pin = RX_Pin; 
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(USART1_GPIO, &GPIO_InitStructure);
@@ -1381,7 +1388,7 @@ void GPIO_Config(void)
 
     ◦ **USART_Mode_Rx**: Cấu hình nhận
 
-	◦ Cấu hình cả 2 cùng lúc (song công)
+    ◦ Cấu hình cả 2 cùng lúc (song công)
 
 * **USART_BaudRate**: Cấu hình tốc độ baudrate cho UART
     
@@ -1398,11 +1405,11 @@ void GPIO_Config(void)
 void USART_Config(){
 	USART_InitTypeDef USART_InitStructure;
 
-    USART_InitStructure.USART_BaudRate = 9600;    
+    	USART_InitStructure.USART_BaudRate = 9600;    
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
 	USART_InitStructure.USART_Parity = USART_Parity_No ;
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_HardwareFlowControl = 	USART_HardwareFlowControl_None;
 	USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 	
 	USART_Init(USART1, &USART_InitStructure);
@@ -1411,9 +1418,11 @@ void USART_Config(){
 
 ```
 
-### **6.2.4.Các hàm  thông dụng**
 
-* `USART_SendData(USART_TypeDef * USARTx,uint16_t Data)` truyền data từ UARTx.Data này đã được thêm bit chẵn/lẻ tùy cấu hình.
+
+### **6.2.4.Các hàm thông dụng**
+
+*  `USART_SendData(USART_TypeDef * USARTx,uint16_t Data)` truyền data từ UARTx.Data này đã được thêm bit chẵn/lẻ tùy cấu hình.
 
 * `USART_ReceiveData(USART_TypeDef* USARTx)` nhận data từ UARTx
 
@@ -1427,10 +1436,17 @@ void USART_Config(){
 
   ◦ **USART_FLAG_PE**   : Cờ báo lỗi Parity
 
-  ◦ **USART_FLAG_TC**   : Cờ báo đã hoàn thành quá trình truyền dữ liệu  
+  ◦ **USART_FLAG_TC**   : Cờ báo đã hoàn thành quá trình truyền dữ liệu
+    
 ### **6.2.5.Hàm truyền**
 
-* Hàm truyền 1 ký tự
+*   **Truyền byte**
+  
+    ◦ 1. Chờ cờ TXE
+
+    ◦ 2. Gửi byte qua USART_SendData.
+
+    ◦ 3. Chờ cờ TC (truyền hoàn tất).
 
 ```
 void USART_TransmitByte(uint8_t byte){
@@ -1447,7 +1463,9 @@ while(USART_GetFlagStatus(USART_FLAG_TC) == RESET);
 
 ```
 
-* Hàm truyền 1 chuỗi ký tự
+*   **Truyền chuỗi**
+  
+    ◦ Lặp qua từng ký tự, gọi hàm truyền byte.
 
 ```
 void USART_TransmitString(const char *str){
@@ -1464,6 +1482,11 @@ void USART_TransmitString(const char *str){
 
 ### **6.2.6.Hàm nhận**
 
+*   **Nhận byte**
+ 
+    ◦ 1. Chờ cờ RXNE
+
+    ◦ 2. Đọc dữ liệu từ USART_ReceiveData.
 
 ```
 uint8_t USART_ReceiveByte(void){
@@ -1503,6 +1526,32 @@ while(1){
 }
 
 ```
+
+### **6.2.8. Các lỗi UART**
+
+* **Parity Error (PE):** Parity nhận không khớp với cấu hình.
+  
+* **Framing Error (FE):** Stop bit không đúng (mức 0 thay vì 1).
+  
+* **Overrun Error (ORE):** Dữ liệu mới đến trước khi đọc dữ liệu cũ.
+  
+* **Noise Error (NE):** Nhiễu trên đường truyền.
+  
+* **Xử lý:** Kiểm tra cờ lỗi (PE, FE, ORE, NE) trong trình xử lý ngắt, gửi thông báo hoặc bỏ dữ liệu lỗi.
+
+### **6.2.9.Hardware Flow Control (RTS/CTS)**
+
+* **Mục đích:** Điều khiển luồng dữ liệu để tránh tràn bộ đệm.
+
+* **Cấu hình:** Bật RTS/CTS qua USART_HardwareFlowControl_RTS_CTS.
+
+* **Chân GPIO:** PA12 (RTS), PA11 (CTS) cho UART1.
+
+*  **Hoạt động:**
+  
+    ◦ RTS: Thiết bị báo sẵn sàng nhận.
+
+    ◦ CTS: Thiết bị đối tác báo sẵn sàng gửi.
 </details>
 
 <details>
