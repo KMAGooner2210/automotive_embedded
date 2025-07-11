@@ -2651,11 +2651,9 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 ## **11.1.Giới thiệu**
  
-    ◦ **CAN:** Giao thức nối tiếp, cho phép vi điều khiển và thiết bị giao tiếp không cần máy tính chủ.
+◦ **CAN:** Giao thức nối tiếp, cho phép vi điều khiển và thiết bị giao tiếp không cần máy tính chủ.
     
-    ◦ **Chức năng:**
-
-      Giảm dây dẫn, hỗ trợ phát hiện và sửa lỗi tự động.
+◦ **Chức năng:** Giảm dây dẫn, hỗ trợ phát hiện và sửa lỗi tự động.
 
 ## **11.2.Kiến trúc**
 
