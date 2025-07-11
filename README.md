@@ -2647,77 +2647,50 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 <details>
 	<summary><strong>BÀI 11: CAN</strong></summary>
 
-## Bài 11: CAN
+## Bài 11: CAN (Controller Area Network)
 
 ## **11.1.Giới thiệu**
-
-
-* **CAN (Controller Area Network):**
  
-    ◦ Là giao thức **nối tiếp**, cho phép các vi điều khiển và các thiết bị khác nhau giao tiếp với nhau mà **không cần máy tính chủ**
+    ◦ **CAN:** Giao thức nối tiếp, cho phép vi điều khiển và thiết bị giao tiếp không cần máy tính chủ.
     
-    ◦ CAN cho phép **nhiều hệ thống điều khiển (ECU)** giao tiếp với nhau trên 1 bus truyền thông chung
+    ◦ **Chức năng:**
 
-    ◦ Giúp **giảm** số lượng dây dẫn
-
-    ◦ Có thể phát hiện lỗi thông qua cơ chế **kiểm tra và sửa lỗi**
-
-
+      Giảm dây dẫn, hỗ trợ phát hiện và sửa lỗi tự động.
 
 ## **11.2.Kiến trúc**
 
 ### **11.2.1.Bus topology**
 
-* CAN sử dụng **topo-bus** để kết nối các thiết bị với nhau
+* **Cấu trúc:** Topo-bus, các node nối song song qua 2 dây CANH (dây tín hiệu cao) và CANL (dây tín hiệu thấp).
 
-  => Tất cả các node được nối **song song** vào 1 cặp dây chung gọi là **CAN Bus**
+* **Tín hiệu:** Vi sai, dựa trên chênh lệch điện áp giữa CANH và CANL.
 
-* CAN bus gồm 2 dây tín hiệu chính
-
-  ◦ **CANH:** Dây tín hiệu cao
-  
-  ◦ **CANL:** Dây tín hiệu thấp
-
-* Tín hiệu truyền qua CAN bus là **tín hiệu vi sai**
-
-  => Thông tin được mã hóa dựa trên sự chênh lệch điện áp giữa 2 dây CANH và CANL
-
-* Mỗi đầu của bus CAN cần 1 **điện trở kết cuối 120 Ohm** để ngăn chặn hiện tượng phản xạ tín hiệu
+* **Điện trở kết cuối:** 120 Ohm ở mỗi đầu bus để tránh phản xạ tín hiệu.
 
 
 ### **11.2.2.Các thiết bị trên bus CAN**
 
 ![Image](https://github.com/user-attachments/assets/1caaac10-6b1f-43df-ba3a-9e2033cceb5f)
 
-* **Sensors**
+* **Sensors:** Cung cấp dữ liệu
 
 * **Actuator(Thiết bị kích động):** nhận lệnh từ MCU qua bus CAN để thực hiện các hành động vật lý như (mở van, điều khiển động cơ, bật đèn) 
 
 * **CAN Controller:** 
 
-  ◦ Gửi và nhận thông điệp CAN
-
-  ◦ Điều khiển truy cập vào bus CAN (arbitration)
-
-  ◦ Phát hiện và xử lý các lỗi truyền thông CAN
-
-  ◦ Kiểm soát việc truyền lại thông điệp khi gặp lỗi
+  ◦ Gửi/nhận thông điệp CAN, điều khiển truy cập bus CAN, xử lý lỗi CAN.
 
   ◦ Cung cấp giao diện giữa MCU và bus CAN
 
 * **CAN Transceiver:** 
 
-  ◦ Chuyển đổi tín hiệu số từ bộ điều khiển CAN thành tín hiệu điện áp dạng vi sai để gửi lên bus CAN và ngược loại
+  ◦ Chuyển đổi tín hiệu số từ bộ điều khiển CAN thành tín hiệu điện áp dạng vi sai để gửi lên bus CAN và ngược lại
 
 * **MCU:**
 
-  ◦ Đọc và xử lý thông điệp CAN
+  ◦ Xử lý, tạo thông điệp CAN.
 
-  ◦ Tạo ra thông điệp CAN để truyền đi
-
-  ◦ Quản lý các khung dữ liệu,bit arbitration và quá trình xử lý lỗi
-
-  ◦ Điều khiển hành vi của node
+  ◦ Quản lý khung dữ liệu, arbitration, lỗi.
 
 ### **11.2.3.Đặc điểm giao tiếp**
 
@@ -2725,11 +2698,9 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 * **Truyền thông quảng bá**
    
-   ◦ Khi một node gửi thông điệp, node đó sẽ được phát sóng đến tất cả các node khác trên bus
+   ◦ Thông điệp phát đến tất cả node, node dùng bộ lọc để chọn thông điệp phù hợp.
 
-   ◦ Không phải tất cả các node sử dụng thông điệp này mà nó sẽ dùng bộ lọc để kiểm tra thông điệp có phù hợp với mình hay không
-
-* **Tranh chấp quyền gửi(Arbitration), khi có nhiều cùng muốn gửi dữ liệu lên Bus cùng một lúc**
+* **Arbitration**
 
    ◦ Mỗi thông điệp CAN có một ID ưu tiên. Node nào có ID ưu tiên thấp hơn (tức độ ưu tiên cao hơn) sẽ chiếm quyền truy cập bus và gửi thông điệp trước
 
@@ -2741,9 +2712,7 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 * **Phát hiện và sửa lỗi tự động**
 
-   ◦ Nếu một node phát hiện lỗi trong quá trình truyền hoặc nhận dữ liệu thì nó gửi một Error Frame để thông báo các node khác rằng dữ liệu đang bị lỗi
-
-   ◦ Sau đó, thông điệp sẽ được truyền lại
+   ◦ Gửi Error Frame khi lỗi, truyền lại thông điệp.
 
 ## **11.3.Khung dữ liệu CAN**
 
@@ -2751,13 +2720,9 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 * **Data Frame**
 
-   ◦ **Chứa thông tin về ID** của node gửi và dữ liệu được truyền.Khung có thể chứa **8 byte dữ liệu**
+   ◦ Chứa ID và dữ liệu (0-8 byte).
 
-   ◦ **Cấu trúc:**
-      
-      ID(Identifier):Thể hiện mức độ ưu tiên của thông điệp.ID càng thấp,ưu tiên càng cao
-
-      Payload: Phần dữ liệu chính của thông điệp chứa từ 0 đến 8 byte
+   ◦ ID quyết định ưu tiên (ID thấp = ưu tiên cao).
 
 
 * **Remote Frame**
@@ -2768,24 +2733,15 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 * **Error Frame**
 
-   ◦ Được sử dụng khi một node phát hiện ra lỗi trong quá trình truyền dữ liệu
-
-   ◦ Được gửi để thông báo cho các node khác rằng có lỗi xảy ra trên Bus
-
-   ◦ Gồm 2 phần: **Error Flag** và **Error Delimiter**. 
+   ◦  Báo lỗi 
    
-   **Error Flag** là chuỗi từ 6 đến 12 bit dominant, báo hiệu lỗi
+   ◦  **Error Flag** là chuỗi từ 6 đến 12 bit dominant, báo hiệu lỗi
 
-   **Error Delimiter** là chuỗi 8 bit recessive, kết thúc Error Frame
+   ◦  **Error Delimiter** là chuỗi 8 bit recessive, kết thúc Error Frame
 
 * **Overload Frame**
 
-   ◦ Được sử dụng để báo hiệu rằng một node đang trong trạng thái bận và không thể xử lý thêm thông điệp nào ngay lập tức
-
-   ◦ Xảy ra khi một node chưa xử lý xong thông điệp trước đó hoặc hệ thống quá tải
-
-   ◦ Khi Frame nay được gửi, nó báo hiệu cho việc cần dừng truyền thông trong một thời gian ngắn để giảm tải trong node đó
-
+   ◦ Báo node bận, tạm dừng truyền thông.
 
 ### **11.3.2.Cấu trúc một khung dữ liệu**
 
@@ -2793,17 +2749,11 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 * Là bit bắt đầu của khung dữ liệu, chỉ có giá trị dominant(0)
 
-* Node mạng nhận biết rằng đây là thời điểm để bắt đầu đọc dữ liệu
-
 #### **11.3.2.2.Arbitration Field**
 
 * **ID:** Chứa định danh thông điệp
 
-* **RTR:** 
-
-Đối với **Remote Frame** => bit này là bit **dominant**
-
-Đối với **Remote Frame** => bit này là bit **recessive** 
+* **RTR:**  Dominant (Data Frame), recessive (Remote Frame).
 
 #### **11.3.2.3.Control Field**
 
@@ -2829,7 +2779,7 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 #### **11.3.2.7.EOF**
 
-* Chứa một chuỗi các bit recessive báo hiệu toàn bộ khung dữ liệu đã được truyền và quá trình truyền này kết thúc
+* Chuỗi bit recessive báo hiệu kết thúc.
 
 ## **11.4. Arbitration**
 
@@ -2957,7 +2907,7 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
   
   Là đoạn đầu tiên, độ dài cố định là **1 TQ(time quanta)**
 
-  => Đồng bộ hóa tất cả các node trên bus
+  => Đồng bộ node trên bus
 
   => Node nhận sẽ phát hiện ra cạnh thay đổi (rising edge hoặc falling edge) của tín hiệu CAN tại đoạn này để điều chỉnh thời gian của chính nó
 
