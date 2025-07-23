@@ -1900,6 +1900,7 @@ Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count t
   ```
 </details>
 
+
 <details>
 	<summary><strong>BÀI 8: ADC </strong></summary> 
 
@@ -1920,7 +1921,13 @@ Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count t
 
 * Số bit mà ADC dùng để xác định số lượng mức sẽ chia từ phạm vi điện áp tương tự
 
+* Với STM32F103C8, ADC có độ phân giải 12 bit, tức là tín hiệu analog được chia thành 2^12 = 4096 mức
+
 * Độ phân giải càng cao => càng nhiều mức sẽ cho được kết quả càng chính xác
+```
+VD: Với điện áp tham chiếu 3.3V, độ phân giải 12bit cho độ chính xác mỗi mức là 33/4096 = 0.805 mV
+```
+
 
 ![Image](https://github.com/user-attachments/assets/893e3052-892a-42b7-bcc0-6fafbabe90ea)
 
@@ -1932,7 +1939,13 @@ Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count t
 
 * Tần số lấy mẫu càng cao => lấy được nhiều mẫu => kết quả càng chính xác
 
+* **Trong STM32:** Tần số lấy mẫu được xác định bởi thời gian lấy mẫu (`ADC_SampleTime`) và tần số clock của ADC
 
+### **8.1.4. Các thông số khác**
+
+* **Điện áp tham chiếu:** Phạm vi điện áp analog mà ADC có thể đo (thường là 0 đến 3.3V/5V trên STM32)
+
+* **Thời gian chuyển đổi:** Thời gian cần để ADC hoàn thành một lần chuyển đổi, phụ thuộc vào tần số clock và thời gian lấy mẫu.
 
 ## **8.2.Sử dụng ADC trong STM32**
 
@@ -1940,40 +1953,44 @@ Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count t
 
 * STM32F103C8 có 2 bộ ADC.Kết quả chuyển đổi được lưu trữ trong thanh ghi 16 bit
 
-   ◦ Độ phân giải 12 bit
+   ◦ **Độ phân giải:** 12 bit(4096 mức)
 
-   ◦ Có các ngắt hỗ trợ
+   ◦ **Thanh ghi dữ liệu:** Giá trị chuyển đổi được lưu trong thanh ghi 16 bit (căn lề trái hoặc phải).
 
-   ◦ Có thể điều khiển hoạt động ADC bằng xung Trigger
+   ◦ **Ngắt (Interrupt):** Hỗ trợ ngắt khi hoàn thành chuyển đổi (EOC), lỗi, hoặc các sự kiện khác.
 
-   ◦ Thời gian chuyển đổi nhanh
+   ◦ **Trigger ngoài:** Có thể kích hoạt chuyển đổi bằng tín hiệu từ timer, GPIO, hoặc nguồn khác.
 
-   ◦ Có bộ DMA hỗ trợ giúp tăng tốc độ xử lý
+   ◦ **DMA (Direct Memory Access):** Hỗ trợ truyền dữ liệu trực tiếp từ ADC đến bộ nhớ, giảm tải cho CPU.
+
+   ◦ **Thời gian chuyển đổi nhanh:** Tùy thuộc vào cấu hình, thường từ vài chu kỳ clock.
 
 ### **8.2.2.Các chế độ của ADC**
 
-  #### **Regular Conversion**
+  #### **Regular Conversion(Chuyển đổi tuần tự)**
 
   * **Single**: ADC chỉ đọc 1 kênh duy nhất và chỉ đọc khi nào được yêu cầu
 
-  * **Single Continuous**: ADC chỉ đọc 1 kênh duy nhất,nhưng đọc dữ liệu nhiều lần liên tiếp (Có thể được biết đến như sử dụng DMA để đọc dữ liệu và ghi vào bộ nhớ)
+  * **Single Continuous**: Chuyển đổi liên tục trên một kênh, tự động lặp lại sau mỗi lần hoàn thành (thường kết hợp với DMA để lưu dữ liệu vào bộ nhớ).
 
   * **Scan:Multi-Channels:** Quét qua và đọc dữ liệu nhiều kênh,nhưng chỉ đọc khi nào được yêu cầu
 
   * **Scan: Continuous Multi-Channel Repeat:** Quét qua và đọc dữ liệu nhiều kênh,nhưng đọc liên tiếp nhiều lần giống như Single Continous. 
 
 
-  ####   **Injected Conversion**
+  #### **Injected Conversion(Chuyển đổi ưu tiên)**
    
    * Trong trường hợp nhiều kênh hoạt động khi kênh có  mức độ ưu tiên cao hơn có thể tạo ra một **Injected Trigger**. 
+
    * Khi gặp **Injected Trigger** thì ngay lập tức kênh đang hoạt động bị ngưng lại để kênh được ưu tiên kia có thể hoạt động.
 
 
   
 ## **8.3.Cấu hình ADC**
 
+### **8.3.1. Cấu hình Clock cho ADC**
 
-  ####  **Cấu hình GPIO cho ADC**
+####  **Cấu hình GPIO cho ADC**
 
 
 * **Các bộ ADC được cấp xung từ RCC APB2**
@@ -1982,7 +1999,10 @@ Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count t
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC2, ENABLE);
 ```
 
+
+
 ![Image](https://github.com/user-attachments/assets/f59f57ea-5a7a-4fb7-811b-3ea2222a156e)
+
 
 ```
 void GPIO_Config(){
@@ -1994,61 +2014,121 @@ void GPIO_Config(){
 }
 
 ```
- #### **Tham số cấu hình cho ADC**
-
-* **ADC_Mode:** Cấu hình chế độ hoạt động cho ADC là đơn(Independent) hay đa,ngoài ra còn có các chế độ ADC chuyển đổi tuần tự các kênh (regularly) hay chuyển đổi khi có kích hoạt (Injected)
-
-* **ADC_NbrOfChannel:** Số kênh ADC để cấu hình
-
-* **ADC_ContinuousConvMode:** Cấu hình bộ ADC có chuyển đổi liên tục hay không , **ENABLE** để cấu hình ADC chuyển đổi liên tục, **DISABLE** thì ta phải gọi lại lệnh đọc ADC để bắt đầu quá trình chuyển đổi
-
-* **ADC_ExternalTrigConv:** Enable để sử dụng tín hiệu Trigger
-
-* **ADC_ScanConvMode:** Cấu hình chế độ quét ADC lần lượt từng kênh, ENABLE nếu sử dụng chế độ quét này
-
-* **ADC_DataAlign:** Cấu hình căn lề cho data.Vì bộ ADC xuất ra giá trị 12bit, được lưu vào biến 16 hoặc 32 bit nên phải căn lề các bit về trái hoặc phải.
+#### **8.3.2. Cấu hình ADC**
 
 ```
-void ADC_Config(){
-	ADC_InitTypeDef ADC_InitStruct;
-	
-	ADC_InitStruct.ADC_Mode = ADC_Mode_Independent;
-	ADC_InitStruct.ADC_NbrOfChannel = 1;
-	ADC_InitStruct.ADC_ScanConvMode = DISABLE;
-	ADC_InitStruct.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
-	ADC_InitStruct.ADC_ContinuousConvMode = ENABLE;
-	ADC_InitStruct.ADC_DataAlign = ADC_DataAlign_Right;
-	
-	ADC_Init(ADC1, &ADC_InitStruct);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
-	ADC_Cmd(ADC1, ENABLE);
-	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+void ADC_Config(void) {
+    ADC_InitTypeDef ADC_InitStruct;
+    ADC_InitStruct.ADC_Mode = ADC_Mode_Independent; // Chế độ độc lập
+    ADC_InitStruct.ADC_NbrOfChannel = 1; // Số kênh (1 kênh cho PA0)
+    ADC_InitStruct.ADC_ScanConvMode = DISABLE; // Không quét nhiều kênh
+    ADC_InitStruct.ADC_ContinuousConvMode = ENABLE; // Chuyển đổi liên tục
+    ADC_InitStruct.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; // Không dùng trigger ngoài
+    ADC_InitStruct.ADC_DataAlign = ADC_DataAlign_Right; // Căn phải
+    ADC_Init(ADC1, &ADC_InitStruct);
+
+    // Cấu hình kênh ADC
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
+
+    // Bật ADC
+    ADC_Cmd(ADC1, ENABLE);
+
+    // Hiệu chỉnh ADC
+    ADC_ResetCalibration(ADC1);
+    while (ADC_GetResetCalibrationStatus(ADC1));
+    ADC_StartCalibration(ADC1);
+    while (ADC_GetCalibrationStatus(ADC1));
 }
-
-
 ```
+
+* **Các thông số:**
+
+* **ADC_Mode:** 
+    
+    ◦ **Independent** cho ADC hoạt động độc lập, không đồng bộ với ADC khác.
+
+    ◦ **DualMode** dùng khi ADC1 và ADC2 hoạt động đồng thời.
+
+* **ADC_NbrOfChannel:** 
+
+    ◦  Số kênh cần đọc (1 cho PA0).
+
+* **ADC_ScanConvMode:** 
+
+    ◦  Cấu hình chế độ quét ADC lần lượt từng kênh
+
+* **ADC_ContinuousConvMode:** 
+
+    ◦ Cấu hình bộ ADC có chuyển đổi liên tục hay không
+
+* **ADC_ExternalTrigConv:** 
+
+    ◦ Sử dụng tín hiệu Trigger
+
+* **ADC_DataAlign:** 
+
+    ◦ Cấu hình căn lề cho data
+
+* **ADC_RegularChannelConfig:** 
+
+    ◦ Cấu hình kênh cụ thể (ADC_Channel_?), thứ tự (Rank = ?), và thời gian lấy mẫu (? chu kỳ để đảm bảo độ chính xác).
+
+#### **8.3.4. Kích hoạt và đọc ADC**
+
+* **Kích hoạt chuyển đổi:**
+```
+ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+```
+* **Đọc giá trị:**
+```
+while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)); // Chờ chuyển đổi hoàn tất
+uint16_t adc_value = ADC_GetConversionValue(ADC1); // Đọc giá trị
+```
+
+#### **8.3.5. Thời gian lấy mẫu**
+
+* Thời gian lấy mẫu **(ADC_SampleTime)** quyết định thời gian ADC thu thập tín hiệu analog trước khi chuyển đổi:
+
+    ◦ Các giá trị: 1.5, 7.5, 13.5, 28.5, 41.5, 55.5, 71.5, 239.5 chu kỳ.
+
+    ◦ Ví dụ: ADC_SampleTime_55Cycles5 cho thời gian lấy mẫu dài, tăng độ chính xác cho tín hiệu thay đổi chậm (như biến trở).
+
+* Công thức thời gian chuyển đổi:
+
+    ◦ Tconv = Tsample + 12.5 chu kỳ
+
 ## **8.4.Các hàm  thông dụng**
 
-* Cần cấu hình thêm thời gian lấy mẫu ,thứ tự kênh ADC khi quét 
- `ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel,uint8_t Rank, uint8_t ADC_SampleTime)`:
+* **1.Cấu hình kênh ADC:** 
+```
+ ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel,uint8_t Rank, uint8_t ADC_SampleTime)
+```
+   **ADCx:** ADC1 hoặc ADC2
 
-   **Rank:** Ưu tiên của kênh ADC
+   **ADC_Channel:** Kênh ADC (ví dụ: ADC_Channel_0 cho PA0)
 
-   **SampleTime:** Thời gian lấy mẫu tín hiệu
+   **Rank:** Thứ tự kênh trong chế độ quét (1 nếu chỉ dùng 1 kênh).
 
-* `ADC_SoftwareStartConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState):`
+   **ADC_SampleTime:** Thời gian lấy mẫu (ví dụ: ADC_SampleTime_55Cycles5).
 
-    Bắt đầu quá trình chuyển đổi
+* **2.Bắt đầu chuyển đổi:**   
+```
+ADC_SoftwareStartConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState);
+```
 
-* `ADC_GetConversionValue(ADC_TypeDef* ADCx):`
+* **3.Đọc giá trị ADC:**
 
-    Đọc giá trị chuyển đổi được ở các kênh ADC tuần tự
-
-* `ADC_GetDualModeConversionValue(void):`
-
-   Trả về giá trị chuyển đổi cuối cùng của ADC1,ADC2 ở chế độ kép
-
-
+```
+uint16_t ADC_GetConversionValue(ADC_TypeDef* ADCx);
+```
+* **4.Đọc giá trị ở chế độ kép:**
+```
+uint32_t ADC_GetDualModeConversionValue(void);
+```
+* **5.Kiểm tra trạng thái:**
+```
+FlagStatus ADC_GetFlagStatus(ADC_TypeDef* ADCx, uint8_t ADC_FLAG);
+```
 ## **8.5.Bộ lọc Kalman**
 
 ### **8.5.1.Định nghĩa**
@@ -2059,13 +2139,17 @@ void ADC_Config(){
 
 * **Giai đoạn dự đoán(Prediction):** 
 
-Trong giai đoạn này,bộ lọc dự đoán trạng thái tiếp theo của hệ thống dựa trên mô hình toán học của hệ thống và dữ liệu từ bước trước
+    ◦ Dự đoán trạng thái tiếp theo dựa trên mô hình hệ thống và trạng thái trước đó.
+
+    ◦ Tính toán độ không chắc chắn (covariance) của dự đoán.
 
 ![Image](https://github.com/user-attachments/assets/f638e348-1525-4589-8793-7e51285f67b4)
 
 * **Giai đoạn cập nhật(Correction):**
 
-Sau khi nhận được dữ liệu quan sát mới từ cảm biến (có thể chứa nhiễu),bộ lọc sẽ cập nhật ước lượng trạng thái của hệ thống bằng cách kết hợp thông tin từ dự đoán trước đó với dữ liệu quan sát, đồng thời giảm thiểu ảnh hưởng của nhiễu.
+    ◦ Kết hợp dữ liệu đo mới (có thể chứa nhiễu) với dự đoán để cập nhật trạng thái.
+
+    ◦  Tính toán Kalman Gain để cân bằng giữa dự đoán và đo lường thực tế.
 
 ![Image](https://github.com/user-attachments/assets/22643b2a-9310-4376-a93e-0ae6e8b2b3ee)
 
@@ -2105,6 +2189,8 @@ while(1){
 }
 ```
 </details>
+
+
 
 <details>
 	<summary><strong>BÀI 9: DMA và PWM </strong></summary> 
