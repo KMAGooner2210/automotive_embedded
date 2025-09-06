@@ -2481,72 +2481,100 @@ GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 ## **10.1.Các loại bộ nhớ cơ bản**
 
 
-* **RAM:**
+* **RAM (Random Access Memory):**
  
     ◦ Tốc độ đọc/ghi nhanh
     
-    ◦ Không cần xóa trước khi ghi, ghi và đọc trực tiếp
+    ◦ Không cần xóa trước khi ghi, ghi và đọc trực tiếp từng byte
 
-    ◦ Dữ liệu **bị mất** khi ngưng cấp nguồn
+    ◦ Dữ liệu **bị mất** khi ngưng cấp nguồn **(volatile memory)**
 
-    **=> Lưu trữ giá trị tạm thời,biến đổi liên tục trong chương trình**
+    **=> Lưu trữ giá trị tạm thời,các biến, ngăn xếp (stack) và heap trong thời gian chạy chương trình.**
 
 * **FLASH:**
 
-    ◦ Tốc độ ghi chậm nhưng đọc nhanh
+    ◦ Tốc độ đọc nhanh, tốc độ ghi và xóa chậm
 
-    ◦ Phải xóa cả trang trước khi ghi,không thể ghi trực tiếp từng byte mà ghi theo khối
+    ◦ Phải xóa cả trang trước khi ghi,việc xóa và ghi được thực hiện theo khối (page/sector), không thể ghi đè trực tiếp từng byte
     
-    ◦ Dữ liệu **không bị mất** khi ngưng cấp điện
+    ◦ Dữ liệu **không bị mất** khi ngưng cấp điện **(Nonvolatile memory)**
 
-    ◦ Giới hạn số lần xóa/ghi
+    ◦ Giới hạn số lần xóa/ghi (thường từ 10k đến 100k chu kỳ)
 
-    **=> Lưu trữ chương trình(firmware) và dữ liệu cố định**
+    **=> Lưu trữ chương trình(firmware, mã máy) và dữ liệu cố định (hằng số, lookup tables)**
 
 
-* **EPROM:**
+* **EEPROM(Electrically Erasable Programmable Read-Only Memory):**
 
     ◦ Tương tự FLASH, có thể đọc/ghi theo từng byte
 
-    ◦ Phải xóa trước khi ghi
+    ◦ Phải xóa trước khi ghi (thường là xóa tự động trước mỗi lần ghi)
 
-    **=> Lưu trữ các giá trị cần giữ lâu dài**
+    ◦ Tốc độ ghi chậm hơn FLASH và số lần ghi/xóa cũng có giới hạn
+
+    **=> Lưu trữ các dữ liệu cần thay đổi không thường xuyên như cấu hình hệ thống, calibration data, log counts**
 
 ## **10.2.FLASH**
 
 ### **10.2.1.Giới thiệu**
 
-* Flash sẽ được chia thành các **Page** để quản lý
+* Flash sẽ được chia thành các **Page (trang)** hoặc **Sector (cấp)** để quản lý
 
-* Mỗi Page có kích thước **1 KB**
+* Kích thước mỗi page/sector phụ thuộc vào dòng vi điều khiển cụ thể (ví dụ: 1KB, 2KB, thậm chí 128KB trên các dòng cao cấp).
 
-* Trước khi ghi phải xóa.Mỗi lần xóa, cả page sẽ bị xóa trắng**(0xFF)**
+* Trước khi ghi phải xóa.Mỗi lần xóa, cả page sẽ bị xóa trắng về giá trị **(0xFF)**
 
-* Khi ghi dữ liệu,**chỉ** có thể ghi từ **half-word(2 byte)** đến **word(4 byte)** tại 1 thời điểm
+* Khi ghi dữ liệu,**chỉ** có thể ghi từ **0** sang **1** (tức là từ 0xFF ghi thành một giá trị khác)
+
+=> Do đó, chỉ có thể ghi các đơn vị dữ liệu như **half-word (2 byte)** hoặc **word (4 byte)** tại một thời điểm 
 
 * Flash có **giới hạn** về số lần xóa/ghi
 
-* Chương trình sẽ được nạp vào vùng nhớ từ 0x08000000, vùng nhớ phía sau sẽ là trống và người dùng có thể lưu trữ dữ liệu ở vùng này
+* Chương trình (firmware) sẽ được nạp vào vùng nhớ từ**0x08000000**, vùng nhớ phía sau firmware sẽ là trống và người dùng có thể lưu trữ dữ liệu ở vùng này
 
 ![Image](https://github.com/user-attachments/assets/229b15b3-74c2-42e9-b0dc-a1df7fb76f18)
 
 
 ### **10.2.2.Xóa FLASH**
 
-* Flash chỉ có thể được xóa theo từng Page (1Kb mỗi Page) hoặc xóa theo cả Bank (1 Bank)
+
 
 ![Image](https://github.com/user-attachments/assets/9c5de0e7-da99-4993-aae7-9c9d9e59ed6b)
 
- 
-  ◦ **Đầu tiên**, kiểm tra cờ LOCK của FLASH, nếu cờ này đang được bật, FLASH ở chế độ Lock và cần phải **Unlock** trước khi sử dụng
+#### **Flash chỉ có thể được xóa theo từng Page (1Kb mỗi Page) hoặc xóa theo cả Bank (1 Bank)** 
 
-  ◦ Sau khi FLASH đã Unlock, cờ **CR_PER** được set lên 1
 
-  ◦ Địa chỉ của Page cần xóa được ghi vào **FAR**
+  * **1. Kiểm tra khóa (LOCK):** 
+    
+    ◦ Nếu FLASH đang bị khóa, cần gửi các khóa (key) cụ thể để mở khóa (Unlock) trước khi có thể thao tác
 
-  ◦ Set bit **CR_STRT** lên 1 để bắt đầu quá trình Xóa
+  * **2. Chờ FLASH sẵn sàng:** 
+    
+    ◦ Kiểm tra cờ **BSY (Busy)** để đảm bảo không có thao tác nào khác diễn ra
 
-  ◦ Kiểm tra cờ **BSY** đợi hoàn tất quá trình xóa
+  * **3. Cấu hình chế độ xóa:** 
+    
+    ◦ Set bit **PER(Page Erase)** trong thanh ghi điều khiển **CR**
+
+  * **4. Chỉ định địa chỉ:** 
+    
+    ◦ Ghi địa chỉ bắt đầu của Page cần xóa và thanh ghi địa chỉ **AR**
+
+  * **5. Kích hoạt xóa:** 
+    
+    ◦ Set bit **STRT (Start)** để bắt đầu quá trình xóa phần cứng
+
+  * **6. Chờ hoàn tất:** 
+    
+    ◦ Tiếp tục kiểm tra cờ **BSY**
+
+  * **7. Kiểm tra kết quả:** 
+    
+    ◦ Kiểm tra cờ **EOP (End of Operation)** hoặc các cờ lỗi
+
+  * **8. Xóa cờ và khóa lại:** 
+    
+    ◦ Xóa các cờ và khóa (Lock) FLASH lại để tránh ghi đè ngoài ý muốn.
 
   
 ### **10.2.3.Ghi FLASH**
@@ -2554,19 +2582,36 @@ GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 ![Image](https://github.com/user-attachments/assets/e6f2c75f-cc9d-4d78-ad8e-d981f000baa6)
 
    
-   ◦ **Đầu tiên**, cờ Lock được kiểm tra
+  * **1. Kiểm tra khóa (LOCK):** 
+    
+    ◦ Nếu FLASH đang bị khóa, cần gửi các khóa (key) cụ thể để mở khóa (Unlock) trước khi có thể thao tác
 
-   ◦ Sau khi xác nhận đã Unlock, cờ **CR_PG** được set lên 1
+  * **2. Chờ FLASH sẵn sàng:** 
+    
+    ◦ Kiểm tra cờ **BSY (Busy)** để đảm bảo không có thao tác nào khác diễn ra
 
-   ◦ Qúa trình ghi dữ liệu vào địa chỉ tương ứng sẽ được thực thiệu
+  * **3. Cấu hình chế độ ghi:** 
+    
+    ◦ Set bit **PG (Programming)** trong thanh ghi điều khiển **CR**
 
-   ◦ Kiểm tra cờ **BSY** để đợi quá trình ghi hoàn tất
+  * **4. Thực hiện ghi:** 
+    
+    ◦ Ghi dữ liệu (half-word hoặc word) vào địa chỉ đích. 
+     
+    => Việc ghi này phải được thực hiện trên một vùng nhớ đã được xóa trước đó (có giá trị 0xFF).
 
+  * **5. Chờ hoàn tất:** 
+    
+    ◦ Chờ cờ BSY trở về 0 
+     
+  * **6. Kiểm tra kết quả và kết thúc:** 
+    
+    ◦ Kiểm tra cờ EOP, xóa cờ và khóa FLASH lại
 
 
 ### **10.2.4.Các hàm thông dụng**
 
-* **Hàm LOCK,UNLOCK FLASH**
+* **Hàm LOCK/UNLOCK FLASH**
 ```
    ◦ void FLASH_Unlock(void): Hàm này Unlock tất cả vùng nhớ trong Flash
 
@@ -2619,6 +2664,12 @@ void FLASH_Erase(uint32_t addresspage){
    ◦ FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data) : Ghi dữ liệu vào vùng nhớ Addres với kích thước mỗi 2 byte
 
    ◦ FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data) : Ghi dữ liệu vào vùng nhớ Address với kích thước mỗi 4 byte
+```
+
+* **Hàm kiểm tra trạng thái**
+
+```
+   ◦ FLASH_Status FLASH_GetStatus(void)
 
    ◦ FLASH_Status FLASH_GetFlagStatus(uint32_t FLASH_FLAG): Hàm này trả về trạng thái của FLag
 
@@ -2627,43 +2678,50 @@ void FLASH_Erase(uint32_t addresspage){
 **Code**
 
 ```
-//Hàm ghi 1 giá trị vào Flash
-void Flash_WriteInt(uint32_t address, uint16_t value){
+// Hàm xóa 1 Page Flash
+void Flash_ErasePage(uint32_t pageAddress) {
+    FLASH_Status status = FLASH_COMPLETE;
 
-  FLASH_Unlock();
+    // Mở khóa Flash
+    FLASH_Unlock();
 
-  // Chờ đến khi bộ nhớ Flash rảnh
-	while(FLASH_GetFlagStatus(FLASH_FLAG_BSY) == 1);
+    // Chờ Flash sẵn sàng
+    status = FLASH_WaitForLastOperation(FLASH_ER_PTIMEOUT);
 
-  // Ghi dữ liệu vào vùng nhớ với kích thước mỗi 2 byte
-  FLASH_ProgramHalfWord(address,byte);
+    if (status == FLASH_COMPLETE) {
+        // Xóa page
+        status = FLASH_ErasePage(pageAddress);
+        if (status != FLASH_COMPLETE) {
+            // Xử lý lỗi tại đây
+        }
+    }
 
-  // Chờ đến khi bộ nhớ Flash rảnh
-	while(FLASH_GetFlagStatus(FLASH_FLAG_BSY) == 1);
-
-	
-	FLASH_Lock();
+    // Khóa Flash lại
+    FLASH_Lock();
 }
 
-//Hàm ghi nhiều giá trị vào Flash
-void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
+// Hàm ghi một mảng dữ liệu (sử dụng Half-Word)
+void Flash_WriteArray(uint32_t startAddress, uint16_t *data, uint16_t length) {
+    FLASH_Status status = FLASH_COMPLETE;
+    uint32_t address = startAddress;
 
-  
-	FLASH_Unlock();
+    // Mở khóa Flash
+    FLASH_Unlock();
 
-	// Chờ đến khi bộ nhớ Flash rảnh
-	while (FLASH_GetFlagStatus(FLASH_FLAG_BSY) == 1);
+    for (uint16_t i = 0; i < length; i++) {
+        // Chờ Flash sẵn sàng trước mỗi lần ghi
+        status = FLASH_WaitForLastOperation(FLASH_ER_PTIMEOUT);
+        if (status != FLASH_COMPLETE) break;
 
-  uint16_t *ptr = (uint16_t*)data;
-  for( int i=0; i< ((num + 1) / 2); i++){
-    FLASH_ProgramHalfWord(address + 2 * i, *ptr);
+        // Ghi dữ liệu
+        status = FLASH_ProgramHalfWord(address, data[i]);
+        if (status != FLASH_COMPLETE) break;
 
-    // Chờ đến khi bộ nhớ Flash rảnh
-		while(FLASH_GetFlagStatus(FLASH_FLAG_BSY) == 1);
+        address += 2; // Di chuyển đến địa chỉ half-word tiếp theo
+    }
 
-		ptr++;
-  }
-  FLASH_Lock();
+    // Khóa Flash lại
+    FLASH_Lock();
 }
 ```
 
@@ -2671,7 +2729,13 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
 
 ### **10.3.1.Định nghĩa**
 
-* Bootloader là chương trình chạy đầu tiên khi khởi động,gồm 2 loại:
+* Bootloader là chương trình đặc biệt chạy đầu tiên ngay sau khi vi điều khiển khởi động hoặc reset.Nó có nhiệm vụ quyết định chương trình nào sẽ được thực thi tiếp theo. 
+
+=> Cho phép nâng cấp, sửa đổi firmware (phần mềm) mà không cần sử dụng các công cụ nạp chuyên dụng (programmer) thông qua các giao tiếp như UART, USB, I2C, SPI, Ethernet, v.v.
+
+* **Ứng dụng:** Cập nhật firmware từ xa (FOTA - Firmware Over-The-Air), cập nhật sản phẩm tại hiện trường mà không cần mở hộp.
+
+* Có 2 loại BOOTLOADER:
 
    ◦ Bootloader do nhà sản xuất cung cấp
 
@@ -2687,48 +2751,73 @@ void Flash_WriteNumByte(uint32_t address, uint8_t *data, int num){
    ◦ Current Firmware
 
 
-* Bootloader có mục tiêu chính là nâng cấp hoặc sửa đổi phần mềm hệ thống mà không cần sự can thiệp của các công cụ nâng cấp chương trình cơ sở chuyên dụng như
-
-   ◦ Cài đặt phần mềm từ xa 
-
-   ◦ Nâng cấp phần mềm không cần các thiết bị nạp
-
 
 ### **10.3.2.Bootloader hoạt động như thế nào**
 
-* **Quá trình từ việc cấp nguồn hoặc nhấn reset cho đến hàm main()**
+#### **Quá trình khởi động của ARM Cortex-M**
 
-  ◦ MCU đọc giá trị từ BOOT0 và BOOT1 để quyết định bắt đầu đọc dữ liệu tại nơi nào của bộ nhớ
+  **1. Thiết lập chế độ Boot:**
 
-  ◦ Địa chỉ bắt đầu của vùng nhớ sẽ được lưu vào thanh ghi **PC (Program Counter)** để tiến hành đọc lệnh từ đó
+◦  Khi khởi động, vi điều khiển đọc các chân BOOT0 và (thường là) BOOT1 để quyết định vùng nhớ nào sẽ được ánh xạ đến địa chỉ 0x00000000. Thông thường, bộ nhớ Flash gốc (0x08000000) được ánh xạ đến địa chỉ 0.
 
-  ◦ Lấy giá trị của ô nhớ đầu tiên để khởi tạo **MSP (Main Stack Pointer)**
+  **2. Khởi tạo Vector Table:**
 
-  ◦ Thanh ghi PC chạy đến ô nhớ tiếp theo, ô nhớ này chứa địa chỉ của **Reset_Handler** 
+◦  CPU lấy giá trị Word đầu tiên (tại địa chỉ 0x00000000) để khởi tạo con trỏ ngăn xếp (MSP - Main Stack Pointer).
 
-  ◦ Chương trình sẽ nhảy đến **Reset_Handler** để thực thi và làm các nhiệm vụ sau:
- 
-    Khởi tạo hệ thống
-
-    Sao chép các dữ liệu (biến) từ FLASH qua RAM
-
-    Gọi hàm main()
-
-
-* **Sau khi Reset**
+◦  CPU lấy Word thứ hai (tại địa chỉ 0x00000004) – đây là địa chỉ của hàm Reset_Handler – và nạp vào thanh ghi PC (Program Counter).
   
-  ◦ Vi điều khiển nhảy đến **Reset_Handler()** mặc định nhảy đến hàm **main()** của chương trình Boot
+  **3. Thực thi Bootloader:**
 
-  ◦ Chương trình Boot sẽ khởi tạo lại MSP bằng cách lấy dữ liệu từ ô nhớ đầu tiên của nơi lưu chương trình Application.
+◦  CPU bắt đầu chạy code trong Reset_Handler, sau đó nhảy đến hàm main() của chương trình được lưu trong vùng nhớ boot (thường là Bootloader).
+ 
+#### **Cơ chế nhảy từ Bootloader sang Application**
 
-  ◦ Gọi hàm **Bootloader()**, hàm này sẽ set thanh ghi **SCB_VTOR** theo địa chỉ App muốn nhảy đến,**SCB➔VTOR = Firmware address**. 
+  **Giả sử:**
 
-  ◦ Nhảy đến ô nhớ tiếp theo, chính là **Reset_Handler** của chương trình Application.
+◦  Bootloader nằm ở đầu bộ nhớ Flash (ví dụ: từ 0x08000000 đến 0x0800BFFF).
 
-  ◦ Bây giờ Firmware mới bắt đầu chạy và Vi xử lý đã nhận diện Reset_Handler() ở địa chỉ mới nên **dù có nhấn nút Reset thì nó vẫn chạy trong Application** 
+◦  Bootloader nằm ở đầu bộ nhớ Flash (ví dụ: từ 0x08000000 đến 0x0800BFFF).
 
+  **Bootloader sẽ thực hiện các bước sau để nhảy sang Application:**
 
+◦  1. Kiểm tra Application: Bootloader kiểm tra một điều kiện (ví dụ: phím nhấn, lệnh từ UART, hoặc kiểm tra signature của Application) để quyết định có nhảy sang App hay không. Nếu không, nó có thể ở lại chế độ cập nhật firmware.
+
+◦  2. Tắt mọi ngắt và ngoại lệ: __disable_irq();
+
+◦  3. De-init các ngoại vi: Khởi tạo lại các ngoại vi mà Bootloader đã sử dụng (như UART, SPI) về trạng thái mặc định.
+  
+◦  4. Cấu hình lại Vector Table: Đây là bước QUAN TRỌNG NHẤT. Thanh ghi SCB->VTOR (Vector Table Offset Register) phải được đặt thành địa chỉ bắt đầu của Application's Vector Table.
+   
+   ```
+   SCB->VTOR = APPLICATION_ADDRESS; // Ví dụ: 0x0800C000
+   ```
+    
+◦  5. Cấu hình lại con trỏ ngăn xếp: Lấy giá trị MSP mới từ word đầu tiên của Application's Vector Table.
+
+   ```
+   __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
+   ```
+
+◦  6. Nhảy đến Reset Handler của Application: Lấy địa chỉ của Reset Handler (word thứ hai trong Vector Table) và gọi nó như một hàm.
+
+   ```
+   void (*app_reset_handler)(void) = (void (*)(void)) *(__IO uint32_t*)(APPLICATION_ADDRESS + 4);
+
+   app_reset_handler(); // Nhảy không trở lại
+   ```
+◦  Lưu ý:
+   
+   ```
+   Application phải được biên dịch và nạp để chạy tại địa chỉ bộ nhớ đã định (ví dụ: 0x0800C000).
+
+   Trong script linker (.ld) của Application, cần phải thay đổi địa chỉ bắt đầu của bộ nhớ FLASH cho phù hợp.
+
+   Vector Table của Application phải được định nghĩa chính xác tại địa chỉ đó.
+   ```
+
+   
 </details>
+
 
 <details>
 	<summary><strong>BÀI 11: CAN</strong></summary>
