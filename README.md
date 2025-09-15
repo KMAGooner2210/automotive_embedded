@@ -277,107 +277,132 @@
 ## BÀI 2: INTERRUPT 
 
 
-### **2.1.Khái niệm**
+### **1. Khái niệm**
 
 ![Image](https://github.com/user-attachments/assets/eb1762a6-057e-4212-91cd-7d216830df0d)
 
 
-* **Ngắt** là 1 sự kiện khẩn cấp xảy ra trong hay ngoài vi điều khiển.Nó yêu cầu MCU phải **dừng chương trình chính** và **thực thi chương trình ngắt**
+*  **Ngắt (Interrupt)** là sự kiện khẩn cấp yêu cầu vi điều khiển (MCU) tạm dừng chương trình chính để thực thi một đoạn chương trình đặc biệt gọi là **Interrupt Service Routine (ISR)**.
 
+*  Ngắt giúp MCU phản ứng nhanh với các sự kiện từ phần cứng hoặc phần mềm mà không cần kiểm tra liên tục (polling).
 
+#### **1.1. Các loại ngắt trên STM32F103**
 
-### **2.2.Interrupt Service Routine (Trình phục vụ ngắt)**
+*  **Ngắt ngoại vi:** EXTI, UART, Timer, ADC, SPI, I2C
+
+*  **Ngắt nội bộ:**  Do CPU hoặc hệ thống tạo ra, như SysTick (ngắt định kỳ), PendSV (cho chuyển đổi tác vụ trong RTOS), Software Interrupt (SWI).
+
+*  **Ngắt lỗi:** HardFault (lỗi phần cứng), MemManage (quản lý bộ nhớ), BusFault, UsageFault.
+
+#### **1.2. Cơ chế hoạt động**
+
+*  **1. Sự kiện ngắt xảy ra (ví dụ: nút nhấn trên GPIO).**
+
+*  **2. NVIC (Nested Vectored Interrupt Controller) xác định số vector ngắt (vector number).**
+
+*  **3. CPU tra cứu Vector Interrupt Table (VIT) để lấy địa chỉ ISR.**
+
+*  **4. CPU lưu trạng thái hiện tại (stacking: đẩy thanh ghi vào stack).**
+
+*  **5. Nhảy đến ISR để thực thi.**
+
+*  **6. Sau khi hoàn thành, khôi phục trạng thái và quay lại chương trình chính.**
+  
+
+### **2. Interrupt Service Routine (Trình phục vụ ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/90c8c28e-edea-4755-b2b3-8c84be788a61)
 
+#### **2.1. Định nghĩa**
 
- * Mỗi ngắt có 1 trình phục vụ riêng
- * Trình phục vụ ngắt là 1 đoạn chương trình được thực hiện khi ngắt xảy ra
- * Địa chỉ trong bộ nhớ của ISR được gọi là **vector ngắt**
+ * ISR là hàm xử lý ngắt, được gọi khi ngắt xảy ra. Mỗi ngắt có một ISR riêng, được xác định bởi địa chỉ trong **Vector Interrupt Table (VIT).**
 
+#### **2.2. Khai báo ISR**
 
+ * Trong STM32F103 (SPL), ISR được khai báo trong file startup (thường là `startup_stm32f10x_md.s` hoặc tương tự)
 
-### **2.3.Vector Interrupt Table (Bảng vector ngắt)**
+			void EXTI0_IRQHandler(void) {
+			    if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+			        // Xử lý ngắt (ví dụ: đảo trạng thái LED)
+			        GPIO_ToggleBits(GPIOC, GPIO_Pin_13);
+			        EXTI_ClearITPendingBit(EXTI_Line0);  // Xóa cờ ngắt
+			    }
+			}   		
+
+#### **2.3. Lưu ý**
+
+ * **Tối ưu tốc độ:** Tránh dùng delay hoặc vòng lặp dài.
+   
+ * **Xóa cờ ngắt:** Luôn xóa cờ ngắt (pending bit) trong ISR để tránh lặp ngắt vô hạn.
+   
+ * **Tránh lồng ngắt không cần thiết:** Chỉ bật ngắt lồng (nested interrupt) khi cần.
+
+ * **Kiểm tra lỗi HardFault:** Nếu ISR gây lỗi (như truy cập bộ nhớ không hợp lệ), CPU nhảy đến HardFault.
+
+			void EXTI0_IRQHandler(void) {
+			    if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+			        // Xử lý ngắt (ví dụ: đảo trạng thái LED)
+			        GPIO_ToggleBits(GPIOC, GPIO_Pin_13);
+			        EXTI_ClearITPendingBit(EXTI_Line0);  // Xóa cờ ngắt
+			    }
+			}
+   
+### **3.Vector Interrupt Table (Bảng vector ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/038312e2-516d-4eb2-8125-438cf5885fc6)
 
+#### **3.1. Khái Niệm**
 
- * Chứa danh sách các địa chỉ bộ nhớ,mỗi địa chỉ trỏ đến hàm xử lý ngắt tương đương với 1 nguồn ngắt cụ thể
+ * VIT là bảng chứa danh sách các địa chỉ bộ nhớ của ISR, tương ứng với từng nguồn ngắt. Trên STM32F103:
 
+	◦ **Vị trí:** Đặt ở đầu bộ nhớ Flash (mặc định: 0x00000000, có thể remap sang SRAM).
+	
+	◦ **Kích thước:** Mỗi mục là 4 byte (địa chỉ 32-bit). STM32F103 hỗ trợ ~80 vector (bao gồm Reset, HardFault, và ngắt ngoại vi).
 
- * Vai trò trung tâm trong xử lý ngắt
+ 	◦ **Cấu trúc:** Bao gồm:
 
-    ◦ Khi 1 ngắt xảy ra, phần cứng CPU (cụ thể **NVIC**) sử dụng bảng **VIT** để xác định ISR nào cần được thực thi
- 
+			Vector 0: Địa chỉ stack pointer ban đầu.
+			Vector 1: Địa chỉ Reset handler.
+			Vector 2-15: Ngắt hệ thống (NMI, HardFault, SysTick, v.v.).
+			Vector 16+: Ngắt ngoại vi (EXTI, UART, Timer, v.v.).
 
- * Địa chỉ cố định trong bộ nhớ Flash
- 
-    ◦ VIT thường được đặt ở địa chỉ bắt đầu bộ nhớ Flash.Điều này do khi vi điều khiển khơi động / reset, nó sẽ bắt đầu thực thi từ địa chỉ này
-
- * Cấu trúc VIT
-
-    ◦ **Bảng các địa chỉ:** VIT về cơ bản là một mảng (table) các địa chỉ bộ nhớ. Mỗi mục trong bảng này chứa một địa chỉ.
-
-    ◦ Mỗi mục tương ứng với 1 nguồn ngắt
-
-    ◦ **Kích thước:** Kích thước của mỗi mục (mỗi địa chỉ vector) thường là 4 byte (32-bit address) trên các kiến trúc 32-bit như ARM Cortex-M, hoặc 2 byte (16-bit address) trên các kiến trúc 16-bit
- 
-
-* **Cách VIT hoạt động:**
-
-
-    ◦Ngắt xảy ra
-
-     ```
-   Quy trình bắt đầu khi một sự kiện ngắt xảy ra.
-
-   Sự kiện này có thể đến từ nhiều nguồn khác nhau, ví dụ:
-
-   Ngắt ngoại vi: Một module ngoại vi như UART, Timer, ADC, GPIO tạo ra ngắt khi hoàn thành một tác vụ hoặc có một sự kiện cụ thể (ví dụ: UART nhận dữ liệu, Timer tràn, ADC chuyển đổi xong, GPIO pin thay đổi trạng thái).
-
-   Ngắt nội bộ: Các ngắt do bộ vi điều khiển tạo ra, ví dụ: SysTick timer ngắt định kỳ, Software Interrupt (SWI), PendSV (Pendable Service Call).
-
-   Ngắt lỗi: Các lỗi phần cứng hoặc phần mềm như HardFault, Memory Management Fault.
-     ```
-  
-    ◦NVIC xác định vector number
-
-    ◦Tra cứu VIT bằng cách sử dụng vector number làm offset để tra cứu bảng 
-    
-      
-      Base_Address of VIT + (n * 4).
-      Base_Address of VIT: Đây là địa chỉ bộ nhớ bắt đầu của Vector Interrupt Table. Như đã thảo luận trước đó, địa chỉ này thường cố định và nằm ở đầu bộ nhớ Flash (ví dụ: 0x00000000).
-      n (vector number): Là số vector mà NVIC đã xác định cho ngắt đang xảy ra.
-      4: Là kích thước của mỗi mục (vector) trong VIT, tính bằng byte. Trong kiến trúc 32-bit, mỗi địa chỉ bộ nhớ thường là 32-bit (4 byte).
-      n * 4: Tính toán offset (độ lệch) từ địa chỉ bắt đầu của VIT. Vector number n được nhân với 4 để tính ra độ lệch byte tương ứng trong bảng VIT.
-      Base_Address of VIT + (n * 4): Kết quả là địa chỉ bộ nhớ trong VIT, nơi chứa địa chỉ của ISR tương ứng với vector number n.
-      
-
-   ◦Lấy địa chỉ ISR
-   
-     Giá trị tra cứu được trong VIT chính là địa chỉ của bộ nhớ hàm ISR tương ứng
-
-   ◦Nhảy đến ISR
-   
-   ◦Kết thúc ISR
+#### **3.2. Ví Dụ Cấu Trúc VIT**
 
 
 
+<img width="1126" height="714" alt="Image" src="https://github.com/user-attachments/assets/3cf7fd5e-6a5b-4d9b-bf51-c8bcc95f130e" />
+
+<img width="1130" height="607" alt="Image" src="https://github.com/user-attachments/assets/2a6db406-ba68-4958-8847-83cae8c878bf" />
 
 
-### **2.4.NVIC (Nested Vectored Interrupt Controller)**
 
-* **Khái niệm**
+#### **3.3. Cách NVIC Sử Dụng VIT**
 
-   ◦Quản lý tất cả các ngắt
-   
-   ◦Quyết định ngắt nào được xử lý dựa trên mức độ ưu tiên
 
-* **Chức năng NVIC**
+  1. Khi ngắt xảy ra, NVIC **xác định vector number** (ví dụ: EXTI0 là 6).
+	
+  2. **Tính địa chỉ ISR:** Base_Address + (vector_number * 4) (Base_Address thường là 0x00000000).
+	
+  3. CPU **lấy địa chỉ ISR từ VIT** và nhảy đến thực thi.
+  	
 
-   ◦ Bật/Tắt từng nguồn ngắt cụ thể
+### **4. NVIC (Nested Vectored Interrupt Controller)**
 
-   ◦ Bật/Tắt ngắt toàn cục
+#### **4.1. Khái niệm**
+
+* NVIC là bộ điều khiển ngắt lồng nhau của ARM Cortex-M3, quản lý tất cả ngắt trên STM32F103:
+
+	◦ **Chức năng:** Bật/tắt ngắt, quản lý ưu tiên, hỗ trợ ngắt lồng (nested interrupt).
+
+	◦ **Đặc điểm:** Hỗ trợ 16 mức ưu tiên (0-15, số nhỏ hơn có ưu tiên cao hơn).
+
+#### **4.2. Quản lý ưu tiên**
+
+* **NVIC sử dụng hai loại ưu tiên:**
+
+	◦ **Preemption Priority:** Quyết định ngắt nào có thể chen ngang (preempt) ngắt khác. Số nhỏ hơn → ưu tiên cao hơn.
+
+	◦ **SubPriority:** Quyết định thứ tự xử lý khi nhiều ngắt có cùng Preemption Priority xảy ra đồng thời. Số nhỏ hơn → xử lý trước.
   
 
 * **Quản lý ưu tiên ngắt**
@@ -387,43 +412,76 @@
    
    
    ◦ Mức ưu tiên thấp hơn (số nhỏ hơn) có độ ưu tiên cao hơn
+
+#### **4.3. Priority Group**
+
+* **Priority Group** xác định cách phân chia 4 bit ưu tiên (PRIGROUP) giữa Preemption và SubPriority.
+
+* Hàm `NVIC_PriorityGroupConfig` được sử dụng:
     
 ![Image](https://github.com/user-attachments/assets/9ca9134e-b2e2-4de9-b352-74ad5a47331e)
  
-     +  Preemption Priority: 
-        Ngắt có Preemption Priority cao hơn (số nhỏ hơn) sẽ chiếm quuyền ngắt có Priority thấp hơn (số to hơn): 
-        Ngắt có Preemption Priority cao hơn (số nhỏ hơn) sẽ chiếm quuyền ngắt có Priority thấp hơn (số to hơn)
+#### **4.4. Cấu Hình NVIC**
 
-     +  SubPriority: 
-        Khi nhiều ngắt có cùng Preemption Priority xảy ra đồng thời
-        => SubPriority quyết định thứ tự xử lý
-        => Ngắt có SubPriority cao hơn (số nhỏ hơn) sẽ được xử lý trước
+* Sử dụng struct `NVIC_InitTypeDef`:
+
+  ◦ **NVIC_IRQChannel:**  Kênh ngắt (ví dụ: EXTI0_IRQn).
+
+  ◦ **NVIC_IRQChannelPreemptionPriority:**  Mức ưu tiên Preemption (0-15).
+
+  ◦ **NVIC_IRQChannelSubPriority:** Mức ưu tiên SubPriority (0-15).
+
+  ◦ **NVIC_IRQChannelCmd:** Bật (ENABLE) hoặc tắt (DISABLE) ngắt.
 
 
-* **Cấu hình NVIC**
- 
-  ◦ **Priority Group:**  xác định cách phân chia bit giữa Preemption Priority và Subpriority.
+#### **4.5. VD**
+
+* **Cấu hình ngắt cho EXTI0 (nút nhấn trên PA0):**
   
-   Sử dụng hàm **NVIC_PriorityGroupConfig(uint32_t PriorityGroup)** để chọn priority group cho NVIC
-
-  ◦ **NVIC_IRQChannel:** Xác định mã của kênh ngắt cần được cấu hình
-
-  ◦ **NVIC_IRQChannelPreemptionPriority:** Xác định mức độ ưu tiên Preemption Priority cho kênh ngắt.
-
-  ◦ **NVIC_IRQChannelSubPriority:** Xác định mức độ ưu tiên phụ Subpriority cho kênh ngắt.
-
-  ◦ **NVIC_IRQChannelSubPriority:** Cho phép ngắt
-
-
-```
-NVIC_InitTypeDef NVICInitStruct;
-NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-NVICInitStruct.NVIC_IRQChannel = EXTI0_IRQn;
-NVICInitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
-NVICInitStruct.NVIC_IRQChannelCmd = ENABLE;
-NVIC_Init(&NVICInitStruct);
-```
+		#include "stm32f10x.h"
+		
+		void EXTI0_IRQHandler(void) {
+		    if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+		        GPIO_ToggleBits(GPIOC, GPIO_Pin_13);  // Đảo trạng thái LED
+		        EXTI_ClearITPendingBit(EXTI_Line0);   // Xóa cờ ngắt
+		    }
+		}
+		
+		int main(void) {
+		    // Bước 1: Kích hoạt clock
+		    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);
+		
+		    // Bước 2: Cấu hình GPIO (PA0 input pull-up, PC13 output)
+		    GPIO_InitTypeDef GPIO_InitStruct;
+		    GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
+		    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IPU;
+		    GPIO_Init(GPIOA, &GPIO_InitStruct);
+		    GPIO_InitStruct.GPIO_Pin = GPIO_Pin_13;
+		    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
+		    GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+		    GPIO_Init(GPIOC, &GPIO_InitStruct);
+		
+		    // Bước 3: Cấu hình EXTI
+		    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0);
+		    EXTI_InitTypeDef EXTI_InitStruct;
+		    EXTI_InitStruct.EXTI_Line = EXTI_Line0;
+		    EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+		    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;  // Kích hoạt khi nhấn nút (LOW)
+		    EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+		    EXTI_Init(&EXTI_InitStruct);
+		
+		    // Bước 4: Cấu hình NVIC
+		    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);  // 4 mức Preemption, 4 mức SubPriority
+		    NVIC_InitTypeDef NVIC_InitStruct;
+		    NVIC_InitStruct.NVIC_IRQChannel = EXTI0_IRQn;
+		    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x01;
+		    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x01;
+		    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+		    NVIC_Init(&NVIC_InitStruct);
+		
+		    while(1);  // Vòng lặp chính
+		}
+  
 </details>
 
 
