@@ -8,83 +8,163 @@
 ## BÀI 1: GPIO (General Purpose Input Output)
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
-### **1.1.Cấp Clock cho ngoại vi**
+### **1.Quy trình làm việc với GPIO**
 
-* **Module RCC** cung cấp các hàm để cấu hình xung clock
+#### **1.1. Cấp xung clock (RCC Configuration)**
 
-`RCC_APB1PeriphClockCmd`
+* **Trên STM32, các ngoại vi đều bị tắt clock mặc định để tiết kiệm năng lượng. Phải kích hoạt clock trước khi sử dụng.**
 
-`RCC_APB2PeriphClockCmd` 
-
-`RCC_AHBPeriphClockCmd`
+	`void RCC_APB2PeriphClockCmd(uint32_t RCC_APB2Periph, FunctionalState NewState);`
+	
+	`void RCC_APB1PeriphClockCmd(uint32_t RCC_APB1Periph, FunctionalState NewState);` 
+	
+	`void RCC_AHBPeriphClockCmd(uint32_t RCC_AHBPeriph, FunctionalState NewState);`
  
 * **Nhận 2 tham số**:
 
- ◦ Ngoại vi Clock
+	 ◦ Ngoại vi Clock
+	
+	 ◦ ENABLE/DISABLE
 
- ◦ ENABLE/DISABLE
+* **Định nghĩa các Port GPIO**:
 
-### **1.2.Cấu hình ngoại vi**
+		#define RCC_APB2Periph_GPIOA              ((uint32_t)0x00000004)
+		#define RCC_APB2Periph_GPIOB              ((uint32_t)0x00000008)
+		#define RCC_APB2Periph_GPIOC              ((uint32_t)0x00000010)
+		#define RCC_APB2Periph_GPIOD              ((uint32_t)0x00000020)
+		#define RCC_APB2Periph_GPIOE              ((uint32_t)0x00000040)
+		#define RCC_APB2Periph_GPIOF              ((uint32_t)0x00000080)
+		#define RCC_APB2Periph_GPIOG              ((uint32_t)0x00000100)
 
+*  **VD:**
 
-* **GPIO_Pin:** Chân cần được cấu hình 
+  		// Kích hoạt clock cho GPIOA và GPIOC
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC, ENABLE);
 
-`GPIO_Pin_<chân cần được cấu hình>`
+		// Vô hiệu hóa clock cho GPIOB
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, DISABLE);
 
+#### **1.2.Cấu hình GPIO**
+
+* **Structure cấu hình**
+
+		  typedef struct {
+		    uint16_t GPIO_Pin;             // Chân GPIO cần cấu hình
+		    GPIOSpeed_TypeDef GPIO_Speed;  // Tốc độ đáp ứng
+		    GPIOMode_TypeDef GPIO_Mode;    // Chế độ hoạt động
+		} GPIO_InitTypeDef;
+  
+* **Các chế độ hoạt động (GPIOMode_TypeDef)**
+
+		typedef enum {
+		    GPIO_Mode_AIN = 0x0,           // Analog Input
+		    GPIO_Mode_IN_FLOATING = 0x04,  // Floating Input
+		    GPIO_Mode_IPD = 0x28,          // Input Pull-Down
+		    GPIO_Mode_IPU = 0x48,          // Input Pull-Up
+		    GPIO_Mode_Out_OD = 0x14,       // Output Open-Drain
+		    GPIO_Mode_Out_PP = 0x10,       // Output Push-Pull
+		    GPIO_Mode_AF_OD = 0x1C,        // Alternate Function Open-Drain
+		    GPIO_Mode_AF_PP = 0x18         // Alternate Function Push-Pull
+		} GPIOMode_TypeDef;
 
  
-* **GPIO_Mode:** Chế độ muốn cấu hình
-    ```
-    typedef enum {
+* **Các tốc độ đáp ứng (GPIOSpeed_TypeDef)**
 
-        GPIO_Mode_AIN = 0x00,            //Analog Input
-        GPIO_Mode_IN_FLOATING = 0x04,    //Input bình thường
-        GPIO_Mode_IPD = 0x28,            //Input có điện trở kéo xuống    
-        GPIO_Mode_IPU = 0x48,            //Input có điện trở kéo lên
-        GPIO_Mode_Out_OD = 0x14,         //Output dạng open-drain
-        GPIO_Mode_Out_PP = 0x10,         //Output dạng push-pull
-        GPIO_Mode_AF_OD = 0x1C,          //Chế độ ngoại vi khác dạng open-drain
-        GPIO_Mode_AF_PP = 0x18           //Chế độ ngoại vi khác dạng push-pull
-    } GPIOMode_TypeDef;
-    ```
-* **GPIO_Speed:** Tốc độ đáp ứng của chân
+		typedef enum {
+		    GPIO_Speed_2MHz   = 0x02,      // Tốc độ thấp (2MHz)
+		    GPIO_Speed_10MHz  = 0x01,      // Tốc độ trung bình (10MHz)
+		    GPIO_Speed_50MHz  = 0x03       // Tốc độ cao (50MHz)
+		} GPIOSpeed_TypeDef;
 
-`GPIO_Speed_<tốc độ muốn cấu hình>`    
+  
+* **Ví dụ cấu hình:**
 
-### **1.3.Sử dụng ngoại vi**
+		GPIO_InitTypeDef GPIO_InitStructure;
+		
+		// Cấu hình chân PC13 làm Output Push-Pull
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+		GPIO_Init(GPIOC, &GPIO_InitStructure);
+		
+		// Cấu hình chân PA0 làm Input với điện trở kéo lên
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+		GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+### **3. Các hàm điều khiển GPIO**
 
-* **Để gắn các giá trị muốn cấu hình vào các thanh ghi** thì ta sử dụng hàm "GPIO_Init" có 2 tham số cung cấp các hàm để cấu hình xung clock
+#### **3.1. Ghi dữ liệu xuống Output**
 
+* **Các hàm cơ bản:**
 
-  ◦Tham số đầu là tên ngoại vi muốn cấu hình
+		// Set bit (xuất mức logic 1)
+		void GPIO_SetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+		
+		// Reset bit (xuất mức logic 0)
+		void GPIO_ResetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+		
+		// Ghi giá trị cụ thể cho một chân
+		void GPIO_WriteBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, BitAction BitVal);
+		
+		// Ghi giá trị cho toàn bộ port
+		void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal);
+ 
+* **Ví dụ sử dụng:**
 
-  ◦Tham số thứ hai là con trỏ đến struct **"GPIO_InitTypeDef"**
+		// Bật LED trên PC13 (giả sử LED nối VCC, chân GPIO xuất 0 để bật)
+		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+		
+		// Tắt LED trên PC13
+		GPIO_SetBits(GPIOC, GPIO_Pin_13);
+		
+		// Sử dụng GPIO_WriteBit
+		GPIO_WriteBit(GPIOC, GPIO_Pin_13, Bit_SET);    // Tắt LED
+		GPIO_WriteBit(GPIOC, GPIO_Pin_13, Bit_RESET);  // Bật LED
+		
+		// Toggle LED sử dụng GPIO_ReadOutputDataBit
+		if (GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13) == Bit_SET) {
+		    GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+		} else {
+		    GPIO_SetBits(GPIOC, GPIO_Pin_13);
+		}
 
-```
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
-    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOC, &GPIO_InitStruct);
-```
+#### **3.2. Đọc dữ liệu từ Input**
 
-* **Các hàm thông dụng để điều khiển GPIO** 
+* **Các hàm đọc dữ liệu:**
 
-```
-    uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);            \\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là INPUT (IDR), có thể đọc nhiều pin nhờ toán tử OR
-    uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx);                                 \\Đọc giá trị nguyên cổng GPIO được cấu hình là INPUT (IDR)
-    uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);           \\Đọc giá trị 1 bit trong cổng GPIO được cấu hình là OUTPUT (ODR), có thể đọc nhiều pin nhờ toán tử OR
-    uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx);                                \\Đọc giá trị nguyên cổng GPIO được cấu hình là OUTPUT (ODR)
-    void GPIO_SetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);                        \\Cho giá trị 1 bit trong cổng GPIO = 1, có thể ghi nhiều pin nhờ toán tử OR
-    void GPIO_ResetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);                      \\Cho giá trị 1 bit trong cổng GPIO = 0, có thể ghi nhiều pin nhờ toán tử OR
-    void GPIO_WriteBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, BitAction BitVal);     \\Ghi giá trị "BitVal" vào 1 bit trong cổng GPIO, có thể ghi nhiều pin nhờ toán tử OR
-    void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal);                           \\Ghi giá trị "PortVal" vào nguyên cổng GPIO
-```
+		// Đọc trạng thái một chân input
+		uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+		
+		// Đọc giá trị toàn bộ port input
+		uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx);
+		
+		// Đọc trạng thái một chân output (trạng thái thanh ghi ODR)
+		uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+		
+		// Đọc giá trị toàn bộ port output
+		uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx);
+		 
+* **Ví dụ sử dụng:**
 
-### **1.4.Kiến thức cần chú ý**
+		// Đọc trạng thái nút nhấn trên PA0 (Input Pull-Up)
+		if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) == Bit_RESET) {
+		    // Nút được nhấn (mức 0 do Pull-Up)
+		    GPIO_ResetBits(GPIOC, GPIO_Pin_13); // Bật LED
+		} else {
+		    // Nút không được nhấn
+		    GPIO_SetBits(GPIOC, GPIO_Pin_13);   // Tắt LED
+		}
+		
+		// Đọc nhiều chân cùng lúc
+		uint16_t input_status = GPIO_ReadInputData(GPIOA);
+		if ((input_status & (GPIO_Pin_0 | GPIO_Pin_1)) == (GPIO_Pin_0 | GPIO_Pin_1)) {
+		    // Cả PA0 và PA1 đều ở mức cao
+		}
 
-#### **1.4.1.Pull-Up vs Pull-Down ???**
+### **4.Kiến thức cần chú ý**
+
+#### **4.1.Pull-Up vs Pull-Down ???**
 
 
 ![Image](https://github.com/user-attachments/assets/2e06645d-579f-4b64-970c-f09a46cf949f)
@@ -129,7 +209,7 @@
 
 
 
-#### **1.4.2.Các chế độ input khác**
+#### **4.2.Các chế độ input khác**
 
 * **Input-Floating:**
 
@@ -153,7 +233,7 @@
     ◦ **Lưu ý:** Dễ bị nhiễu
     
 
-#### **1.4.3.Các chế độ output**
+#### **4.3.Các chế độ output**
 
 * **Output Push-Pull:**
 
@@ -174,7 +254,7 @@
 
 
 
-#### **1.4.4.Các chế độ Alternate Function**
+#### **4.4.Các chế độ Alternate Function**
 
 
 * **AF-Push Pull:**
