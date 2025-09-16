@@ -1746,7 +1746,7 @@ while(1){
 
 ## BÀI 7: CÁC LOẠI NGẮT
 
-### **7.1.Ngắt ngoài**
+### **1. Ngắt ngoài (EXTI)**
 
 
 * **Sơ đồ**
@@ -1754,9 +1754,11 @@ while(1){
 ![Image](https://github.com/user-attachments/assets/b8531dc8-d8a1-4fea-b10b-90365810da53)
 
 
-#### **7.1.1.Tổng Quan**
+#### **1.1. Tổng quan**
 
-* **Số lượng line ngắt:** STM32F103 hỗ trợ 16 line ngắt ngoài (EXTI Line 0 đến EXTI Line 15)
+* **Số lượng line ngắt:**
+
+  ◦ STM32F103 hỗ trợ 16 EXTI line (Line 0 đến Line 15), tương ứng với các chân GPIO cùng số thứ tự (ví dụ: PA0, PB0, PC0 cho Line 0).
 
 * **Kết nối với GPIO:** 
 
@@ -1764,42 +1766,52 @@ while(1){
 
   ◦ Tuy nhiên, chỉ một chân duy nhất trong số các chân cùng thứ tự được chọn làm nguồn ngắt cho một EXTI line.
 
-```
-Ví dụ: Nếu PB0 được chọn cho EXTI Line 0, các chân như PA0, PC0,... không thể được sử dụng đồng thời cho ngắt ngoài trên cùng Line 0.
-```
+  
+		Ví dụ: Nếu PB0 được chọn cho EXTI Line 0, các chân như PA0, PC0,... không thể được sử dụng đồng thời cho ngắt ngoài trên cùng Line 0.
+  
 
-* **Mục đích:** Ngắt ngoài được sử dụng để phát hiện các sự kiện từ bên ngoài (ví dụ: nhấn nút, tín hiệu từ cảm biến) và kích hoạt xử lý tức thời.
+* **Mục đích:**
 
-#### **7.1.2.Cấu hình ngắt ngoài**
+  ◦ Ngắt ngoài được sử dụng để phát hiện các sự kiện từ bên ngoài (ví dụ: nhấn nút, tín hiệu từ cảm biến) và kích hoạt xử lý tức thời.
 
-* **Bật clock**
+* **Thanh ghi chính:**
+
+  ◦ IMR (Interrupt Mask Register): Bật/tắt ngắt cho mỗi line.
+  
+  ◦ EMR (Event Mask Register): Bật/tắt sự kiện (không gọi ISR).
+  
+  ◦ RTSR/FTSR (Rising/Falling Trigger Selection Register): Chọn cạnh kích hoạt.
+  
+  ◦ PR (Pending Register): Lưu trạng thái ngắt chờ xử lý.
+
+#### **1.2.Cấu hình ngắt ngoài**
+
+* **1.2.1. Bật clock**
 
   ◦ **GPIO:** Port chứa chân được chọn làm nguồn ngắt (ví dụ: GPIOB cho PB0).
 
   ◦ **AFIO:** Hệ thống Alternate Function Input/Output (AFIO) để liên kết chân GPIO với EXTI line.
 
-```
-  void RCC_Config(){
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-}
-```
 
-* **Cấu hình chân GPIO**
+		  void RCC_Config(){
+			RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+		}
+
+* **1.2.2. Cấu hình chân GPIO**
 
   ◦ Chân GPIO được sử dụng cho ngắt ngoài cần được cấu hình ở **chế độ Input**.
 
   ◦ Tùy thuộc vào loại cạnh ngắt (rising, falling, hoặc cả hai), có thể cấu hình thêm trở kéo lên (pull-up) hoặc kéo xuống (pull-down) để đảm bảo trạng thái ổn định.
 
-```
-GPIO_InitTypeDef GPIOInitStructure;
-GPIOInitStructure.GPIO_Pin = GPIO_Pin_0;        // Chọn chân PB0
-GPIOInitStructure.GPIO_Mode = GPIO_Mode_IPU;    // Input với pull-up
-GPIO_Init(GPIOB, &GPIOInitStructure);
 
-```
+		GPIO_InitTypeDef GPIOInitStructure;
+		GPIOInitStructure.GPIO_Pin = GPIO_Pin_0;        // Chọn chân PB0
+		GPIOInitStructure.GPIO_Mode = GPIO_Mode_IPU;    // Input với pull-up
+		GPIO_Init(GPIOB, &GPIOInitStructure);
 
-* **Liên kết chân GPIO với EXTI Line**
+
+* **1.2.3. Liên kết chân GPIO với EXTI Line**
 
   ◦ Sử dụng hàm **GPIO_EXTILineConfig** để liên kết một chân GPIO với một EXTI line
   
@@ -1810,41 +1822,43 @@ GPIO_Init(GPIOB, &GPIOInitStructure);
     GPIO_PinSource: Chọn số thứ tự của chân   
     ```
 
-* **Cấu hình EXTI**
+* **1.2.4. Cấu hình EXTI**
 
 Các tham số của ngắt ngoài được định nghĩa trong struct EXTI_InitTypeDef:
 
   ◦ **EXTI_Line:** Xác định EXTI line cụ thể (EXTI_Line0 đến EXTI_Line15).
 
   ◦ **EXTI_Mode:** Chế độ hoạt động của EXTI
-```
-EXTI_Mode_Interrupt: Kích hoạt ngắt để gọi hàm xử lý ngắt.
-EXTI_Mode_Event: Kích hoạt sự kiện (thường dùng cho các mục đích khác, không gọi ngắt).
-```
+
+		EXTI_Mode_Interrupt: Kích hoạt ngắt để gọi hàm xử lý ngắt.
+		EXTI_Mode_Event: Kích hoạt sự kiện (thường dùng cho các mục đích khác, không gọi ngắt).
+
   ◦ **EXTI_Trigger:** Loại cạnh xung kích hoạt ngắt
 
-EXTI_Trigger_Rising: Cạnh lên (tín hiệu từ thấp lên cao).
-```
-Khi nào nên dùng Trigger Rising???
+		EXTI_Trigger_Rising: Cạnh lên (tín hiệu từ thấp lên cao).
 
-Nút nhấn với pull-down:
-Tình huống: Nút nhấn được nối với VDD (3.3V hoặc 5V) và chân GPIO được cấu hình với trở kéo xuống (pull-down) nội hoặc ngoại. Khi không nhấn, chân GPIO ở mức thấp (LOW); khi nhấn, chân GPIO lên mức cao (HIGH).
+* **1.2.5. Khi nào nên dùng Trigger Rising???**
 
-Lý do chọn Trigger Rising: Ngắt sẽ kích hoạt khi nhấn nút, vì tín hiệu chuyển từ LOW sang HIGH (cạnh lên).
+  ◦ Nút nhấn với pull-down:
 
-Ví dụ ứng dụng: 
-Các hệ thống yêu cầu nút nhấn active-high, như một số bảng điều khiển công nghiệp.
+		Tình huống: Nút nhấn được nối với VDD (3.3V hoặc 5V) và chân GPIO được cấu hình với trở kéo xuống (pull-down) nội hoặc ngoại. Khi không nhấn, chân GPIO ở mức thấp (LOW); khi nhấn, chân GPIO lên mức cao (HIGH).
 
-Cảm biến hoặc thiết bị xuất tín hiệu active-high:
-Tình huống: Một số cảm biến hoặc mô-đun (như cảm biến ánh sáng, cảm biến nhiệt độ) xuất tín hiệu mức cao (HIGH) khi phát hiện sự kiện.
+  ◦	Lý do chọn Trigger Rising:
 
-Lý do chọn Trigger Rising: Để phát hiện sự kiện khi tín hiệu từ LOW (trạng thái nghỉ) chuyển sang HIGH (trạng thái hoạt động).
-Ví dụ ứng dụng: Hệ thống giám sát môi trường, phát hiện ánh sáng hoặc nhiệt độ vượt ngưỡng.
-```
-EXTI_Trigger_Falling: Cạnh xuống (tín hiệu từ cao xuống thấp).
-EXTI_Trigger_Rising_Falling: Cả hai cạnh.
+  		Ngắt sẽ kích hoạt khi nhấn nút, vì tín hiệu chuyển từ LOW sang HIGH (cạnh lên).
 
-```
+  ◦ Ví dụ ứng dụng:
+  
+		Các hệ thống yêu cầu nút nhấn active-high, như một số bảng điều khiển công nghiệp.
+  
+		Cảm biến hoặc thiết bị xuất tín hiệu active-high:
+		Tình huống: Một số cảm biến hoặc mô-đun (như cảm biến ánh sáng, cảm biến nhiệt độ) xuất tín hiệu mức cao (HIGH) khi phát hiện sự kiện.
+
+
+		EXTI_Trigger_Falling: Cạnh xuống (tín hiệu từ cao xuống thấp).
+		EXTI_Trigger_Rising_Falling: Cả hai cạnh.
+
+
 Khi nào nên dùng Trigger Falling???
 
 Nút nhấn với pull-up:
@@ -1858,16 +1872,16 @@ Cảm biến hoặc thiết bị xuất tín hiệu active-low
 Tình huống: Một số cảm biến (như cảm biến hồng ngoại, cảm biến khoảng cách) xuất tín hiệu mức thấp (LOW) khi phát hiện sự kiện (ví dụ: vật cản, chuyển động).
 
 Lý do chọn Trigger Falling: Để phát hiện sự kiện khi tín hiệu từ HIGH (trạng thái nghỉ) chuyển sang LOW (trạng thái hoạt động).
+
 Ví dụ ứng dụng: Hệ thống báo động, phát hiện vật cản.
-```
+
 
   ◦ **EXTI_LineCmd:** Kích hoạt hoặc vô hiệu hóa EXTI line
 
-```
-ENABLE: Bật ngắt
-DISABLE: Tắt ngắt.
-```
-```
+		ENABLE: Bật ngắt
+		DISABLE: Tắt ngắt.
+
+
 EXTI_InitTypeDef EXTIInitStruct;
 EXTIInitStruct.EXTI_Line = EXTI_Line0;           // Chọn EXTI Line 0
 EXTIInitStruct.EXTI_Mode = EXTI_Mode_Interrupt;  // Chế độ ngắt
