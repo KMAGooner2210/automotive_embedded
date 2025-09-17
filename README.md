@@ -1764,7 +1764,7 @@ while(1){
 
   ◦ Mỗi EXTI line có thể được liên kết với các chân GPIO có cùng số thứ tự
 
-  ◦ Tuy nhiên, chỉ một chân duy nhất trong số các chân cùng thứ tự được chọn làm nguồn ngắt cho một EXTI line.
+  ◦ Tuy nhiên, chỉ một chân duy nhất trong số các chân cùng thứ tự được chọn làm nguồn ngắt cho một EXTI line.Việc chọn được thực hiện qua thanh ghi AFIO_EXTICRx.
 
   
 		Ví dụ: Nếu PB0 được chọn cho EXTI Line 0, các chân như PA0, PC0,... không thể được sử dụng đồng thời cho ngắt ngoài trên cùng Line 0.
@@ -1776,70 +1776,92 @@ while(1){
 
 * **Thanh ghi chính:**
 
-  ◦ IMR (Interrupt Mask Register): Bật/tắt ngắt cho mỗi line.
+  ◦ **IMR (Interrupt Mask Register):** Bật/tắt ngắt cho mỗi line (bit 0-15: 1 = bật, 0 = tắt). Nếu bật, ngắt sẽ gọi ISR qua NVIC.
   
-  ◦ EMR (Event Mask Register): Bật/tắt sự kiện (không gọi ISR).
+  ◦ **EMR (Event Mask Register):** Bật/tắt sự kiện (bit tương tự IMR). Sự kiện không gọi ISR mà chỉ kích hoạt các module khác (như DMA hoặc Wake-up từ Low Power mode).
   
-  ◦ RTSR/FTSR (Rising/Falling Trigger Selection Register): Chọn cạnh kích hoạt.
-  
-  ◦ PR (Pending Register): Lưu trạng thái ngắt chờ xử lý.
+  ◦ **RTSR (Rising Trigger Selection Register):** Chọn cạnh lên cho mỗi line (1 = bật rising trigger).
+
+  ◦ **FTSR (Falling Trigger Selection Register):** Chọn cạnh xuống cho mỗi line (1 = bật falling trigger). Có thể bật cả hai để phát hiện thay đổi (change trigger).
+
+  ◦ **PR (Pending Register):** Lưu trạng thái ngắt chờ xử lý (bit 1 = ngắt đang chờ). Phải xóa bit này trong ISR để tránh ngắt lặp.
 
 #### **1.2.Cấu hình ngắt ngoài**
 
 * **1.2.1. Bật clock**
 
-  ◦ **GPIO:** Port chứa chân được chọn làm nguồn ngắt (ví dụ: GPIOB cho PB0).
+  ◦ **Bật clock cho GPIO port chứa chân ngắt và AFIO (để cấu hình liên kết EXTI).**
 
-  ◦ **AFIO:** Hệ thống Alternate Function Input/Output (AFIO) để liên kết chân GPIO với EXTI line.
+  ◦ **Hàm:** `RCC_APB2PeriphClockCmd(uint32_t RCC_APB2Periph, FunctionalState NewState)`
+    
+    **Tham số:**
 
+            RCC_APB2Periph: Chọn peripheral (ví dụ: RCC_APB2Periph_GPIOA cho port A, RCC_APB2Periph_AFIO cho AFIO).
+
+            NewState: ENABLE hoặc DISABLE.
+    
+  ◦ VD:
 
 		  void RCC_Config(){
-			RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+			RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 		}
-
+        
 * **1.2.2. Cấu hình chân GPIO**
 
-  ◦ Chân GPIO được sử dụng cho ngắt ngoài cần được cấu hình ở **chế độ Input**.
+  ◦ Chân GPIO phải ở chế độ Input để nhận tín hiệu ngoài.
 
-  ◦ Tùy thuộc vào loại cạnh ngắt (rising, falling, hoặc cả hai), có thể cấu hình thêm trở kéo lên (pull-up) hoặc kéo xuống (pull-down) để đảm bảo trạng thái ổn định.
+  ◦ Sử dụng pull-up/pull-down để tránh trạng thái floating (nhiễu).
+
+  ◦ **Struct:** `GPIO_InitTypeDef`
 
 
-		GPIO_InitTypeDef GPIOInitStructure;
-		GPIOInitStructure.GPIO_Pin = GPIO_Pin_0;        // Chọn chân PB0
-		GPIOInitStructure.GPIO_Mode = GPIO_Mode_IPU;    // Input với pull-up
-		GPIO_Init(GPIOB, &GPIOInitStructure);
+        GPIO_Pin: Chọn pin (ví dụ: GPIO_Pin_0 cho pin 0).
+        GPIO_Mode: Chế độ (ví dụ: GPIO_Mode_IPU cho Input Pull-Up, GPIO_Mode_IPD cho Input Pull-Down, GPIO_Mode_IN_FLOATING cho Input không pull).
+        GPIO_Speed: Không cần thiết cho Input (có thể bỏ qua hoặc đặt GPIO_Speed_50MHz).
 
+  ◦ **Hàm:** `GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef* GPIO_InitStruct)`
+
+  ◦ VD:
+
+        GPIO_InitTypeDef GPIOInitStructure;
+        GPIOInitStructure.GPIO_Pin = GPIO_Pin_0;          // Chọn PB0
+        GPIOInitStructure.GPIO_Mode = GPIO_Mode_IPU;      // Input với pull-up (tránh nhiễu khi không kết nối)
+        GPIO_Init(GPIOB, &GPIOInitStructure);  
 
 * **1.2.3. Liên kết chân GPIO với EXTI Line**
 
-  ◦ Sử dụng hàm **GPIO_EXTILineConfig** để liên kết một chân GPIO với một EXTI line
+  ◦ **Hàm:** `GPIO_EXTILineConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource)`
   
-  ◦ Tham số:
+  ◦ **Tham số:**
 
-    ```
-    GPIO_PortSource: Chọn port GPIO
-    GPIO_PinSource: Chọn số thứ tự của chân   
-    ```
+    
+        GPIO_PortSource: Port nguồn (ví dụ: GPIO_PortSourceGPIOB cho port B).
+        GPIO_PinSource: Số thứ tự pin (ví dụ: GPIO_PinSource0 cho pin 0).
+    
+  ◦ VD:
+
+        GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource0); // Liên kết PB0 với EXTI Line 0.
 
 * **1.2.4. Cấu hình EXTI**
 
-Các tham số của ngắt ngoài được định nghĩa trong struct EXTI_InitTypeDef:
+  ◦ **Struct:** `EXTI_InitTypeDef`
 
-  ◦ **EXTI_Line:** Xác định EXTI line cụ thể (EXTI_Line0 đến EXTI_Line15).
+        EXTI_Line: Line cụ thể (ví dụ: EXTI_Line0 đến EXTI_Line15).
+        EXTI_Mode: EXTI_Mode_Interrupt (gọi ISR) hoặc EXTI_Mode_Event (không gọi ISR).
+        EXTI_Trigger: EXTI_Trigger_Rising (cạnh lên), EXTI_Trigger_Falling (cạnh xuống), EXTI_Trigger_Rising_Falling (cả hai).
+        EXTI_LineCmd: ENABLE hoặc DISABLE.
 
-  ◦ **EXTI_Mode:** Chế độ hoạt động của EXTI
+  ◦ **Hàm:** `EXTI_Init(EXTI_InitTypeDef* EXTI_InitStruct)`
 
-		EXTI_Mode_Interrupt: Kích hoạt ngắt để gọi hàm xử lý ngắt.
-		EXTI_Mode_Event: Kích hoạt sự kiện (thường dùng cho các mục đích khác, không gọi ngắt).
+        EXTI_InitTypeDef EXTI_InitStructure;
+        EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+        EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+        EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  // Phát hiện cạnh xuống (nút bấm nhấn)
+        EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+        EXTI_Init(&EXTI_InitStructure);
 
-  ◦ **EXTI_Trigger:** Loại cạnh xung kích hoạt ngắt
 
-		EXTI_Trigger_Rising: Cạnh lên (tín hiệu từ thấp lên cao).
-
-
-
-### **7.2.Ngắt Timer**
+### **2. Ngắt Timer**
 
 * **Sơ đồ**
 
@@ -1847,13 +1869,13 @@ Các tham số của ngắt ngoài được định nghĩa trong struct EXTI_Ini
 ![Image](https://github.com/user-attachments/assets/b0736d5c-3a49-41bf-95db-063762fdb254)
 
 
-#### **7.2.1.Tổng quan**
+#### **2.1. Tổng quan**
 
 * **Timer** trên STM32F103 được sử dụng để tạo các sự kiện định thời, chẳng hạn như tạo ngắt định kỳ, đo thời gian, hoặc điều khiển PWM.
 
 * **Ngắt Timer:** Khi Timer đếm đến một giá trị xác định (gọi là Period), nó có thể kích hoạt ngắt để thực hiện các tác vụ được lập trình trong hàm xử lý ngắt.
 
-* Ngắt Timer thường được dùng để: 
+* **Ngắt Timer thường được dùng để:** 
 
   ◦ Tạo độ trễ chính xác (thay thế cho các hàm delay thô sơ).
 
@@ -1862,149 +1884,211 @@ Các tham số của ngắt ngoài được định nghĩa trong struct EXTI_Ini
   ◦ Điều khiển các tác vụ định kỳ (ví dụ: gửi dữ liệu qua UART mỗi 1 giây).
 
 
-#### **7.2.2.Cấu hình**
+#### **2.2. Cấu hình**
 
-* Sử dụng cấu trúc TIM_TimeBaseInitTypeDef để cấu hình các tham số cơ bản của Timer, bao gồm:
+**Cấu hình Timer bao gồm bật clock, init timebase, bật ngắt, cấu hình NVIC, và viết ISR.**
 
+* **2.2.1. Bật clock:** `RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); (TIM2-5 trên APB1, TIM1 trên APB2).`
 
-  ◦ **TIM_Prescaler:** Chia tần số clock của Timer để xác định tần số đếm (tick frequency)
+* **2.2.2. Cấu hình TimeBase:**
 
-  ```
-  Công thức: Timer tick frequency = Timer clock / (TIM_Prescaler + 1).
+    * **Struct:** `TIM_TimeBaseInitTypeDef`
 
-  Ví dụ: Với clock hệ thống 72 MHz, TIM_Prescaler = 7199 => tick frequency = 72 MHz / (7199 + 1) = 10 kHz (1 tick = 0.1 ms).
-  ```
+        ◦ **TIM_Prescaler (uint16_t):** Chia tần số clock để giảm tốc độ đếm. Giá trị từ 0-65535.
 
-  ◦ **TIM_Period:** Xác định số lần đếm trước khi Timer tạo ngắt (khi bộ đếm đạt giá trị này, sự kiện update xảy ra).
+            Công thức: Tick frequency = Timer clock / (TIM_Prescaler + 1).
 
-  ```
-  Ví dụ: TIM_Period = 9 với tick frequency 10 kHz => ngắt mỗi 10 ticks = 10 * 0.1 ms = 1 ms.
-  ```
-
-  ◦ **TIM_ClockDivision:** Phân chia clock trước khi vào Timer (thường đặt TIM_CKD_DIV1 để không chia).
-
-  ◦ **TIM_CounterMode:** Chế độ đếm
-
-* **Kích hoạt ngắt:** Sử dụng hàm `TIM_ITConfig(TIMx, TIM_IT_Update, ENABLE)` để bật ngắt khi Timer đạt giá trị TIM_Period.
-
-* **Bật Timer:** Sử dụng hàm TIM_Cmd(TIMx, ENABLE) để khởi động Timer.
-```
-void TIM_Config(void) {
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
-    
-    // Bật clock cho TIM2
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-    
-    // Cấu hình Timer 2: ngắt mỗi 1ms
-    // Timer clock = 72 MHz, Prescaler = 7200-1 => tick = 72 MHz / 7200 = 10 kHz (0.1ms)
-    // Period = 10-1 => 10 ticks = 10 * 0.1ms = 1ms
-    TIM_TimeBaseInitStruct.TIM_Prescaler = 7200 - 1;
-    TIM_TimeBaseInitStruct.TIM_Period = 10 - 1;
-    TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
-    
-    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
-    
-    // Bật ngắt cho Timer 2
-    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-    
-    // Khởi động Timer
-    TIM_Cmd(TIM2, ENABLE);
-}
-```
-
-* **Cấu hình NVIC:**
-```
-void NVIC_Config(void) {
-    NVIC_InitTypeDef NVIC_InitStruct;
-    
-    NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
-    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
-    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
-    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-    
-    NVIC_Init(&NVIC_InitStruct);
-}
-```
-
-* **Hàm xử lý ngắt Timer:**
-
-  ◦ Mỗi Timer có một hàm xử lý ngắt cố định, đặt tên là `TIMx_IRQHandler` (với x là số Timer, ví dụ: TIM2_IRQHandler).
-
-  ◦ Quy trình xử lý ngắt
-
-```
-1. Kiểm tra cờ ngắt: Sử dụng hàm TIM_GetITStatus(TIMx, TIM_IT_Update) để xác định ngắt có thực sự xảy ra từ sự kiện update của Timer hay không.
-Trả về SET nếu có ngắt, RESET nếu không.
-
-2.Thực thi tác vụ: Thực hiện các công việc cần thiết trong hàm xử lý ngắt (ví dụ: tăng biến đếm, đặt cờ).
-
-3.Xóa cờ ngắt: Sử dụng hàm TIM_ClearITPendingBit(TIMx, TIM_IT_Update) để xóa cờ ngắt, tránh ngắt lặp lại liên tục.
-```
-```
-volatile uint16_t count = 0;
-
-void TIM2_IRQHandler(void) {
-    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-        count++; // Tăng biến đếm mỗi 1ms
-        TIM_ClearITPendingBit(TIM2, TIM_IT_Update); // Xóa cờ ngắt
-    }
-}
-```
-
-* **Hàm delay sử dụng Timer**
-```
-void delay_ms(uint16_t time) {
-    count = 0; // Reset biến đếm
-    while (count < time) {
-        // Chờ ngắt Timer tăng biến count mỗi 1ms
-    }
-}
-```
-Giải thích: Với Timer được cấu hình ngắt mỗi 1ms, biến count tăng lên 1 mỗi lần ngắt. Hàm delay_ms chờ cho đến khi count đạt giá trị time (tính bằng mili-giây).
+            Clock hệ thống thường 72MHz (HSI/PLL). Prescaler làm chậm clock để dễ tính toán thời gian. Ví dụ: Prescaler = 71 → Tick freq = 72MHz / 72 = 1MHz (1 tick = 1μs).
+            Lưu ý: Prescaler +1 vì đếm từ 0.
 
 
-### **7.3.Ngắt truyền thông**
+        ◦ **TIM_Period (uint16_t):** Giá trị counter đạt để reset và tạo ngắt (Update Event). Từ 0-65535 (cho 16-bit Timer).
 
-#### Ngắt UART
+            Công thức thời gian ngắt: Interval = (TIM_Period + 1) / Tick frequency.
+            
+            Counter đếm từ 0 đến Period, rồi reset. Ví dụ: Period = 999 với tick 1kHz → Interval = 1000 / 1000 = 1s.
+
+            Lưu ý: Period +1 vì đếm bao gồm 0.
+
+        ◦ **TIM_ClockDivision (uint16_t):** Chia clock thêm trước prescaler.
+
+            TIM_CKD_DIV1 (không chia, mặc định)
+            
+            TIM_CKD_DIV2 (chia 2)
+
+            TIM_CKD_DIV4 (chia 4)
+
+        ◦ **TIM_CounterMode (uint16_t):** Chế độ đếm
+
+            TIM_CounterMode_Up: Đếm lên từ 0 đến Period.
+            
+            TIM_CounterMode_Down: Đếm xuống từ Period đến 0.
+
+            TIM_CounterMode_CenterAligned1/2/3: Cho PWM, ít dùng cho ngắt cơ bản.
+
+    * **Hàm:** `TIM_TimeBaseInit(TIM_TypeDef* TIMx, TIM_TimeBaseInitTypeDef* TIM_TimeBaseInitStruct)`
+
+        ◦ **VD:** ngắt mỗi 1ms với clock 72MHz
+
+            TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+            RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+            // Tick freq = 72MHz / (7199 + 1) = 10kHz (1 tick = 0.1ms)
+            // Interval = (9 + 1) / 10kHz = 10 / 10000 = 1ms
+            TIM_TimeBaseInitStruct.TIM_Prescaler = 7199;  // Chia clock thành 10kHz
+            TIM_TimeBaseInitStruct.TIM_Period = 9;        // Đếm 10 ticks để ngắt
+            TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;  // Không chia thêm
+            TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;  // Đếm lên
+
+            TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+
+* **2.2.3. Cấu hình TimeBase:**
+
+    * **Kích hoạt ngắt:** `TIM_ITConfig(TIM_TypeDef* TIMx, uint16_t TIM_IT, FunctionalState NewState)`
+
+        ◦ **Tham số:** 
+
+            TIM_IT_Update cho Update Event, NewState = ENABLE.
+
+        ◦ **VD:** 
+
+            TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+
+    * **Bật Timer:** `TIM_Cmd(TIM_TypeDef* TIMx, FunctionalState NewState)`
+
+        ◦ **VD:** 
+
+            TIM_Cmd(TIM2, ENABLE);
+
+    * **Cấu hình NVIC:** 
+
+        ◦ **Struct:** `NVIC_InitTypeDef`
+
+            NVIC_IRQChannel: Kênh IRQ (ví dụ: TIM2_IRQn cho TIM2).
+            NVIC_IRQChannelPreemptionPriority: Độ ưu tiên preempt (0-15, thấp hơn = ưu tiên cao hơn).
+            NVIC_IRQChannelSubPriority: Độ ưu tiên sub (0-15).
+            NVIC_IRQChannelCmd: ENABLE.
+
+        ◦ **Hàm:** `NVIC_Init(NVIC_InitTypeDef* NVIC_InitStruct)`
+
+            NVIC_InitTypeDef NVIC_InitStruct;
+            NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+            NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;  // Ưu tiên cao
+            NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+            NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+            NVIC_Init(&NVIC_InitStruct);
+
+    * **Hàm xử lý ngắt Timer:** 
+
+        ◦ **Tên cố định:** `TIMx_IRQHandler(void)` `(ví dụ: TIM2_IRQHandler).`
+
+        ◦ **Quy trình:** 
+
+            Kiểm tra cờ: TIM_GetITStatus(TIM_TypeDef* TIMx, uint16_t TIM_IT) → Trả về SET nếu ngắt từ Update.
+      
+            Thực thi tác vụ (ví dụ: tăng biến đếm).
+      
+            Xóa cờ: TIM_ClearITPendingBit(TIM_TypeDef* TIMx, uint16_t TIM_IT)
+
+        ◦ **VD:** 
+
+            volatile uint16_t count = 0;
+
+            void TIM2_IRQHandler(void) {
+                if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+                    count++;  // Tăng mỗi 1ms
+                    TIM_ClearITPendingBit(TIM2, TIM_IT_Update);  // Phải xóa để tránh lặp ngắt
+                }
+            }
+
+        ◦ **Lưu ý:**  Không xóa cờ → Ngắt lặp vô tận. Giữ ISR ngắn để tránh stack overflow.
+
+    * **Hàm delay sử dụng Timer:** 
+
+
+            void delay_ms(uint16_t time) {
+                count = 0;  // Reset
+                while (count < time);  // Chờ count tăng bởi ISR
+            }
+
+### **3. Ngắt truyền thông**
+
+#### **3.1. Tổng quan**
 
 ![Image](https://github.com/user-attachments/assets/9affbbd5-a18d-40d2-9c22-588a47d195df)
 
-* Trước khi cho phép UART hoạt động, cần kích hoạt ngắt UART bằng cách gọi hàm **USART_ITConfig()**;
+#### **3.2. Cấu hình**
 
-* Ở NVIC, ta cấu hình tương tự như ngắt ngoài EXTI, tuy nhiên NVIC_IRQChannel được đổi thành **USART_IRQn** để khớp với line ngắt timer.
+* **Kích hoạt ngắt UART:** Sau khi cấu hình UART, dùng `USART_ITConfig(USART_TypeDef* USARTx, uint16_t USART_IT, FunctionalState NewState)`
 
-* Hàm phục vụ ngắt UART được đặt tên : **USARTx_IRQHandler()**
+    * **Tham số:** 
 
-   ◦ Kiểm tra ngắt 
+        ◦ **USART_IT** 
 
-   ◦ Nhận và lưu data từ USART1
+            USART_IT_RXNE (RX not empty)
 
-   ◦ Kiểm tra cờ ngắt truyền,đảm bảo UART đang rỗi
+            USART_IT_TXE (TX empty)
 
-   ◦ Truyền lại data vừa nhận được sang máy tính
+            USART_IT_TC (Transmission Complete)
 
-   ◦ Xóa cờ ngắt,thoát khỏi hàm
+        ◦ **NewState** 
 
-* Hàm kiểm tra cờ ngắt : **USART_GetITStatus**
+            ENABLE
+            
+* **Cấu hình NVIC:** Tương tự Timer, nhưng IRQ channel là `USART1_IRQn (cho USART1)`
 
-* Hàm kiểm tra trạng thái của quá trình truyền dữ liệu : **USART_GetFlagStatus(USART_InitTypeDef * USARTx,uint32_t USART_FLAG)**
+    * **VD:** 
 
-   ```
-   void UART1_IRQHandler(){
-      uint8_t data = 0x00;
-      if(USART_GetITStatus(USART1,USART_IT_RXNE) != RESET){
-         while(!USART_GetFlagStatus(USART1,USART_FLAG_RXNE));
-         data = USART_ReceiveData(USART1);
-           if(USART_GetITStatus(USART1,USART_IT_TXE) != RESET){
-              USART_SendData(USART1,data);
-              while(USART_GetFlagStatus(USART1,USART_FLAG_TC) == RESET) ;
-          }
-      }
-      USART_ClearITPendingBit(USART1,USART_IT_RXNE);  
-   }
-  ```
+            NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
+
+#### **3.3. Hàm xử lý ngắt UART**
+
+* **Tên:** `USARTx_IRQHandler(void)` (ví dụ: `USART1_IRQHandler`).
+
+* **Quy trình:** 
+
+    * **1. Kiểm tra ngắt:** 
+
+        ◦ `USART_GetITStatus(USART_TypeDef* USARTx, uint16_t USART_IT)` → SET nếu có.
+
+    * **2. Xử lý: Nhận dữ liệu** 
+
+        ◦ `USART_ReceiveData(USART_TypeDef* USARTx)` (trả về uint16_t).
+
+    * **3. Kiểm tra flag** 
+
+        ◦ `USART_GetFlagStatus(USART_TypeDef* USARTx, uint16_t USART_FLAG)`
+
+            USART_FLAG_RXNE (RX ready)
+
+            USART_FLAG_TXE (TX ready)
+
+            USART_FLAG_TC (Transmission Complete)
+
+
+    * **4. Gửi dữ liệu** 
+
+        ◦ `USART_SendData(USART_TypeDef* USARTx, uint16_t Data)`
+
+    * **5. Xóa cờ** 
+
+        ◦ `USART_ClearITPendingBit(USART_TypeDef* USARTx, uint16_t USART_IT)`
+
+            void USART1_IRQHandler(void) {
+                uint8_t data = 0x00;
+                if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {  // Kiểm tra ngắt nhận
+                    data = USART_ReceiveData(USART1);  // Nhận data
+                    if (USART_GetFlagStatus(USART1, USART_FLAG_TXE) != RESET) {  // Kiểm tra TX ready
+                        USART_SendData(USART1, data);  // Gửi lại
+                        while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);  // Chờ hoàn tất gửi
+                    }
+                    USART_ClearITPendingBit(USART1, USART_IT_RXNE);  // Xóa cờ RX
+                }
+            }            
+
 </details>
+
 
 
 <details>
