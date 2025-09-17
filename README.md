@@ -1793,13 +1793,13 @@ while(1){
   ◦ **Bật clock cho GPIO port chứa chân ngắt và AFIO (để cấu hình liên kết EXTI).**
 
   ◦ **Hàm:** `RCC_APB2PeriphClockCmd(uint32_t RCC_APB2Periph, FunctionalState NewState)`
-    
-    **Tham số:**
+    ```
+        **Tham số:**
 
             RCC_APB2Periph: Chọn peripheral (ví dụ: RCC_APB2Periph_GPIOA cho port A, RCC_APB2Periph_AFIO cho AFIO).
 
             NewState: ENABLE hoặc DISABLE.
-    
+    ```
   ◦ VD:
 
 		  void RCC_Config(){
@@ -1814,11 +1814,19 @@ while(1){
 
   ◦ **Struct:** `GPIO_InitTypeDef`
 
-
+     ```
         GPIO_Pin: Chọn pin (ví dụ: GPIO_Pin_0 cho pin 0).
-        GPIO_Mode: Chế độ (ví dụ: GPIO_Mode_IPU cho Input Pull-Up, GPIO_Mode_IPD cho Input Pull-Down, GPIO_Mode_IN_FLOATING cho Input không pull).
-        GPIO_Speed: Không cần thiết cho Input (có thể bỏ qua hoặc đặt GPIO_Speed_50MHz).
+     ```
+     ```
+        GPIO_Mode: Chế độ Input
 
+            GPIO_Mode_IPU: Input với pull-up (phù hợp khi nút bấm nối GND, nhấn → low).
+            GPIO_Mode_IPD: Input với pull-down (nút bấm nối VCC, nhấn → high).
+            GPIO_Mode_IN_FLOATING: Input không pull (cần đảm bảo tín hiệu ổn định bên ngoài).
+    ```
+     ```
+        GPIO_Speed: Không cần thiết cho Input (có thể bỏ qua hoặc đặt GPIO_Speed_50MHz).
+    ```
   ◦ **Hàm:** `GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef* GPIO_InitStruct)`
 
   ◦ VD:
@@ -1846,11 +1854,26 @@ while(1){
 
   ◦ **Struct:** `EXTI_InitTypeDef`
 
-        EXTI_Line: Line cụ thể (ví dụ: EXTI_Line0 đến EXTI_Line15).
-        EXTI_Mode: EXTI_Mode_Interrupt (gọi ISR) hoặc EXTI_Mode_Event (không gọi ISR).
-        EXTI_Trigger: EXTI_Trigger_Rising (cạnh lên), EXTI_Trigger_Falling (cạnh xuống), EXTI_Trigger_Rising_Falling (cả hai).
-        EXTI_LineCmd: ENABLE hoặc DISABLE.
+    ```    
+    EXTI_Line: Line cụ thể (ví dụ: EXTI_Line0 đến EXTI_Line15).
+    ```
+    ```
+    EXTI_Mode: 
 
+        EXTI_Mode_Interrupt: Gọi ISR khi ngắt xảy ra (thông dụng).
+        EXTI_Mode_Event: Không gọi ISR, dùng cho các module khác (như DMA, Wake-up).
+    
+    ```
+    ```
+    EXTI_Trigger: 
+    
+        EXTI_Trigger_Rising: Phát hiện cạnh lên (low → high).
+        EXTI_Trigger_Falling: Phát hiện cạnh xuống (high → low).
+        EXTI_Trigger_Rising_Falling: Phát hiện cả hai (thay đổi trạng thái).
+    ```
+    ```    
+    EXTI_LineCmd: ENABLE hoặc DISABLE.
+    ```
   ◦ **Hàm:** `EXTI_Init(EXTI_InitTypeDef* EXTI_InitStruct)`
 
         EXTI_InitTypeDef EXTI_InitStructure;
@@ -1871,11 +1894,19 @@ while(1){
 
 #### **2.1. Tổng quan**
 
-* **Timer** trên STM32F103 được sử dụng để tạo các sự kiện định thời, chẳng hạn như tạo ngắt định kỳ, đo thời gian, hoặc điều khiển PWM.
+* **Timer:** 
+        
+   ◦ Tạo sự kiện định thời chính xác (ngắt định kỳ, đo thời gian, PWM)
 
-* **Ngắt Timer:** Khi Timer đếm đến một giá trị xác định (gọi là Period), nó có thể kích hoạt ngắt để thực hiện các tác vụ được lập trình trong hàm xử lý ngắt.
+   ◦ Các Timer trên STM32F103: TIM1 (Advanced), TIM2-5 (General Purpose), TIM6-7 (Basic).
 
-* **Ngắt Timer thường được dùng để:** 
+* **Ngắt Timer:** 
+
+   ◦ Xảy ra khi counter đạt giá trị Period, tạo Update Event và kích hoạt ISR.
+
+   ◦ Có thể cấu hình thêm ngắt từ các sự kiện khác (Input Capture, Output Compare).
+
+* **Ứng dụng:** 
 
   ◦ Tạo độ trễ chính xác (thay thế cho các hàm delay thô sơ).
 
@@ -1942,7 +1973,17 @@ while(1){
 
             TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
 
+    * **Lưu ý:**
 
+        ◦ Tính toán Prescaler và Period dựa trên thời gian mong muốn. 
+        
+        ◦ VD: Với Interval = 1 ms, Timer clock = 72 MHz, có thể chọn:
+
+            Prescaler = 7199, Period = 9 → (7200 × 10) / 72 MHz = 1 ms.
+            Hoặc Prescaler = 71, Period = 999 → (72 × 1000) / 72 MHz = 1 ms.
+
+
+Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 * **2.2.3. Cấu hình TimeBase:**
 
     * **Kích hoạt ngắt:** `TIM_ITConfig(TIM_TypeDef* TIMx, uint16_t TIM_IT, FunctionalState NewState)`
@@ -1986,9 +2027,7 @@ while(1){
         ◦ **Quy trình:** 
 
             Kiểm tra cờ: TIM_GetITStatus(TIM_TypeDef* TIMx, uint16_t TIM_IT) → Trả về SET nếu ngắt từ Update.
-      
             Thực thi tác vụ (ví dụ: tăng biến đếm).
-      
             Xóa cờ: TIM_ClearITPendingBit(TIM_TypeDef* TIMx, uint16_t TIM_IT)
 
         ◦ **VD:** 
@@ -2012,6 +2051,1189 @@ while(1){
                 while (count < time);  // Chờ count tăng bởi ISR
             }
 
+#### **2.3. Các chế độ Timer**
+
+* **2.3.1. Input Capture** 
+
+    * **Mục đích:** Đo thời gian của tín hiệu bên ngoài (như độ rộng xung, tần số, chu kỳ). Input Capture ghi lại giá trị counter khi phát hiện cạnh (rising/falling) trên chân Timer.
+
+    * **Ứng dụng:** 
+
+        ◦ Đo thời gian xung (pulse width) từ cảm biến siêu âm.
+
+        ◦ Đo tần số tín hiệu.
+
+        ◦ Phân tích tín hiệu PWM.
+
+    * **Nguyên lý:** 
+
+        ◦ Một chân Timer (ví dụ: PA0 cho TIM2 Channel 1) được cấu hình làm Input Capture.
+
+        ◦ Khi phát hiện cạnh (rising/falling), giá trị counter được lưu vào thanh ghi CCRx (Capture/Compare Register).
+
+        ◦ Ngắt được kích hoạt (nếu bật) để xử lý giá trị capture.
+    
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** Như phần Timer cơ bản.
+
+        ◦ **2. Cấu hình TimeBase:** Như trên, để xác định tần số đếm (Prescaler, Period).
+
+        ◦ **3. Cấu hình Input Capture**
+
+        ```
+        Struct: TIM_ICInitTypeDef
+        ```
+        ```
+        TIM_Channel: Kênh, ví dụ: TIM_Channel_1 (CC1), TIM_Channel_2 (CC2).
+        ```
+        ```
+        TIM_ICPolarity: Cạnh phát hiện:
+
+            TIM_ICPolarity_Rising: Cạnh lên.
+            TIM_ICPolarity_Falling: Cạnh xuống.
+            TIM_ICPolarity_BothEdge: Cả hai (không khuyến nghị vì phức tạp
+        ```        
+        ```
+        TIM_ICSelection: Chọn nguồn input:
+
+            TIM_ICSelection_DirectTI: Kênh trực tiếp (ví dụ: TI1 cho Channel 1).
+            TIM_ICSelection_IndirectTI: Kênh chéo (hiếm dùng).
+            TIM_ICSelection_TRC: Từ Trigger Controller (ít dùng).
+        ```  
+        ```
+        TIM_ICPrescaler: Chia tần số tín hiệu vào:
+
+            TIM_ICPSC_DIV1: Không chia.
+            TIM_ICPSC_DIV2, TIM_ICPSC_DIV4, TIM_ICPSC_DIV8: Chia 2, 4, 8.
+        ```  
+        ```
+        TIM_ICFilter: Lọc nhiễu (0-15, 0 = không lọc, 15 = lọc mạnh nhất)
+        ```
+        ```
+        Hàm: TIM_ICInit(TIM_TypeDef* TIMx, TIM_ICInitTypeDef* TIM_ICInitStruct)
+        ``` 
+
+        ◦ **4. Bật ngắt Capture:** `TIM_ITConfig(TIMx, TIM_IT_CCx, ENABLE) (x = 1, 2, 3, 4)`.    
+
+        ◦ **5. Cấu hình NVIC:** Như trên, dùng cùng `TIMx_IRQn`. 
+
+        ◦ **6. Bật Timer:** `TIM_Cmd(TIMx, ENABLE)`.`  
+
+    * **VD: Đo độ rộng xung trên TIM2 Channel 1, chân PA0** 
+
+            volatile uint32_t capture_value1 = 0, capture_value2 = 0;
+            volatile uint8_t capture_flag = 0;
+
+            void InputCapture_Config() {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA0 làm input cho TIM2 Channel 1
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase: Tick = 1 μs
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 71;  // 72 MHz / 72 = 1 MHz
+                TIM_TimeBaseInitStruct.TIM_Period = 65535;  // Max để tránh tràn sớm
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+                // Cấu hình Input Capture
+                TIM_ICInitTypeDef TIM_ICInitStruct;
+                TIM_ICInitStruct.TIM_Channel = TIM_Channel_1;
+                TIM_ICInitStruct.TIM_ICPolarity = TIM_ICPolarity_Rising;  // Bắt đầu với cạnh lên
+                TIM_ICInitStruct.TIM_ICSelection = TIM_ICSelection_DirectTI;
+                TIM_ICInitStruct.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+                TIM_ICInitStruct.TIM_ICFilter = 0x0;  // Không lọc
+                TIM_ICInit(TIM2, &TIM_ICInitStruct);
+
+                // Bật ngắt Capture Channel 1
+                TIM_ITConfig(TIM2, TIM_IT_CC1, ENABLE);
+
+                // Cấu hình NVIC
+                NVIC_InitTypeDef NVIC_InitStruct;
+                NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+                NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+                NVIC_Init(&NVIC_InitStruct);
+
+                // Bật Timer
+                TIM_Cmd(TIM2, ENABLE);
+            }
+
+            void TIM2_IRQHandler(void) {
+                if (TIM_GetITStatus(TIM2, TIM_IT_CC1) != RESET) {
+                    if (capture_flag == 0) {  // Cạnh lên
+                        capture_value1 = TIM_GetCapture1(TIM2);  // Lấy giá trị counter
+                        TIM_SetIC1Polarity(TIM2, TIM_ICPolarity_Falling);  // Chuyển sang cạnh xuống
+                        capture_flag = 1;
+                    } else {  // Cạnh xuống
+                        capture_value2 = TIM_GetCapture1(TIM2);
+                        TIM_SetIC1Polarity(TIM2, TIM_ICPolarity_Rising);  // Quay lại cạnh lên
+                        capture_flag = 0;
+                        // Tính độ rộng xung (μs): (capture_value2 - capture_value1) * 1 μs
+                    }
+                    TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
+                }
+            }      
+
+* **2.3.2. Output Compare** 
+
+    * **Mục đích:** So sánh giá trị counter với một ngưỡng (CCR) để tạo sự kiện, như đặt/xóa/toggle chân GPIO hoặc kích hoạt ngắt.
+
+    * **Ứng dụng:** 
+
+        ◦ Tạo tín hiệu PWM (chế độ PWM là một dạng Output Compare).
+
+        ◦ Tạo xung đơn (One-Pulse Mode).
+
+        ◦ Tạo tín hiệu định kỳ với độ rộng cụ thể.
+
+    * **Nguyên lý:** 
+
+        ◦ Counter được so sánh với giá trị trong thanh ghi CCRx.
+
+        ◦ Khi counter = CCRx, xảy ra sự kiện (ví dụ: đặt chân GPIO lên high/low, toggle, hoặc tạo ngắt).
+    
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** Như trên
+
+        ◦ **2. Cấu hình TimeBase:** Như trên
+
+        ◦ **3. Cấu hình Output Compare**
+
+        ```
+        Struct: TIM_OCInitTypeDef
+        ```
+        ```
+        TIM_OCMode: Chế độ so sánh:
+
+            TIM_OCMode_Timing: Chỉ tạo ngắt, không ảnh hưởng chân GPIO.
+            TIM_OCMode_Active: Đặt chân high khi counter = CCR.
+            TIM_OCMode_Inactive: Đặt chân low.
+            TIM_OCMode_Toggle: Đổi trạng thái chân.
+            TIM_OCMode_PWM1: PWM mode 1 (high khi counter < CCR, low khi ≥ CCR).
+            TIM_OCMode_PWM2: PWM mode 2 (ngược PWM1).
+        ```        
+        ```
+        TIM_OutputState: TIM_OutputState_Enable (kích hoạt output) hoặc TIM_OutputState_Disable (chỉ ngắt).
+        ```  
+        ```
+        TIM_OCPolarity: Trạng thái output
+            
+            TIM_OCPolarity_High: High khi active
+            TIM_OCPolarity_Low: Low khi active
+        ```  
+        ```
+        Hàm: TIM_OCxInit(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct) (x = 1, 2, 3, 4).
+        ``` 
+
+        ◦ **4. Bật ngắt Compare:** `TTIM_ITConfig(TIMx, TIM_IT_CCx, ENABLE)`.    
+
+        ◦ **5. Cấu hình NVIC:** Như trên 
+
+        ◦ **6. Bật Timer:** `TIM_Cmd(TIMx, ENABLE)`.`  
+
+    * **VD: Toggle chân PA0 mỗi 500 μs bằng TIM2 Channel 1** 
+
+            void OutputCompare_Config() {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA0 làm output cho TIM2 Channel 1
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP;  // Alternate Function Push-Pull
+                GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase: Tick = 1 μs
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 71;  // 72 MHz / 72 = 1 MHz
+                TIM_TimeBaseInitStruct.TIM_Period = 65535;
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+                // Cấu hình Output Compare
+                TIM_OCInitTypeDef TIM_OCInitStruct;
+                TIM_OCInitStruct.TIM_OCMode = TIM_OCMode_Toggle;
+                TIM_OCInitStruct.TIM_OutputState = TIM_OutputState_Enable;
+                TIM_OCInitStruct.TIM_Pulse = 500;  // Toggle sau 500 μs
+                TIM_OCInitStruct.TIM_OCPolarity = TIM_OCPolarity_High;
+                TIM_OC1Init(TIM2, &TIM_OCInitStruct);
+
+                // Bật ngắt Compare Channel 1
+                TIM_ITConfig(TIM2, TIM_IT_CC1, ENABLE);
+
+                // Cấu hình NVIC
+                NVIC_InitTypeDef NVIC_InitStruct;
+                NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+                NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+                NVIC_Init(&NVIC_InitStruct);
+
+                // Bật Timer
+                TIM_Cmd(TIM2, ENABLE);
+            }
+
+            void TIM2_IRQHandler(void) {
+                if (TIM_GetITStatus(TIM2, TIM_IT_CC1) != RESET) {
+                    TIM_SetCompare1(TIM2, TIM_GetCapture1(TIM2) + 500);  // Cập nhật CCR1 cho lần toggle tiếp theo
+                    TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
+                }
+            }
+
+* **2.3.3. One-Pulse Mode (OPM)** 
+
+    * **Khái niệm:**
+
+        ◦ Timer chỉ thực hiện một chu kỳ đếm (từ 0 đến giá trị TIM_Period hoặc ngược lại, tùy cấu hình) và sau đó tự động dừng, thay vì đếm liên tục như các chế độ Timer thông thường.
+
+        ◦ Chế độ này thường được kết hợp với Output Compare hoặc PWM để tạo ra một xung (pulse) có độ rộng chính xác trên chân GPIO, hoặc chỉ tạo sự kiện ngắt mà không cần output ra chân.        
+
+    * **Mục đích:** 
+
+        ◦ Tạo một xung đơn (single pulse) với độ rộng và thời gian được kiểm soát chính xác.
+
+        ◦ Thực hiện một tác vụ định thời chỉ một lần (ví dụ: kích hoạt thiết bị trong một khoảng thời gian cụ thể).
+
+        ◦ Kết hợp với các tín hiệu Trigger bên ngoài để khởi động Timer, tạo xung theo sự kiện cụ thể.
+
+    * **Ứng dụng:** 
+
+        ◦ Tạo xung đơn với độ rộng chính xác (ví dụ: kích hoạt thiết bị trong thời gian cụ thể).
+
+        ◦ Điều khiển servo hoặc tạo tín hiệu điều chế đặc biệt..
+
+    * **Nguyên lý:** 
+
+        ◦ Timer được cấu hình để chỉ đếm một chu kỳ (từ 0 đến Period) rồi dừng (bit OPM trong thanh ghi CR1 được bật).
+
+        ◦ Khi counter đạt TIM_Period, Timer tạo một Update Event và tự động dừng (bit OPM trong thanh ghi CR1 được đặt thành 1, khiến Timer vô hiệu hóa sau khi hoàn thành chu kỳ).
+
+        ◦ Không cần ngắt Update nếu chỉ dùng để tạo xung, vì Timer tự dừng.
+
+        ◦ Một kênh của Timer (Channel 1-4) được cấu hình ở chế độ Output Compare để điều khiển trạng thái chân GPIO (high, low, hoặc toggle) khi counter đạt giá trị TIM_Pulse (lưu trong thanh ghi CCRx).
+
+        ◦ Timer có thể được cấu hình để khởi động bởi một Trigger (như cạnh lên của GPIO hoặc tín hiệu từ Timer khác), thay vì bật bằng TIM_Cmd.    
+
+    * **Công thức:** 
+
+        ◦ Thời gian của xung (nếu dùng Output Compare):
+
+            Pulse width = TIM_Pulse x Tick time
+            
+            Với  Tick time = TIM_Prescaler + 1 / Timer Clock
+
+        ◦ Thời gian toàn bộ chu kỳ (từ khi bắt đầu đến khi dừng):
+
+            Total duration = (TIM_Period + 1) x (TIM_Prescaler + 1) / Timer clock
+
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** Như trên
+
+        ◦ **2. Cấu hình TimeBase:** 
+        
+        ```
+        TIM_TimeBaseInitTypeDef, bổ sung trường TIM_OnePulseMode
+        ```
+        ```
+        TIM_OPMode_Single: Bật One-Pulse Mode (Timer dừng sau một chu kỳ).
+
+        TIM_OPMode_Repetitive: Chế độ lặp lại (mặc định, không dùng trong OPM).
+        ```  
+
+        ◦ **3. Cấu hình Output Compare:** (nếu cần tạo xung trên chân GPIO): Như phần Output Compare.
+
+        ◦ **4. Bật Timer:** 
+
+        ```
+        Dùng TIM_Cmd(TIMx, ENABLE) để khởi động Timer. Timer sẽ chạy một lần và tự dừng.
+        ``` 
+         
+        ```
+        Nếu dùng Trigger, cấu hình thêm TIM_SelectInputTrigger và TIM_SelectSlaveMode.
+        ``` 
+    * **VD: Tạo xung 1 ms trên PA0 với TIM2 Channel 1** 
+
+            void OnePulse_Config() {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA0 làm output cho TIM2 Channel 1
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP;
+                GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase: Tick = 1 μs, Period = 1 ms
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 71;  // 72 MHz / 72 = 1 MHz
+                TIM_TimeBaseInitStruct.TIM_Period = 999;    // 1000 ticks = 1 ms
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInitStruct.TIM_OnePulseMode = TIM_OPMode_Single;  // One-Pulse
+                TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+                // Cấu hình Output Compare: Active khi counter = 500
+                TIM_OCInitTypeDef TIM_OCInitStruct;
+                TIM_OCInitStruct.TIM_OCMode = TIM_OCMode_Active;
+                TIM_OCInitStruct.TIM_OutputState = TIM_OutputState_Enable;
+                TIM_OCInitStruct.TIM_Pulse = 500;  // Xung high tại 500 μs
+                TIM_OCInitStruct.TIM_OCPolarity = TIM_OCPolarity_High;
+                TIM_OC1Init(TIM2, &TIM_OCInitStruct);
+
+                // Bật Timer (chạy 1 lần và dừng)
+                TIM_Cmd(TIM2, ENABLE);
+            }
+
+* **2.3.4. Encoder Interface Mode** 
+
+    * **Khái niệm:** 
+
+        ◦ Encoder Interface Mode là một chế độ chuyên biệt của Timer trên STM32F103 (chủ yếu hỗ trợ trên TIM1-5, vì TIM6-7 là Basic Timer không có kênh Input)
+
+        ◦ Cho phép Timer giao tiếp trực tiếp với các loại encoder quay (quadrature encoder hoặc incremental encoder)
+
+        ◦ Chế độ này biến Timer thành một bộ đếm encoder, tự động xử lý tín hiệu từ encoder để đo lường vị trí, hướng quay, và tốc độ mà không cần CPU can thiệp liên tục. 
+
+    * **Mục đích:** 
+
+        ◦ Đo vị trí góc quay (position) hoặc số vòng quay (revolutions).
+
+        ◦ Phát hiện hướng quay (thuận chiều hay ngược chiều).
+
+        ◦ Tính toán tốc độ quay (speed) dựa trên sự thay đổi counter.
+
+        ◦ Giảm tải cho CPU bằng cách để phần cứng Timer xử lý tín hiệu encoder.
+
+    * **Ứng dụng:** 
+
+        ◦ Điều khiển robot: Đo vị trí bánh xe để tính toán quãng đường di chuyển, định vị robot (odometry), hoặc điều khiển PID cho động cơ.
+
+        ◦ Điều khiển động cơ: Theo dõi góc quay của động cơ DC, stepper, hoặc servo với encoder tích hợp.
+    
+        ◦ Hệ thống đo lường: Đếm số xung từ encoder để đo tốc độ
+
+        ◦ Giao tiếp thiết bị: Kết nối với encoder quang học, từ tính, hoặc Hall-effect để đo chuyển động tuyến tính hoặc quay.
+
+    * **Nguyên lý:** 
+
+        ◦ Encoder quadrature (còn gọi là encoder hai pha) tạo ra hai tín hiệu vuông A và B (thường là tín hiệu TTL 5V hoặc 3.3V), lệch pha 90°.
+
+        ◦ Hướng quay: Được xác định bằng thứ tự pha
+
+               Nếu A dẫn trước B: Quay thuận (counter tăng)
+               Nếu B dẫn trước A: Quay ngược (counter giảm).
+
+        ◦ Mỗi encoder có độ phân giải (pulses per revolution - PPR), ví dụ: 1000 PPR nghĩa là 1000 xung mỗi vòng quay.
+
+    * **Vai trò của Timer:** 
+
+        ◦ Timer sử dụng hai kênh Input Capture (Channel 1 và Channel 2) để đọc tín hiệu A (kết nối với TI1) và B (kết nối với TI2).
+
+        ◦ Counter của Timer (CNT) tự động tăng/giảm dựa trên cạnh (rising/falling) của tín hiệu A và B, mà không cần phần mềm xử lý từng xung.
+
+        ◦ Hỗ trợ các chế độ:
+
+               Encoder Mode 1 (TIM_EncoderMode_TI1): Đếm chỉ dựa trên cạnh của Channel 1 (A), Channel 2 (B) chỉ dùng để xác định hướng. Độ phân giải thấp hơn (1x PPR).
+
+
+               Encoder Mode 2 (TIM_EncoderMode_TI2): Đếm chỉ dựa trên cạnh của Channel 2 (B), Channel 1 (A) xác định hướng. Tương tự Mode 1.
+
+
+               Encoder Mode 3 (TIM_EncoderMode_TI12): Đếm dựa trên cạnh của cả hai kênh (A và B), tăng độ phân giải lên gấp 4 lần (4x PPR), vì đếm cả rising và falling edge.
+
+        ◦ Polarity: Xác định cạnh phát hiện (rising hoặc falling) để phù hợp với tín hiệu encoder (thường là rising cho cả hai).
+
+    * **Hoạt động counter:** 
+
+        ◦ Counter bắt đầu từ 0 (hoặc giá trị tùy chỉnh)
+
+        ◦ Mỗi xung encoder làm counter tăng/giảm 1 (hoặc nhiều hơn tùy mode)
+
+        ◦ Khi counter đạt TIM_Period (thường 65535 cho Timer 16-bit), tạo Update Event và có thể ngắt nếu bật.
+
+    * **Công thức:** 
+
+        ◦ Vị trí góc (degree)
+
+
+        <img width="569" height="116" alt="Image" src="https://github.com/user-attachments/assets/1e764654-720c-4d94-8de2-5c35f207cb6c" />
+
+
+
+        ◦ Tốc độ quay (RPM - revolutions per minute)
+
+
+        <img width="688" height="143" alt="Image" src="https://github.com/user-attachments/assets/5768429c-c068-47df-8f34-08feea848958" />
+
+
+
+        ◦ Số vòng quay
+
+
+        <img width="387" height="89" alt="Image" src="https://github.com/user-attachments/assets/82265445-e70d-4c8b-bf36-cf7f757a9efe" />
+
+
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** Như trên
+
+        ◦ **2. Cấu hình TimeBase:** Chỉ cần Prescaler và Period (Period thường đặt tối đa để tránh tràn).
+   
+        ◦ **3. Cấu hình Encoder**
+
+        ```
+        Hàm: TIM_EncoderInterfaceConfig(TIM_TypeDef* TIMx, uint16_t TIM_EncoderMode, uint16_t TIM_IC1Polarity, uint16_t TIM_IC2Polarity)
+        ```
+        ```
+        TIM_EncoderMode:
+
+            TIM_EncoderMode_TI1 : Đếm trên TI1 (Channel 1).
+            TIM_EncoderMode_TI2 : Đếm trên TI2 (Channel 2).
+            IM_EncoderMode_TI12 : Đếm trên cả TI1 và TI2 (khuyến nghị cho độ chính xác cao).
+        ```        
+        ```
+        TIM_IC1Polarity, TIM_IC2Polarity:
+
+            TIM_ICPolarity_Rising : Phát hiện cạnh lên.
+            TIM_ICPolarity_Falling : Phát hiện cạnh xuống (ít dùng, tùy encoder)
+        ```  
+        
+
+        ◦ **4. Bật Timer:** Counter sẽ tự động đếm dựa trên tín hiệu encoder.     
+
+    * **VD: Đọc encoder trên TIM2, Channel 1: PA0, Channel 2: PA1** 
+
+            void Encoder_Config() {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA0, PA1 làm input cho encoder
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 0;  // Không chia để đếm chính xác
+                TIM_TimeBaseInitStruct.TIM_Period = 65535;  // Max để tránh tràn
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+                // Cấu hình Encoder Mode
+                TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+
+                // Bật Timer
+                TIM_Cmd(TIM2, ENABLE);
+            }
+
+            // Đọc giá trị encoder
+            uint16_t Read_Encoder() {
+                return TIM_GetCounter(TIM2);  // Lấy giá trị counter
+            }
+
+
+* **2.3.5. Hall Sensor Interface** 
+
+    * **Khái niệm:** 
+
+        ◦ Hall Sensor Interface Mode là một chế độ đặc biệt của Timer trên STM32F103 (chủ yếu hỗ trợ trên TIM1 và TIM2-4, vì TIM6-7 là Basic Timer không có kênh Input/Output)
+
+        ◦ Được thiết kế để giao tiếp với các cảm biến Hall trong động cơ không chổi (Brushless DC - BLDC)     
+
+        ◦ Chế độ này cho phép Timer tự động phát hiện và xử lý tín hiệu từ ba cảm biến Hall (Hall A, B, C) để xác định vị trí rotor, từ đó hỗ trợ điều khiển chính xác quá trình chuyển pha (commutation) của động cơ BLDC.
+
+    * **Mục đích:** 
+    
+        ◦ Xác định vị trí rotor của động cơ BLDC để điều khiển thời điểm chuyển pha.
+
+        ◦ Tự động capture giá trị counter khi có sự thay đổi tín hiệu Hall, từ đó đo thời gian giữa các trạng thái pha.
+
+        ◦ Giảm tải cho CPU bằng cách để phần cứng Timer xử lý tín hiệu Hall và tạo ngắt hoặc Trigger cho các tác vụ điều khiển.
+
+    * **Ứng dụng:** 
+
+        ◦ Điều khiển động cơ BLDC: Sử dụng trong robot, quạt, xe điện, hoặc máy bơm, nơi động cơ BLDC yêu cầu điều khiển pha chính xác dựa trên vị trí rotor.
+
+    * **Nguyên lý:** 
+
+        ◦ Động cơ BLDC thường có 3 cảm biến Hall (Hall A, Hall B, Hall C) được đặt cách nhau 120° điện, tạo ra tín hiệu số (0 hoặc 1) dựa trên vị trí từ trường của rotor.
+
+        ◦ Mỗi cảm biến Hall xuất ra tín hiệu vuông (TTL 5V/3.3V), và tổ hợp trạng thái của ba tín hiệu (6 trạng thái chính) cho biết vị trí rotor tương ứng với các pha (U, V, W).
+
+            Hall A | Hall B | Hall C | Rotor Position | Commutation Step
+            -------|-------|-------|----------------|-----------------
+            1    |  0    |  1    |     0°-60°     | Step 1
+            1    |  0    |  0    |    60°-120°    | Step 2
+            1    |  1    |  0    |   120°-180°    | Step 3
+            0    |  1    |  0    |   180°-240°    | Step 4
+            0    |  1    |  1    |   240°-300°    | Step 5
+            0    |  0    |  1    |   300°-360°    | Step 6
+
+
+    * **Vai trò của Timer:** 
+
+        ◦ Timer sử dụng 3 kênh Input Capture (Channel 1, 2, 3) để đọc tín hiệu từ ba cảm biến Hall (thường kết nối với chân TI1, TI2, TI3).
+
+        ◦ Các tín hiệu Hall được kết hợp thành một tín hiệu XOR nội bộ (trong Timer), tạo ra tín hiệu Trigger mỗi khi có sự thay đổi trạng thái (commutation event).
+
+        ◦ Khi Trigger xảy ra, giá trị counter của Timer được capture vào thanh ghi CCR1 (Channel 1), và một ngắt có thể được tạo để CPU xử lý (ví dụ: cập nhật PWM cho pha tiếp theo).
+
+        ◦ Timer cũng có thể xuất Trigger để kích hoạt Timer khác (ví dụ: Timer PWM) hoặc DMA.        
+
+    * **Chế độ hoạt động:** 
+
+        ◦ **Hall Sensor Mode:** Bật bằng `TIM_SelectHallSensor(TIMx, ENABLE)`
+
+        ◦ Tín hiệu XOR được lọc (digital filter) để giảm nhiễu trước khi tạo Trigger.
+
+        ◦ Capture giá trị counter giúp đo thời gian giữa các lần chuyển pha, từ đó tính tốc độ quay:
+
+
+        <img width="926" height="100" alt="Image" src="https://github.com/user-attachments/assets/e4e1dcfa-9ceb-41d0-aff6-3b4fe70bffec" />
+
+
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** 
+
+             Dùng RCC_APB1PeriphClockCmd (cho TIM2-4) hoặc RCC_APB2PeriphClockCmd (cho TIM1).
+             Bật clock cho GPIO chứa chân Hall (thường là Channel 1, 2, 3) và AFIO.
+
+        ◦ **2. Cấu hình TimeBase:** Chỉ cần Prescaler và Period (Period thường đặt tối đa để tránh tràn).
+   
+        ◦ **3. Cấu hình Hall Sensor**
+
+        ```
+        Hàm: TIM_SelectHallSensor(TIM_TypeDef* TIMx, FunctionalState NewState)
+        NewState: ENABLE để bật chế độ Hall.
+        ```
+        ```
+        Cấu hình Input Capture trên Channel 1 để capture tín hiệu XOR:
+        
+        ```
+        ```
+        Struct: TIM_ICInitTypeDef
+
+        TIM_Channel: TIM_Channel_1 (capture trên TI1FP1, tín hiệu XOR của Hall).
+        TIM_ICPolarity: TIM_ICPolarity_Rising hoặc TIM_ICPolarity_Falling (tùy cảm biến Hall).
+        TIM_ICSelection: TIM_ICSelection_TRC (chọn tín hiệu XOR nội bộ).
+        TIM_ICPrescaler: TIM_ICPSC_DIV1 (không chia).
+        TIM_ICFilter: Lọc nhiễu (0-15, ví dụ: 0x4 để giảm nhiễu nhẹ).
+        ```        
+        ```
+        Hàm: TIM_ICInit(TIM_TypeDef* TIMx, TIM_ICInitTypeDef* TIM_ICInitStruct)
+        ```  
+        
+
+        ◦ **4. Bật ngắt Capture (nếu cần):** `TIM_ITConfig(TIMx, TIM_IT_CC1, ENABLE)` để tạo ngắt khi capture giá trị counter.
+
+        ◦ **5. Cấu hình NVIC**
+
+        ◦ **6. Bật Timer** `TIM_Cmd(TIMx, ENABLE)` để bắt đầu đếm.
+        
+    * **VD: Đọc tín hiệu Hall trên TIM2 (PA0, PA1, PA2)** 
+
+        ◦ Giả sử động cơ BLDC có 3 cảm biến Hall kết nối với PA0 (TIM2_CH1), PA1 (TIM2_CH2), PA2 (TIM2_CH3).
+
+            volatile uint32_t hall_time1 = 0, hall_time2 = 0;
+            volatile float speed_rpm = 0;
+
+            void HallSensor_Config() {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA0, PA1, PA2 làm input cho cảm biến Hall
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;  // Input không pull
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 71;  // 72 MHz / 72 = 1 MHz (1 μs/tick)
+                TIM_TimeBaseInitStruct.TIM_Period = 65535;  // Max để tránh tràn
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+                // Bật chế độ Hall Sensor
+                TIM_SelectHallSensor(TIM2, ENABLE);
+
+                // Cấu hình Input Capture trên Channel 1 (tín hiệu XOR)
+                TIM_ICInitTypeDef TIM_ICInitStruct;
+                TIM_ICInitStruct.TIM_Channel = TIM_Channel_1;
+                TIM_ICInitStruct.TIM_ICPolarity = TIM_ICPolarity_Rising;  // Phát hiện cạnh lên của XOR
+                TIM_ICInitStruct.TIM_ICSelection = TIM_ICSelection_TRC;   // Tín hiệu XOR nội bộ
+                TIM_ICInitStruct.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+                TIM_ICInitStruct.TIM_ICFilter = 0x4;  // Lọc nhiễu nhẹ
+                TIM_ICInit(TIM2, &TIM_ICInitStruct);
+
+                // Bật ngắt Capture Channel 1
+                TIM_ITConfig(TIM2, TIM_IT_CC1, ENABLE);
+
+                // Cấu hình NVIC
+                NVIC_InitTypeDef NVIC_InitStruct;
+                NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+                NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+                NVIC_Init(&NVIC_InitStruct);
+
+                // Bật Timer
+                TIM_Cmd(TIM2, ENABLE);
+            }
+
+            // Hàm xử lý ngắt
+            void TIM2_IRQHandler(void) {
+                if (TIM_GetITStatus(TIM2, TIM_IT_CC1) != RESET) {
+                    hall_time2 = TIM_GetCapture1(TIM2);  // Lấy giá trị counter
+                    uint32_t delta_time = hall_time2 - hall_time1;  // Thời gian giữa 2 lần capture
+                    // Tính tốc độ (RPM) với động cơ có 2 cặp cực (pole pairs = 2)
+                    speed_rpm = (60.0 * 1000000) / (delta_time * 2 * 6);  // 6 trạng thái mỗi vòng
+                    hall_time1 = hall_time2;  // Cập nhật giá trị trước
+                    TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
+                }
+            }
+
+* **2.3.6. Trigger Mode và Slave Mode** 
+
+    * **Khái niệm:** 
+
+        ◦ Trigger Mode và Slave Mode là các chế độ của Timer trên STM32F103 (hỗ trợ trên TIM1-5, vì TIM6-7 là Basic Timer chỉ có chức năng đếm cơ bản) nhằm đồng bộ hóa hoạt động của Timer với các sự kiện bên ngoài hoặc nội bộ
+
+        ◦ Trong chế độ này, Timer hoạt động như một slave, được điều khiển bởi một nguồn Trigger (như tín hiệu từ GPIO, Timer khác, hoặc sự kiện nội bộ). 
+
+        ◦ Cho phép Timer khởi động, dừng, reset, hoặc đếm theo các sự kiện cụ thể, thay vì chạy tự do.
+
+    * **Mục đích:** 
+    
+        ◦ Đồng bộ nhiều Timer để tạo các tín hiệu PWM lệch pha hoặc các sự kiện định thời liên quan.
+
+        ◦ Kích hoạt Timer bằng tín hiệu ngoài (như nhấn nút, cảm biến, hoặc tín hiệu từ thiết bị ngoại vi).
+
+        ◦ Điều khiển chính xác thời gian hoạt động của Timer dựa trên sự kiện Trigger.
+
+        ◦ Kết hợp với các chế độ khác (như PWM, Input Capture) để tạo hệ thống điều khiển phức tạp.       
+
+    * **Ứng dụng:** 
+
+        ◦ Đồng bộ PWM lệch pha: Nhiều Timer được đồng bộ để tạo tín hiệu PWM cho động cơ BLDC, inverter, hoặc hệ thống năng lượng.
+
+        ◦ Đo thời gian sự kiện: Dùng Trigger để reset hoặc khởi động Timer, đo khoảng thời gian giữa các sự kiện.   
+
+        ◦ Điều khiển động cơ: Đồng bộ Timer PWM với Timer đo tín hiệu Hall hoặc encoder
+
+        ◦ Hệ thống thời gian thực: Tạo các chuỗi sự kiện định thời chính xác, ví dụ: gửi dữ liệu UART sau khi nhận Trigger từ Timer khác.
+
+    * **Nguyên lý:** 
+
+        ◦ **Slave Mode:** Timer hoạt động như một slave, nghĩa là nó không tự chạy mà được điều khiển bởi một nguồn Trigger thông qua thanh ghi SMCR (Slave Mode Control Register).
+
+            Các chế độ Slave Mode:
+
+            TIM_SlaveMode_Reset: Reset counter (CNT) về 0 khi nhận Trigger. Dùng để đồng bộ counter với sự kiện.
+
+            TIM_SlaveMode_Gated: Timer chỉ đếm khi tín hiệu Trigger ở mức cao (hoặc thấp, tùy cấu hình). Dùng để bật/tắt Timer theo tín hiệu ngoài.
+
+            TIM_SlaveMode_Trigger: Timer chỉ khởi động khi nhận Trigger (cạnh lên hoặc xuống). Dùng để bắt đầu đếm theo sự kiện.
+            
+            TIM_SlaveMode_External1: Dùng tín hiệu ngoài làm clock cho Timer (ít phổ biến).            
+
+        ◦ **Trigger Source:** 
+
+            Nguồn Trigger được chọn qua thanh ghi SMCR, bao gồm:
+
+                GPIO: Tín hiệu từ chân GPIO (TI1FP1, TI2FP2, hoặc filtered input).
+                Timer khác: Trigger Output (TRGO) từ Timer khác (TIMx_TRGO).
+                Sự kiện nội bộ: Như tín hiệu từ ADC, RTC, hoặc PVD.                
+
+            Các nguồn Trigger phổ biến (TIM_InputTriggerSource):
+
+                TIM_TS_ITR0, TIM_TS_ITR1, ...: Trigger từ Timer khác (ITR = Internal Trigger).
+                TIM_TS_TI1FP1, TIM_TS_TI2FP2: Tín hiệu từ GPIO qua bộ lọc (filtered input).
+                TIM_TS_TI1F_ED: Tín hiệu từ Channel 1 với cạnh bất kỳ (rising/falling).
+                TIM_TS_ETRF: External Trigger (thường từ chân ETR). 
+
+    * **Hoạt động:** 
+
+        ◦ Timer chờ Trigger để thực hiện hành động (reset, start, gate)
+
+        ◦ Khi Trigger xảy ra, Timer thực hiện hành động theo chế độ Slave Mode
+
+            Reset: CNT = 0, Timer tiếp tục đếm nếu đã bật.
+            Gated: Timer đếm khi Trigger = 1, dừng khi Trigger = 0.
+            Trigger: Timer bắt đầu đếm từ 0 đến TIM_Period, tạo Update Event.             
+
+    * **Công thức:** 
+
+        ◦ Thời gian đếm (nếu Trigger khởi động Timer):
+
+             <img width="592" height="92" alt="Image" src="https://github.com/user-attachments/assets/94073b06-8ecc-4941-b2f4-ca20da4c3137" />
+
+        ◦ Tần số Trigger (nếu dùng để đo)
+
+            <img width="426" height="84" alt="Image" src="https://github.com/user-attachments/assets/602a3214-c7c3-4fa8-83e3-ab3170aac137" />
+
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** 
+
+             Dùng RCC_APB1PeriphClockCmd (cho TIM2-5) hoặc RCC_APB2PeriphClockCmd (cho TIM1).
+             Bật clock cho GPIO nếu dùng Trigger từ chân GPIO.
+
+        ◦ **2. Cấu hình TimeBase:** Chỉ cần Prescaler và Period (Period thường đặt tối đa để tránh tràn).
+   
+        ◦ **3. Cấu hình Slave Mode và Trigger**
+
+        ```
+        Hàm: TIM_SelectSlaveMode(TIM_TypeDef* TIMx, uint16_t TIM_SlaveMode)
+        ```
+        ```
+        TIM_SlaveMode:
+
+        TIM_SlaveMode_Reset: Reset counter khi Trigger.
+        TIM_SlaveMode_Gated: Đếm khi Trigger active.
+        TIM_SlaveMode_Trigger: Khởi động Timer khi Trigger.
+        TIM_SlaveMode_External1: Dùng Trigger làm clock (hiếm dùng).
+        
+        ```
+        ```
+        Hàm: TIM_SelectInputTrigger(TIM_TypeDef* TIMx, uint16_t TIM_InputTriggerSource)
+        ```
+        ```
+        TIM_InputTriggerSource:
+
+        TIM_TS_ITR0, TIM_TS_ITR1, ...: Trigger từ Timer khác.
+        TIM_TS_TI1FP1, TIM_TS_TI2FP2: Trigger từ GPIO (Channel 1, 2).
+        TIM_TS_ETRF: Trigger từ chân ETR (External Trigger).
+        
+        ```
+        ```
+        Nếu dùng GPIO, cấu hình chân làm input (thường GPIO_Mode_IN_FLOATING).
+        ```  
+        
+
+        ◦ **4. Bật ngắt (tùy chọn):** `TIM_ITConfig(TIMx, TIM_IT_Update, ENABLE)` để tạo ngắt khi Timer đạt TIM_Period.
+
+        ◦ **5. Cấu hình NVIC**
+
+        ◦ **6. Bật Timer:** `TIM_Cmd(TIMx, ENABLE)` Timer chờ Trigger (nếu ở Trigger Mode) hoặc đếm ngay (nếu ở Reset/Gated Mode).
+
+    * **VD: TIM2 khởi động bởi cạnh lên của PA0** 
+
+            volatile uint32_t counter_value = 0;
+
+            void Trigger_Config() {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA0 làm Trigger input (TIM2_CH1)
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 71;  // 72 MHz / 72 = 1 MHz (1 μs/tick)
+                TIM_TimeBaseInitStruct.TIM_Period = 999;    // 1 ms
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStruct);
+
+                // Cấu hình Trigger và Slave Mode
+                TIM_SelectInputTrigger(TIM2, TIM_TS_TI1FP1);  // Trigger từ PA0 (Channel 1)
+                TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Trigger);  // Khởi động Timer khi Trigger
+
+                // Bật ngắt Update (tùy chọn)
+                TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+
+                // Cấu hình NVIC
+                NVIC_InitTypeDef NVIC_InitStruct;
+                NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+                NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+                NVIC_Init(&NVIC_InitStruct);
+
+                // Bật Timer (chờ Trigger)
+                TIM_Cmd(TIM2, ENABLE);
+            }
+
+            // Hàm xử lý ngắt
+            void TIM2_IRQHandler(void) {
+                if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+                    counter_value = TIM_GetCounter(TIM2);  // Lấy giá trị counter
+                    GPIO_ToggleBits(GPIOC, GPIO_Pin_13);  // Bật/tắt LED (giả sử PC13)
+                    TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+                }
+            }
+
+* **2.3.7. Break and Dead-Time (TIM1)** 
+
+    * **Khái niệm:** 
+
+        ◦ Break and Dead-Time là các tính năng nâng cao của TIM1 (Advanced Timer) trên STM32F103, được thiết kế để bảo vệ và tối ưu hóa điều khiển PWM trong các ứng dụng liên quan đến động cơ, đặc biệt là động cơ không chổi (BLDC) hoặc các mạch H-bridge
+
+        ◦ Break: Ngắt khẩn cấp tín hiệu PWM khi phát hiện lỗi (như quá dòng, quá áp, hoặc tín hiệu lỗi từ ngoài), ngăn chặn hư hỏng phần cứng.
+
+        ◦ Dead-Time: Tạo khoảng thời gian trễ (dead-time) giữa các tín hiệu PWM bổ sung (complementary PWM) để tránh hiện tượng ngắn mạch (shoot-through) trong H-bridge.
+
+    * **Mục đích:** 
+    
+        ◦ Bảo vệ hệ thống: Dừng PWM ngay lập tức khi có lỗi để bảo vệ động cơ hoặc mạch công suất.
+
+        ◦ Tối ưu PWM: Đảm bảo các tín hiệu PWM bổ sung (high-side và low-side) không bật cùng lúc, tránh ngắn mạch.
+      
+
+    * **Ứng dụng:** 
+
+        ◦ Điều khiển động cơ BLDC: Sử dụng trong robot, quạt, xe điện, hoặc máy bơm, nơi cần PWM bổ sung và bảo vệ quá dòng.
+
+        ◦ Mạch H-bridge hoặc inverter: Ngăn ngắn mạch trong các mạch công suất sử dụng transistor (MOSFET/IGBT). 
+
+        ◦ Hệ thống năng lượng: Điều khiển PWM trong bộ biến tần (inverter) hoặc bộ nguồn chuyển mạch (SMPS).
+
+
+    * **Nguyên lý:** 
+
+     ◦ **Break:**
+
+    ```
+    Chức năng:
+
+    Khi phát hiện lỗi (qua chân BKIN hoặc nguồn nội bộ), Timer ngay lập tức vô hiệu hóa tất cả tín hiệu PWM (đặt các chân PWM về trạng thái an toàn, thường là low hoặc high-impedance).
+    ```
+    
+    ```
+    Nguồn Break:
+
+            Chân BKIN (Break Input): Một chân GPIO (thường là PA6 trên TIM1) nhận tín hiệu lỗi từ mạch bảo vệ ngoài (như cảm biến quá dòng).
+            
+            Nguồn nội bộ: Lỗi từ comparator, PVD (Power Voltage Detector), hoặc phần mềm (bit BKE trong thanh ghi BDTR).      
+    ```
+    ```
+    Hành vi:
+
+            Khi Break xảy ra, tất cả kênh PWM của TIM1 (bao gồm cả kênh bổ sung) bị tắt.
+            
+            Có thể cấu hình trạng thái an toàn (OSS = Off-State Selection) khi Break:
+
+                TIM_BreakPolarity_Low: Tín hiệu BKIN active-low (mức thấp = lỗi).
+                TIM_BreakPolarity_High: Tín hiệu BKIN active-high (mức cao = lỗi).
+
+            Ngắt Break có thể được bật để CPU xử lý
+    ```
+
+    ◦ **Dead-Time:** 
+
+    ```
+    Chức năng:
+
+            Tạo khoảng thời gian trễ (dead-time) giữa hai tín hiệu PWM bổ sung (complementary PWM) trên cùng một kênh để đảm bảo transistor high-side và low-side không bật đồng thời.         
+    ```
+    ```
+    Cơ chế:
+
+            Trong H-bridge, mỗi pha cần hai tín hiệu PWM (chính và bổ sung) để điều khiển transistor high-side và low-side.
+
+            Nếu cả hai transistor bật cùng lúc, xảy ra ngắn mạch (shoot-through), gây hư hỏng.
+
+            Dead-time chèn một khoảng trễ (thường vài trăm ns đến vài μs) giữa thời điểm tắt tín hiệu này và bật tín hiệu kia. 
+    ```
+
+    * **Công thức:** 
+
+        ◦ Thời gian Dead-Time:
+
+             Dead-Time = DTG x t_DT
+
+            ◦ DTG (Dead-Time Generator): Giá trị 0-255 trong thanh ghi BDTR.
+
+            ◦ t_DT (đơn vị thời gian): Phụ thuộc cấu hình clock và DTG
+
+
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** 
+
+             Dùng RCC_APB2PeriphClockCmd cho TIM1 (Advanced Timer).
+
+             Bật clock cho GPIO (cho PWM và BKIN) và AFIO.
+
+        ◦ **2. Cấu hình TimeBase** 
+   
+        ◦ **3. Cấu hình PWM**
+
+            Sử dụng struct TIM_OCInitTypeDef để cấu hình các kênh PWM (chính và bổ sung).
+
+            Cần bật complementary output (TIM_OutputNState_Enable).
+
+        ◦ **4. Cấu hình Break và Dead-Time**
+
+        ```
+        Struct: TIM_BDTRInitTypeDef
+        ```
+        ```
+        TIM_OSSRState: Off-State Selection for Run mode (trạng thái PWM khi tắt).
+
+        TIM_OSSIState: Off-State Selection for Idle mode (trạng thái PWM khi Break).
+
+        TIM_LOCKLevel: Lock cấu hình BDTR (0-3, 0 = không lock).
+
+        TIM_DeadTime: Giá trị DTG (0-255) xác định dead-time.
+
+        TIM_Break: TIM_Break_Enable hoặc TIM_Break_Disable.
+
+        TIM_BreakPolarity: TIM_BreakPolarity_Low hoặc TIM_BreakPolarity_High.
+
+        TIM_AutomaticOutput: TIM_AutomaticOutput_Enable (tự động khôi phục PWM sau Break).
+        
+        ```
+        ```
+        Hàm: TIM_BDTRConfig(TIM_TypeDef* TIMx, TIM_BDTRInitTypeDef* TIM_BDTRInitStruct)
+        ```
+
+        ◦ **5. Bật ngắt Break (tùy chọn):** `TIM_ITConfig(TIM1, TIM_IT_Break, ENABLE)` để xử lý sự kiện Break.
+
+        ◦ **6. Cấu hình NVIC:** Dùng `TIM1_BRK_IRQn hoặc TIM1_UP_IRQn`.
+
+        ◦ **7. Bật Timer và PWM :** `TIM_Cmd(TIM1, ENABLE)` để chạy Timer.
+`TIM_CtrlPWMOutputs(TIM1, ENABLE)` để bật PWM output.
+
+
+   * **VD: Cấu hình Break và Dead-Time trên TIM1 (PWM trên PA8, BKIN trên PA6)** 
+
+        ◦ Giả sử cần tạo PWM 10 kHz trên Channel 1 (PA8) và complementary PWM trên Channel 1N, với dead-time 1 μs và Break khi PA6 (BKIN) active-low.
+
+            void Break_DeadTime_Config() {
+                RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+                // Cấu hình PA8 (TIM1_CH1) và PA7 (TIM1_CH1N) cho PWM
+                GPIO_InitTypeDef GPIO_InitStruct;
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_7;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP;
+                GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình PA6 (BKIN) làm input
+                GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+                GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+                // Cấu hình TimeBase: PWM 10 kHz
+                TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+                TIM_TimeBaseInitStruct.TIM_Prescaler = 0;  // 72 MHz (no prescaler)
+                TIM_TimeBaseInitStruct.TIM_Period = 7199;  // 72 MHz / 7200 = 10 kHz
+                TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+                TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+                TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStruct);
+
+                // Cấu hình PWM Channel 1
+                TIM_OCInitTypeDef TIM_OCInitStruct;
+                TIM_OCInitStruct.TIM_OCMode = TIM_OCMode_PWM1;
+                TIM_OCInitStruct.TIM_OutputState = TIM_OutputState_Enable;
+                TIM_OCInitStruct.TIM_OutputNState = TIM_OutputNState_Enable;  // Complementary PWM
+                TIM_OCInitStruct.TIM_Pulse = 3600;  // Duty cycle 50% (3600/7200)
+                TIM_OCInitStruct.TIM_OCPolarity = TIM_OCPolarity_High;
+                TIM_OCInitStruct.TIM_OCNPolarity = TIM_OCNPolarity_High;
+                TIM_OC1Init(TIM1, &TIM_OCInitStruct);
+
+                // Cấu hình Break và Dead-Time
+                TIM_BDTRInitTypeDef TIM_BDTRInitStruct;
+                TIM_BDTRInitStruct.TIM_OSSRState = TIM_OSSRState_Enable;
+                TIM_BDTRInitStruct.TIM_OSSIState = TIM_OSSIState_Enable;
+                TIM_BDTRInitStruct.TIM_LOCKLevel = TIM_LOCKLevel_OFF;
+                TIM_BDTRInitStruct.TIM_DeadTime = 72;  // ~1 μs (72 * 13.89 ns)
+                TIM_BDTRInitStruct.TIM_Break = TIM_Break_Enable;
+                TIM_BDTRInitStruct.TIM_BreakPolarity = TIM_BreakPolarity_Low;  // Active-low
+                TIM_BDTRInitStruct.TIM_AutomaticOutput = TIM_AutomaticOutput_Enable;
+                TIM_BDTRConfig(TIM1, &TIM_BDTRInitStruct);
+
+                // Bật ngắt Break
+                TIM_ITConfig(TIM1, TIM_IT_Break, ENABLE);
+
+                // Cấu hình NVIC
+                NVIC_InitTypeDef NVIC_InitStruct;
+                NVIC_InitStruct.NVIC_IRQChannel = TIM1_BRK_IRQn;
+                NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+                NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+                NVIC_Init(&NVIC_InitStruct);
+
+                // Bật Timer và PWM
+                TIM_Cmd(TIM1, ENABLE);
+                TIM_CtrlPWMOutputs(TIM1, ENABLE);
+            }
+
+            // Hàm xử lý ngắt Break
+            void TIM1_BRK_IRQHandler(void) {
+                if (TIM_GetITStatus(TIM1, TIM_IT_Break) != RESET) {
+                    GPIO_SetBits(GPIOC, GPIO_Pin_13);  // Bật LED báo lỗi (giả sử PC13)
+                    TIM_ClearITPendingBit(TIM1, TIM_IT_Break);
+                }
+            }
+
+
+* **2.3.8. DMA Burst Mode** 
+
+    * **Khái niệm:** 
+
+        ◦ DMA Burst Mode là một chế độ nâng cao của Timer trên STM32F103 (hỗ trợ trên TIM1-5, vì TIM6-7 là Basic Timer chỉ hỗ trợ DMA cho Update Event)
+
+        ◦ Cho phép kết hợp Timer với DMA (Direct Memory Access) để tự động truyền dữ liệu từ bộ nhớ đến các thanh ghi của Timer (như CCR1, ARR, hoặc PSC) mà không cần CPU can thiệp.
+
+        ◦ Trong chế độ này, Timer kích hoạt yêu cầu DMA tại các sự kiện cụ thể (như Update Event hoặc Capture/Compare), và DMA truyền một khối dữ liệu (burst) vào các thanh ghi Timer để cập nhật liên tục.
+
+    * **Mục đích:** 
+    
+        ◦ Tự động cập nhật các tham số Timer (như duty cycle PWM, period, hoặc prescaler) mà không cần CPU xử lý từng lần.
+
+        ◦ Tạo các mẫu PWM phức tạp hoặc thay đổi động mà không làm gián đoạn hoạt động của Timer.
+
+        ◦ Cho phép truyền dữ liệu định kỳ (như bảng giá trị PWM) để điều khiển thiết bị ngoại vi.       
+      
+
+    * **Ứng dụng:** 
+
+        ◦ **Tạo mẫu PWM phức tạp:** Thay đổi duty cycle hoặc tần số PWM theo một chuỗi giá trị được định sẵn, ví dụ:
+
+                Điều khiển động cơ BLDC với tốc độ thay đổi mượt mà.
+                Tạo sóng sin PWM cho inverter hoặc bộ nguồn.            
+
+        ◦ **Truyền dữ liệu định kỳ:** Cập nhật giá trị CCR (Capture/Compare Register) để điều chỉnh PWM hoặc đo thời gian trong Input Capture.
+
+        ◦ **Hệ thống âm thanh hoặc tín hiệu:** Dùng DMA để truyền dữ liệu vào CCR để tạo sóng PWM mô phỏng tín hiệu analog.
+
+
+    * **Nguyên lý:** 
+
+        ◦ **DMA Burst Mode:**
+
+            Trong chế độ này, Timer gửi yêu cầu DMA (DMA Request) khi xảy ra một sự kiện cụ thể (như Update Event, Capture/Compare Event).
+
+            DMA truyền một khối dữ liệu (burst) từ bộ nhớ (RAM hoặc Flash) đến một hoặc nhiều thanh ghi của Timer (như CCR1, CCR2, ARR, PSC) trong một lần truyền.
+            
+            Burst có nghĩa là truyền nhiều byte/word liên tiếp vào các thanh ghi liên tục (ví dụ: CCR1, CCR2, CCR3, CCR4).
+
+        ◦ **Sự kiện kích hoạt DMA:** 
+
+            TIM_DMASource:
+
+                TIM_DMA_Update: Kích hoạt DMA khi Timer tạo Update Event (counter đạt TIM_Period hoặc reset về 0).
+
+                TIM_DMA_CC1, TIM_DMA_CC2, ...: Kích hoạt DMA khi xảy ra Capture/Compare trên kênh 1, 2, ...
+
+                TIM_DMA_Trigger: Kích hoạt DMA khi Timer nhận Trigger (nếu dùng Trigger Mode).
+
+            Thanh ghi đích:
+
+                DMA thường truyền dữ liệu vào thanh ghi TIMx_DMAR (DMA Address Register), từ đó dữ liệu được phân phối đến các thanh ghi như CCR1, ARR, ...
+
+                Số lượng thanh ghi được truyền được xác định bởi Burst Length (trong cấu hình DMA).
+    
+
+    * **Công thức:** 
+
+        ◦ Thời gian giữa các lần truyền DMA (nếu dùng Update Event):
+
+
+
+        <img width="623" height="82" alt="Image" src="https://github.com/user-attachments/assets/af856670-96c9-4d1d-818d-07211c587159" />
+
+
+
+        ◦ Số lần truyền DMA:
+
+            Number of transfers = DMA Burst Length
+
+        ◦ Tần số PWM (nếu cập nhật ARR)
+
+
+
+        <img width="527" height="85" alt="Image" src="https://github.com/user-attachments/assets/ecea0961-d9e2-408f-a289-c7f5101f00e6" />
+
+
+
+
+    * **Cấu hình:** 
+
+        ◦ **1. Bật clock:** 
+
+             Dùng RCC_APB2PeriphClockCmd (cho TIM1) hoặc RCC_APB1PeriphClockCmd (cho TIM2-5).
+
+             Bật clock cho DMA (thường RCC_AHBPeriph_DMA1).
+
+             Bật clock cho GPIO nếu dùng PWM output.
+
+        ◦ **2. Cấu hình TimeBase** 
+   
+        ◦ **3. Cấu hình PWM (nếu dùng)**
+
+            Sử dụng struct TIM_OCInitTypeDef để cấu hình các kênh PWM 
+
+        ◦ **4. Cấu hình DMA**
+
+        ```
+        Struct: DMA_InitTypeDef
+        ```
+        ```
+        DMA_PeripheralBaseAddr: Địa chỉ thanh ghi Timer (TIMx_DMAR).
+
+        DMA_MemoryBaseAddr: Địa chỉ mảng dữ liệu trong RAM.
+
+        DMA_DIR: DMA_DIR_PeripheralDST (truyền từ RAM → Timer).
+
+        DMA_BufferSize: Số lượng dữ liệu truyền (Burst Length).
+
+        DMA_PeripheralInc: DMA_PeripheralInc_Disable (giữ địa chỉ TIMx_DMAR).
+
+        DMA_MemoryInc: DMA_MemoryInc_Enable (tăng địa chỉ RAM).
+
+        DMA_PeripheralDataSize, DMA_MemoryDataSize: Thường DMA_DataSize_Word (32-bit).
+
+        DMA_Mode: DMA_Mode_Circular (lặp lại) hoặc DMA_Mode_Normal (một lần).
+        
+        ```
+        ```
+        Hàm: DMA_Init(DMA_Channel_TypeDef* DMAy_Channelx, DMA_InitTypeDef* DMA_InitStruct)
+        ```
+
+        ◦ **5. Bật DMA cho Timer:** `TIM_DMACmd(TIM_TypeDef* TIMx, uint16_t TIM_DMASource, FunctionalState NewState)`
+
+        ◦ **6. Cấu hình Burst Mode:**
+
+        ```
+        Hàm: TIM_DMAConfig(TIM_TypeDef* TIMx, uint16_t TIM_DMABase, uint16_t TIM_DMABurstLength)
+        ```
+        ```
+        TIM_DMABase: Thanh ghi bắt đầu truyền (thường TIM_DMABase_CCR1).
+
+        TIM_DMABurstLength: Số thanh ghi truyền (1-18, ví dụ: TIM_DMABurstLength_1Transfer).
+        ```
+
+        ◦ **7. Bật ngắt DMA (tùy chọn):** `DMA_ITConfig(DMAy_Channelx, DMA_IT_TC, ENABLE)` để xử lý khi truyền hoàn tất.
+
+        ◦ **8. Cấu hình NVIC (nếu dùng ngắt):** Dùng kênh IRQ của DMA (ví dụ: `DMA1_Channel5_IRQn`)
+
+        ◦ **9. Bật Timer và DMA:** `TIM_Cmd(TIMx, ENABLE) và DMA_Cmd(DMAy_Channelx, ENABLE)`
+
 ### **3. Ngắt truyền thông**
 
 #### **3.1. Tổng quan**
@@ -2034,7 +3256,7 @@ while(1){
 
         ◦ **NewState** 
 
-            ENABLE
+            ENABLE hoặc DISABLE
             
 * **Cấu hình NVIC:** Tương tự Timer, nhưng IRQ channel là `USART1_IRQn (cho USART1)`
 
@@ -2088,6 +3310,7 @@ while(1){
             }            
 
 </details>
+
 
 
 
