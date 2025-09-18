@@ -2784,11 +2784,11 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 
         ◦ Thời gian đếm (nếu Trigger khởi động Timer):
 
-             <img width="592" height="92" alt="Image" src="https://github.com/user-attachments/assets/94073b06-8ecc-4941-b2f4-ca20da4c3137" />
+        <img width="592" height="92" alt="Image" src="https://github.com/user-attachments/assets/94073b06-8ecc-4941-b2f4-ca20da4c3137" />
 
         ◦ Tần số Trigger (nếu dùng để đo)
 
-            <img width="426" height="84" alt="Image" src="https://github.com/user-attachments/assets/602a3214-c7c3-4fa8-83e3-ab3170aac137" />
+        <img width="426" height="84" alt="Image" src="https://github.com/user-attachments/assets/602a3214-c7c3-4fa8-83e3-ab3170aac137" />
 
     * **Cấu hình:** 
 
