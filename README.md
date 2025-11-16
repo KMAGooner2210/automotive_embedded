@@ -5,26 +5,40 @@
 <details>
 	<summary><strong>BÀI 1: GPIO</strong></summary>
 	
-## BÀI 1: GPIO (General Purpose Input Output)
+## BÀI 1: GPIO 
 ![Image](https://github.com/user-attachments/assets/f275f738-034e-41e5-849a-892cb47e31d6)
 
-### **1.Quy trình làm việc với GPIO**
+### **I.Giới thiệu**
 
-#### **1.1. Cấp xung clock (RCC Configuration)**
+#### **1.1. Định nghĩa**
 
-* **Trên STM32, các ngoại vi đều bị tắt clock mặc định để tiết kiệm năng lượng. Phải kích hoạt clock trước khi sử dụng.**
+* GPIO (General Purpose Input Output) là các chân đầu vào/đầu ra đa năng trên vi điều khiển STM32F103
 
-	`void RCC_APB2PeriphClockCmd(uint32_t RCC_APB2Periph, FunctionalState NewState);`
+* Mỗi port GPIO (A-G) có 16 chân (Pin 0-15), hỗ trợ các chế độ linh hoạt: Input (đọc tín hiệu), Output (ghi tín hiệu), Alternate Function (AF, cho ngoại vi như UART/SPI), và Analog (cho ADC).
+
+#### **1.2. Đặc điểm**
+
+* **Cấu trúc port:** Mỗi port có thanh ghi CRL/CRH (cấu hình chân thấp/cao), IDR (Input Data), ODR (Output Data), BSRR (Bit Set/Reset).
+
+* **Tốc độ:** 2/10/50 MHz (tùy chế độ)
+
+### **II.Quy trình làm việc với GPIO**
+
+#### **2.1. Cấp xung clock (RCC Configuration)**
+
+* **Trên STM32, các ngoại vi đều bị tắt clock mặc định để tiết kiệm năng lượng. Phải kích hoạt clock qua RCC (Reset and Clock Control) trước khi dùng.**
+
+	◦ `void RCC_APB2PeriphClockCmd(uint32_t RCC_APB2Periph, FunctionalState NewState);`
 	
-	`void RCC_APB1PeriphClockCmd(uint32_t RCC_APB1Periph, FunctionalState NewState);` 
+	◦ `void RCC_APB1PeriphClockCmd(uint32_t RCC_APB1Periph, FunctionalState NewState);` 
 	
-	`void RCC_AHBPeriphClockCmd(uint32_t RCC_AHBPeriph, FunctionalState NewState);`
+	◦ `void RCC_AHBPeriphClockCmd(uint32_t RCC_AHBPeriph, FunctionalState NewState);`
  
 * **Nhận 2 tham số**:
 
-	 ◦ Ngoại vi Clock
+	◦ Ngoại vi Clock
 	
-	 ◦ ENABLE/DISABLE
+	◦ ENABLE/DISABLE
 
 * **Định nghĩa các Port GPIO**:
 
@@ -44,7 +58,7 @@
 		// Vô hiệu hóa clock cho GPIOB
 		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, DISABLE);
 
-#### **1.2.Cấu hình GPIO**
+#### **2.2.Cấu hình GPIO**
 
 * **Structure cấu hình**
 
@@ -92,7 +106,7 @@
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 		GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-### **3. Các hàm điều khiển GPIO**
+### **III. Các hàm điều khiển GPIO**
 
 #### **3.1. Ghi dữ liệu xuống Output**
 
@@ -162,9 +176,9 @@
 		    // Cả PA0 và PA1 đều ở mức cao
 		}
 
-### **4.Kiến thức cần chú ý**
+### **IV.Kiến thức cần chú ý**
 
-#### **4.1.Pull-Up vs Pull-Down ???**
+#### **4.1.Pull-Up vs Pull-Down**
 
 
 ![Image](https://github.com/user-attachments/assets/2e06645d-579f-4b64-970c-f09a46cf949f)
@@ -173,41 +187,38 @@
 
 * **Pull-up:**
 
-     ◦ Được kết nối giữa chân **đầu vào** với **nguồn VCC**
+    ◦ Được kết nối giữa chân **đầu vào** với **nguồn VCC**
 
-     => Đảm bảo rằng khi **không** có tín hiệu hoặc thiết bị nào **tác động** vào chân nó sẽ **luôn ở mức cao**
+        => Đảm bảo rằng khi **không** có tín hiệu hoặc thiết bị nào **tác động** vào chân nó sẽ **luôn ở mức cao**
 
 
-     ◦ **Không** có tín hiệu vào:
+    ◦ Mặc định (không tín hiệu):
  
-    `GPIO-> HIGH (Pull up kéo lên Vcc)` 
+        GPIO-> HIGH (Pull up kéo lên Vcc), (1).
 
-     ◦ **Có**  tín hiệu vào:
+    ◦ Có tín hiệu vào:
  
-    `GPIO->  HIGH => LOW `
+        GPIO->  HIGH => LOW , (0).
 
-     ◦ Thường được ứng dụng trong nút nhấn
+    ◦ Ứng dụng: Nút nhấn (nhấn = LOW, dễ debounce).
 
 
 * **Pull-down:**
 
     ◦ Được kết nối giữa chân **đầu vào** với **GND**
 
-    => Kéo chân về mức **thấp** khi **không** có tín hiệu hoặc thiết bị nào **tác động** 
+        => Kéo chân về mức **thấp** khi **không** có tín hiệu hoặc thiết bị nào **tác động** 
 
 
-    ◦ **Không** có tín hiệu vào:
+    ◦ Mặc định (không tín hiệu):
  
-    `GPIO-> LOW (Trở kéo về GND)` 
+        GPIO-> LOW (Trở kéo về GND), (0).
 
-    ◦ **Có**  tín hiệu vào:
+    ◦ Có  tín hiệu vào:
  
-    `GPIO->  LOW => HIGH `
+        GPIO->  LOW => HIGH 
 
-    ◦ Thường được dùng để xác định trạng thái khi công tắc hoặc thiết bị đầu vào tắt hoặc không hoạt động
-
-
-
+    ◦ Ứng dụng: Công tắc (tắt = LOW).
 
 #### **4.2.Các chế độ input khác**
 
@@ -239,10 +250,7 @@
 
     ◦ **Mục đích:**  Xuất tín hiệu số kéo VDD (HIGH) và kéo xuống GND (LOW) 1 cách chủ động
 
-
     ◦ **Sử dụng:** Điều khiển relay,led,...
-
-
 
 * **Output Open-Drain (Đầu ra hở mạch):**
 
@@ -252,10 +260,7 @@
 
     ◦ **Sử dụng:** I2C,...   
 
-
-
 #### **4.4.Các chế độ Alternate Function**
-
 
 * **AF-Push Pull:**
 
@@ -269,6 +274,7 @@
     ◦ **Mục đích:** Sử dụng cho các giao thức yêu cầu đường truyền 2 chiều
 
     ◦ **Sử dụng:** GPIO cho giao tiếp I2C (SCL,SDA) ,UART (truyền nhận)
+    
 </details>
 
 <details>
