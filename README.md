@@ -491,17 +491,17 @@
 
 ## **BÀI 3: CÁC CHUẨN GIAO TIẾP CƠ BẢN**
 
-### **1. SPI (Serial Peripheral Interface)**
+### **I. SPI (Serial Peripheral Interface)**
 
 #### **1.1. Đặc điểm**
 
 * **Loại:** Giao tiếp nối tiếp, đồng bộ, song công (full-duplex).
 
- 	◦ **Nối Tiếp (Serial):** Dữ liệu được truyền đi từng bit một trên một đường dây (hoặc một cặp đường dây)
+    ◦ **Nối Tiếp (Serial):** Dữ liệu được truyền đi từng bit một trên một đường dây (hoặc một cặp đường dây)
 
- 	◦ **Đồng Bộ (Synchronous):** Quá trình truyền và nhận dữ liệu được đồng bộ hóa bởi một tín hiệu xung nhịp chung (SCK - Serial Clock) do Master tạo ra.Với mỗi xung nhịp (một cạnh lên hoặc cạnh xuống) do Master phát ra, một bit dữ liệu sẽ được dịch ra (trên MOSI) hoặc được dịch vào (trên MISO).
+    ◦ **Đồng Bộ (Synchronous):** Quá trình truyền và nhận dữ liệu được đồng bộ hóa bởi một tín hiệu xung nhịp chung (SCK - Serial Clock) do Master tạo ra.Với mỗi xung nhịp (một cạnh lên hoặc cạnh xuống) do Master phát ra, một bit dữ liệu sẽ được dịch ra (trên MOSI) hoặc được dịch vào (trên MISO).
 
- 	◦ **Song Công (Full-Duplex):** Dữ liệu có thể được truyền (TX) và nhận (RX) cùng một lúc.			
+    ◦ **Song Công (Full-Duplex):** Dữ liệu có thể được truyền (TX) và nhận (RX) cùng một lúc.			
 
 * **Số dây:** 4 dây (SCK, MISO, MOSI, SS/CS).
   	 
@@ -545,20 +545,22 @@
 
 * **CPOL:**
 
-  ◦ **CPOL = 0:** Xung clock ban đầu ở mức 0.
+    ◦ **CPOL = 0:** Xung clock ban đầu ở mức 0.
 
-  ◦ **CPOL = 1:** Xung clock ban đầu ở mức 1.
+    ◦ **CPOL = 1:** Xung clock ban đầu ở mức 1.
 
 * **CPHA:**
 
-  ◦ **CPHA = 0 (1Edge):**
+    ◦ **CPHA = 0 (1Edge):**
   
          Dữ liệu được lấy mẫu (sampled) trên cạnh đầu tiên (leading edge) của chu kỳ đồng hồ và được thay đổi (shifted) trên cạnh thứ hai (trailing edge).
+
          Dữ liệu phải sẵn sàng trên đường truyền (MOSI/MISO) trước khi chu kỳ đồng hồ bắt đầu.
   
-  ◦ **CPHA = 1 (2Edge):**
+    ◦ **CPHA = 1 (2Edge):**
   
          Dữ liệu được thay đổi (shifted) trên cạnh đầu tiên (leading edge) và được lấy mẫu (sampled) trên cạnh thứ hai (trailing edge).
+
          Dữ liệu chỉ xuất hiện trên đường truyền sau khi chu kỳ đồng hồ bắt đầu.
   
   ![Image](https://github.com/user-attachments/assets/7035fcb0-fd0e-4d24-976b-0a56d80a1207)
@@ -566,27 +568,27 @@
 
 * **CPOL = 0 (đồng hồ nghỉ ở mức thấp):**
   
-  ◦  **1Edge (CPHA = 0):** Lấy mẫu trên rising edge (cạnh tăng), thay đổi trên falling edge (cạnh giảm).
+    ◦  **1Edge (CPHA = 0):** Lấy mẫu trên rising edge (cạnh tăng), thay đổi trên falling edge (cạnh giảm).
   
-  ◦  **2Edge (CPHA = 1):** Thay đổi trên rising edge, lấy mẫu trên falling edge.
+    ◦  **2Edge (CPHA = 1):** Thay đổi trên rising edge, lấy mẫu trên falling edge.
 
 * **CPOL = 1 (đồng hồ nghỉ ở mức cao):**
   
-  ◦  **1Edge (CPHA = 0):** Lấy mẫu trên falling edge (cạnh giảm), thay đổi trên rising edge (cạnh tăng).
-  
-  ◦  **2Edge (CPHA = 1):** Thay đổi trên falling edge, lấy mẫu trên rising edge.
+    ◦  **1Edge (CPHA = 0):** Lấy mẫu trên falling edge (cạnh giảm), thay đổi trên rising edge (cạnh tăng).
+    
+    ◦  **2Edge (CPHA = 1):** Thay đổi trên falling edge, lấy mẫu trên rising edge.
 
-### **2. I2C (Inter-Integrated Circuit)**
+### **II. I2C (Inter-Integrated Circuit)**
 
 #### **2.1. Đặc điểm**
 
 * **Loại:** Giao tiếp nối tiếp, đồng bộ, bán song công (half-duplex).
 
- 	◦ **Nối Tiếp (Serial):** Tương tự SPI, dữ liệu được truyền từng bit một trên một đường duy nhất (SDA), thay vì truyền song song nhiều bit.
+    ◦ **Nối Tiếp (Serial):** Tương tự SPI, dữ liệu được truyền từng bit một trên một đường duy nhất (SDA), thay vì truyền song song nhiều bit.
 
- 	◦ **Đồng Bộ (Synchronous):** Tương tự SPI, quá trình truyền được đồng bộ bởi một tín hiệu xung nhịp chung (SCL - Serial Clock) do Master duy nhất điều khiển. 
+    ◦ **Đồng Bộ (Synchronous):** Tương tự SPI, quá trình truyền được đồng bộ bởi một tín hiệu xung nhịp chung (SCL - Serial Clock) do Master duy nhất điều khiển. 
 
- 	◦ **Bán song công (Half-Duplex):** Dữ liệu có thể được truyền và nhận, nhưng không thể thực hiện cùng lúc trên cùng một đường dây.Cả Master và Slave đều sử dụng chung một đường dữ liệu SDA. Vào một thời điểm, chỉ có một thiết bị được quyền "chiếm" đường SDA để gửi dữ liệu. Thiết bị còn lại phải ở chế độ nghe (listen).
+    ◦ **Bán song công (Half-Duplex):** Dữ liệu có thể được truyền và nhận, nhưng không thể thực hiện cùng lúc trên cùng một đường dây.Cả Master và Slave đều sử dụng chung một đường dữ liệu SDA. Vào một thời điểm, chỉ có một thiết bị được quyền "chiếm" đường SDA để gửi dữ liệu. Thiết bị còn lại phải ở chế độ nghe (listen).
 
 * **Số dây:** 2 dây (SCL, SDA), đều là Open-Drain, cần điện trở kéo lên (Pull-up)
   	 
@@ -608,37 +610,37 @@
   
 * **2. Master gửi địa chỉ Slave (7 bit) + Bit R/W (1 bit)**
 
-  ◦ **Bit R/W = 0:** Master muốn ghi (Write) dữ liệu vào Slave.
+    ◦ **Bit R/W = 0:** Master muốn ghi (Write) dữ liệu vào Slave.
 
-  ◦ **Bit R/W = 1:** Master muốn đọc (Read) dữ liệu từ Slave.
+    ◦ **Bit R/W = 1:** Master muốn đọc (Read) dữ liệu từ Slave.
 
 * **3. Slave phản hồi ACK (A):**
 
-  ◦ Slave có địa chỉ khớp sẽ kéo đường SDA xuống LOW trong chu kỳ cao của xung clock thứ 9 để báo hiệu nó đã nhận được địa chỉ (ACK).
+    ◦ Slave có địa chỉ khớp sẽ kéo đường SDA xuống LOW trong chu kỳ cao của xung clock thứ 9 để báo hiệu nó đã nhận được địa chỉ (ACK).
 
-  ◦  Nếu không có Slave nào nhận ra địa chỉ, đường SDA sẽ được để ở mức HIGH (do điện trở kéo lên) trong xung clock thứ 9 (NACK). Master sẽ biết là không có Slave phản hồi.
+    ◦  Nếu không có Slave nào nhận ra địa chỉ, đường SDA sẽ được để ở mức HIGH (do điện trở kéo lên) trong xung clock thứ 9 (NACK). Master sẽ biết là không có Slave phản hồi.
 
 * **4. Truyền Data Byte:**
 
-  ◦ Master (khi ghi) hoặc Slave (khi đọc) sẽ gửi một byte dữ liệu (8 bit, MSB first).
+    ◦ Master (khi ghi) hoặc Slave (khi đọc) sẽ gửi một byte dữ liệu (8 bit, MSB first).
 
-  ◦ Sau mỗi byte, bên nhận phải gửi một bit ACK (kéo SDA xuống LOW) để xác nhận.
+    ◦ Sau mỗi byte, bên nhận phải gửi một bit ACK (kéo SDA xuống LOW) để xác nhận.
 
 * **5. Lặp lại bước 4 cho đến khi truyền hết dữ liệu.**
 
 * **6. Master gửi điều kiện Stop (P): SDA lên HIGH sau SCL.**
 
-### **3. UART**
+### **III. UART**
 
 #### **3.1. Đặc điểm**
 
 * **Loại:** Giao tiếp nối tiếp, không đồng bộ, song công (full-duplex).
   
- 	◦ **Nối Tiếp (Serial):** Tương tự SPI và I2C, dữ liệu được truyền từng bit một trên một đường dây. 
+    ◦ **Nối Tiếp (Serial):** Tương tự SPI và I2C, dữ liệu được truyền từng bit một trên một đường dây. 
 
- 	◦ **Không đồng bộ (Asynchronous):** Không có đường tín hiệu xung nhịp (Clock) chung nào để đồng bộ hóa giữa hai thiết bị.
+    ◦ **Không đồng bộ (Asynchronous):** Không có đường tín hiệu xung nhịp (Clock) chung nào để đồng bộ hóa giữa hai thiết bị.
   
- 	◦ **Song công (Full-Duplex):** ữ liệu có thể được truyền (TX) và nhận (RX) cùng một lúc vì chúng sử dụng hai đường dây hoàn toàn độc lập
+    ◦ **Song công (Full-Duplex):** ữ liệu có thể được truyền (TX) và nhận (RX) cùng một lúc vì chúng sử dụng hai đường dây hoàn toàn độc lập
 
 * **Số dây:** 2 dây (Tx, Rx)
   	 
@@ -646,9 +648,9 @@
 
 ![Image](https://github.com/user-attachments/assets/5d657816-56e4-4871-8c40-7ce476b283c2)
 
-**Tx (Transmit)**: Chân truyền dữ liệu. Dữ liệu từ thiết bị này phải được nối đến chân RX của thiết bị kia.
+* **Tx (Transmit)**: Chân truyền dữ liệu. Dữ liệu từ thiết bị này phải được nối đến chân RX của thiết bị kia.
 
-**Rx (Receive)**: Chân nhận dữ liệu. Dữ liệu từ thiết bị kia phải được nối đến chân TX của thiết bị này.
+* **Rx (Receive)**: Chân nhận dữ liệu. Dữ liệu từ thiết bị kia phải được nối đến chân TX của thiết bị này.
 
 #### **3.3.Quá trình truyền nhận**
 
