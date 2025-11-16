@@ -276,11 +276,9 @@
 
 ## BÀI 2: INTERRUPT 
 
-
-### **1. Khái niệm**
+### **I. Khái niệm**
 
 ![Image](https://github.com/user-attachments/assets/eb1762a6-057e-4212-91cd-7d216830df0d)
-
 
 *  **Ngắt (Interrupt)** là sự kiện khẩn cấp yêu cầu vi điều khiển (MCU) tạm dừng chương trình chính để thực thi một đoạn chương trình đặc biệt gọi là **Interrupt Service Routine (ISR)**.
 
@@ -309,17 +307,19 @@
 *  **6. Sau khi hoàn thành, khôi phục trạng thái và quay lại chương trình chính.**
   
 
-### **2. Interrupt Service Routine (Trình phục vụ ngắt)**
+### **II. Interrupt Service Routine (Trình phục vụ ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/90c8c28e-edea-4755-b2b3-8c84be788a61)
 
 #### **2.1. Định nghĩa**
 
- * ISR là hàm xử lý ngắt, được gọi khi ngắt xảy ra. Mỗi ngắt có một ISR riêng, được xác định bởi địa chỉ trong **Vector Interrupt Table (VIT).**
+* ISR là hàm xử lý ngắt, được gọi khi ngắt xảy ra. Mỗi ngắt có một ISR riêng, được xác định bởi địa chỉ trong **Vector Interrupt Table (VIT).**
 
 #### **2.2. Khai báo ISR**
 
- * Trong STM32F103 (SPL), ISR được khai báo trong file startup (thường là `startup_stm32f10x_md.s` hoặc tương tự)
+* Trong STM32F103 (SPL), ISR được khai báo trong file startup (thường là `startup_stm32f10x_md.s` hoặc tương tự)
+
+* **VD:** ISR cho EXTI0 (nút nhấn PA0 đảo LED PC13)
 
 			void EXTI0_IRQHandler(void) {
 			    if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
@@ -331,23 +331,24 @@
 
 #### **2.3. Lưu ý**
 
- * **Tối ưu tốc độ:** Tránh dùng delay hoặc vòng lặp dài.
+* **Tối ưu tốc độ:** Tránh dùng delay hoặc vòng lặp dài.
    
- * **Xóa cờ ngắt:** Luôn xóa cờ ngắt (pending bit) trong ISR để tránh lặp ngắt vô hạn.
+* **Xóa cờ ngắt:** Luôn xóa cờ ngắt (pending bit) trong ISR để tránh lặp ngắt vô hạn.
    
- * **Tránh lồng ngắt không cần thiết:** Chỉ bật ngắt lồng (nested interrupt) khi cần.
+* **Tránh lồng ngắt không cần thiết:** Chỉ bật ngắt lồng (nested interrupt) khi cần.
 
- * **Kiểm tra lỗi HardFault:** Nếu ISR gây lỗi (như truy cập bộ nhớ không hợp lệ), CPU nhảy đến HardFault.
+* **Kiểm tra lỗi HardFault:** Nếu ISR gây lỗi (như truy cập bộ nhớ không hợp lệ), CPU nhảy đến HardFault.
 
-			void EXTI0_IRQHandler(void) {
-			    if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
-			        // Xử lý ngắt (ví dụ: đảo trạng thái LED)
-			        GPIO_ToggleBits(GPIOC, GPIO_Pin_13);
-			        EXTI_ClearITPendingBit(EXTI_Line0);  // Xóa cờ ngắt
-			    }
-			}
+* **VD:** ISR cho SysTick (ngắt 1 ms, dùng cho delay)
+
+        volatile uint32_t tick = 0;
+
+        void SysTick_Handler(void) {
+            tick++;  // Tăng counter
+            // Không xóa cờ (NVIC tự động)
+        }
    
-### **3.Vector Interrupt Table (Bảng vector ngắt)**
+### **III.Vector Interrupt Table (Bảng vector ngắt)**
 
 ![Image](https://github.com/user-attachments/assets/038312e2-516d-4eb2-8125-438cf5885fc6)
 
@@ -359,7 +360,7 @@
 	
 	◦ **Kích thước:** Mỗi mục là 4 byte (địa chỉ 32-bit). STM32F103 hỗ trợ ~80 vector (bao gồm Reset, HardFault, và ngắt ngoại vi).
 
- 	◦ **Cấu trúc:** Bao gồm:
+    ◦ **Cấu trúc:** Bao gồm:
 
 			Vector 0: Địa chỉ stack pointer ban đầu.
 			Vector 1: Địa chỉ Reset handler.
@@ -367,7 +368,6 @@
 			Vector 16+: Ngắt ngoại vi (EXTI, UART, Timer, v.v.).
 
 #### **3.2. Ví Dụ Cấu Trúc VIT**
-
 
 
 <img width="1126" height="714" alt="Image" src="https://github.com/user-attachments/assets/3cf7fd5e-6a5b-4d9b-bf51-c8bcc95f130e" />
@@ -378,15 +378,14 @@
 
 #### **3.3. Cách NVIC Sử Dụng VIT**
 
-
-  1. Khi ngắt xảy ra, NVIC **xác định vector number** (ví dụ: EXTI0 là 6).
+* **1.** Khi ngắt xảy ra, NVIC **xác định vector number** (ví dụ: EXTI0 là 6).
 	
-  2. **Tính địa chỉ ISR:** Base_Address + (vector_number * 4) (Base_Address thường là 0x00000000).
+* **2.** Tính địa chỉ ISR:** Base_Address + (vector_number * 4) (Base_Address thường là 0x00000000).
 	
-  3. CPU **lấy địa chỉ ISR từ VIT** và nhảy đến thực thi.
+* **3.** CPU **lấy địa chỉ ISR từ VIT** và nhảy đến thực thi.
   	
 
-### **4. NVIC (Nested Vectored Interrupt Controller)**
+### **IV. NVIC (Nested Vectored Interrupt Controller)**
 
 #### **4.1. Khái niệm**
 
@@ -407,11 +406,9 @@
 
 * **Quản lý ưu tiên ngắt**
 
- 
-   ◦ Cho phép 16 mức ưu tiên (0-15)
+    ◦ Cho phép 16 mức ưu tiên (0-15)
    
-   
-   ◦ Mức ưu tiên thấp hơn (số nhỏ hơn) có độ ưu tiên cao hơn
+    ◦ Mức ưu tiên thấp hơn (số nhỏ hơn) có độ ưu tiên cao hơn
 
 #### **4.3. Priority Group**
 
@@ -425,18 +422,18 @@
 
 * Sử dụng struct `NVIC_InitTypeDef`:
 
-  ◦ **NVIC_IRQChannel:**  Kênh ngắt (ví dụ: EXTI0_IRQn).
+    ◦ **NVIC_IRQChannel:**  Kênh ngắt (ví dụ: EXTI0_IRQn).
 
-  ◦ **NVIC_IRQChannelPreemptionPriority:**  Mức ưu tiên Preemption (0-15).
+    ◦ **NVIC_IRQChannelPreemptionPriority:**  Mức ưu tiên Preemption (0-15).
 
-  ◦ **NVIC_IRQChannelSubPriority:** Mức ưu tiên SubPriority (0-15).
+    ◦ **NVIC_IRQChannelSubPriority:** Mức ưu tiên SubPriority (0-15).
 
-  ◦ **NVIC_IRQChannelCmd:** Bật (ENABLE) hoặc tắt (DISABLE) ngắt.
+    ◦ **NVIC_IRQChannelCmd:** Bật (ENABLE) hoặc tắt (DISABLE) ngắt.
 
 
 #### **4.5. VD**
 
-* **Cấu hình ngắt cho EXTI0 (nút nhấn trên PA0):**
+* **Cấu hình ngắt cho EXTI0 (nút nhấn trên PA0 đảo LED PC13):**
   
 		#include "stm32f10x.h"
 		
