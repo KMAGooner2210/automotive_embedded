@@ -3774,7 +3774,7 @@ void main(void) {
 
 ## Bài 9: DMA và PWM
 
-## **9.1.Hoạt động của MCU**
+## **9.1.Hoạt động của CPU**
 
 ![Image](https://github.com/user-attachments/assets/248243ef-2eac-4d56-b746-2ffa3fb54799)
 
