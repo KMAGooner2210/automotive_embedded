@@ -3770,272 +3770,362 @@ void main(void) {
 
 
 <details>
-	<summary><strong>BÀI 9: DMA và PWM </strong></summary> 
+	<summary><strong>BÀI 9: DMA và PWM</strong></summary> 
 
 ## Bài 9: DMA và PWM
 
-## **9.1.Hoạt động của CPU**
+### **I.CPU**
 
-![Image](https://github.com/user-attachments/assets/248243ef-2eac-4d56-b746-2ffa3fb54799)
+#### **1.1. Đặc điểm**
 
-* **(1) CPU** lấy lệnh chương trình từ FLASH để xử lý
+* Trong hệ thống nhúng như STM32 (dựa trên lõi ARM Cortex-M3), CPU (Central Processing Unit)  chịu trách nhiệm thực thi các lệnh chương trình, xử lý dữ liệu và điều khiển ngoại vi.
 
-* **(2) CPU** đọc/ghi những dữ liệu từ/vào các ngoại vi thông qua đường bus ngoại vi
+* CPU hoạt động theo **kiến trúc Von Neumann** (bộ nhớ thống nhất cho lệnh và dữ liệu), với các thành phần chính:
 
-* **(3) Lưu** các dữ liệu vừa đọc được vào RAM 
+    ◦ **ALU (Arithmetic Logic Unit):** Thực hiện các phép toán số học và logic.
 
-* **(4) Giao tiếp** với RAM (đọc/ghi các dữ liệu) thông qua đường bus bộ nhớ
+    ◦ **Control Unit:** Giải mã lệnh và điều khiển luồng thực thi.
 
-**=> CPU bị chiếm dụng quá nhiều, giảm hiệu suất chương trình** 
+    ◦ **Registers:** Các thanh ghi nội bộ lưu trữ dữ liệu tạm thời (ví dụ: R0-R15 trong ARM)
+
+    ◦ **Bus Interface:** Kết nối với bộ nhớ (AHB/APB bus) và ngoại vi.
+
+#### **1.2. Chu kỳ hoạt động của CPU**
+
+
+* **1. Fetch:** 
+
+    ◦ Lấy lệnh từ bộ nhớ (FLASH) qua bus địa chỉ.
+
+* **2. Decode:** 
+
+    ◦ Giải mã lệnh để hiểu hành động cần thực hiện.
+
+* **3. Execute::** 
+
+    ◦ Thực thi lệnh, có thể bao gồm đọc/ghi dữ liệu từ RAM hoặc ngoại vi.
+
+* **4. Store/Write-back:** 
+
+    ◦ Lưu kết quả nếu cần.
+
+#### **1.3. Chu kỳ hoạt động của CPU trong STM32**
+
+<img width="499" height="330" alt="Image" src="https://github.com/user-attachments/assets/d110d322-e545-4a6e-866b-b7f33546fd28" />
+
+* **(1)** CPU lấy lệnh chương trình từ FLASH để xử lý
+
+* **(2)**  CPUđọc/ghi những dữ liệu từ/vào các ngoại vi thông qua đường bus ngoại vi
+
+* **(3)** Lưu các dữ liệu vừa đọc được vào RAM 
+
+* **(4)** Giao tiếp với RAM (đọc/ghi các dữ liệu) thông qua đường bus bộ nhớ
+
+**Hậu quả: CPU bị chiếm dụng quá nhiều, giảm hiệu suất chương trình** 
  
+**=> Để khắc phục, sử dụng DMA (Direct Memory Access)** 
 
+### **II.Giới thiệu về DMA**
 
-## **9.2.Giới thiệu về DMA**
+#### **2.1.Định nghĩa**
 
-### **9.2.1.Định nghĩa**
-
-**DMA (Direct Memory Access)** là 1 cơ chế cho phép các thiết bị ngoại vi truyền dữ liệu trực tiếp đến bộ nhớ mà không cần CPU và thực hiện từng bước truyền dữ liệu
+* **DMA (Direct Memory Access)** là 1 cơ chế cho phép các thiết bị ngoại vi truyền dữ liệu trực tiếp đến bộ nhớ mà không cần CPU can thiệp và thực hiện từng bước truyền dữ liệu
 
 ![Image](https://github.com/user-attachments/assets/2cf6eb88-05b1-4fe0-b95d-8fb6d5ce901a)
 
-* **CPU** cấu hình và kích hoạt **DMA** hoạt động
+* **Quy trình hoạt động:** 
 
-* Ngoại vi sẽ sử dụng **DMA Request** để yêu cầu **DMA** gửi/nhận dữ liệu ngoại vi
+    ◦ **CPU** cấu hình và kích hoạt **DMA** hoạt động
 
-* **DMA** tiến hành thực hiện yêu cầu từ **DMA Request**
+    ◦ Ngoại vi sẽ sử dụng **DMA Request** để yêu cầu **DMA** gửi/nhận dữ liệu ngoại vi
 
-* Lấy dữ liệu từ **SRAM** thông qua bus matrix ,đi qua các đường bus ngoại vi rồi truy cập các thanh ghi của ngoại vi
+    ◦ **DMA** tiến hành thực hiện yêu cầu từ **DMA Request**
 
-* Khi **kết thúc**, **DMA** kích hoạt ngắt báo cho **CPU** biết là quá trình hoàn tất
+    ◦ Lấy dữ liệu từ **SRAM** thông qua bus matrix ,đi qua các đường bus ngoại vi rồi truy cập các thanh ghi của ngoại vi
 
-### **9.2.2.DMA trong STM32**
+    ◦ Khi **kết thúc**, **DMA** kích hoạt ngắt báo cho **CPU** biết là quá trình hoàn tất
 
-* STM32F1 có 2 bộ DMA, **DMA1** bao gồm **7** kênh, **DMA2** bao gồm **5** kênh
+#### **2.2.DMA trong STM32**
 
+* **STM32F1 có 2 bộ DMA:**
 
-   ◦ Có 2 chế độ hoạt động
+    ◦  **DMA1:** 7 kênh
+    
+    ◦  **DMA2:** 5 kênh
 
-   ◦ Mỗi kênh có thể cấu hình riêng
+* **Đặc điểm chính:**
 
-   ◦ Mỗi kênh có thể phục vụ **nhiều ngoại vi** khác nhau nhưng **không đồng thời**
+    ◦ Có 2 chế độ hoạt động (**Normal và Circular**).
 
-   ◦ Có mức ưu tiên để lập trình cho các kênh
+    ◦ Mỗi kênh có thể cấu hình riêng
 
-   ◦ Có thể sử dụng DMA với 5 cờ báo ngắt **(DMA Half Transfer, DMA Transfer complete, DMA Transfer Error, DMA FIFO Error, Direct Mode Error)** 
+    ◦ Mỗi kênh có thể phục vụ **nhiều ngoại vi** khác nhau nhưng **không đồng thời**
+
+    ◦ Có mức ưu tiên (Priority) để lập trình cho các kênh (Low, Medium, High, Very High).
+
+    ◦ Có thể sử dụng DMA với 5 cờ báo ngắt: **DMA Half Transfer**, **DMA Transfer complete**, **DMA Transfer Error**, **DMA FIFO Error**, **Direct Mode Error** 
 
    ![Image](https://github.com/user-attachments/assets/1fd23a47-dda9-4bc1-b4d5-66752f038651)
 
 
-* **DMA** có 2 chế độ hoạt động alf **normal** và **circular**
+* **Chế độ hoạt động:**
 
   ◦ **Normal Mode:** 
 
-    DMA truyền dữ liệu cho tới khi truyền đủ 1 lượng dữ liệu giới hạn đã khai báo DMA sẽ dừng hoạt động.
+        DMA truyền dữ liệu cho tới khi truyền đủ 1 lượng dữ liệu giới hạn đã khai báo DMA sẽ dừng hoạt động.
 
-    Muốn nó tiếp tục phải khởi động lại
+        Muốn nó tiếp tục phải khởi động lại
 
    ◦ **Circular Mode:**
 
-   DMA truyền đủ dữ liệu giới hạn đã khai báo thì nó sẽ truyền tiếp về vị trí ban đầu, không dừng lại
+        DMA truyền đủ dữ liệu giới hạn đã khai báo thì nó sẽ truyền tiếp về vị trí ban đầu, không dừng lại
 
 
-### **9.2.3.Cấu hình DMA trong STM32**
+#### **2.3.Cấu hình DMA trong STM32**
 
-* DMA được cấp xung từ AHB
+* **Bước 1:** Cấp xung clock từ AHB.
 
-```
-void RCC_Config(void){
-	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
-}
-```
-
-* Các tham số cần được cấu hình
-
-  ◦ **DMA_PeripheralBaseAddr:** Cấu hình địa chỉ ngoại vi cho DMA.Đây là địa chỉ mà DMA sẽ lấy data hoặc truyền data tới ngoại vi
+        void RCC_Config(void){
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
+        }
 
 
-  ◦ **DMA_MemoryBaseAddr:** Cấu hình địa chỉ vùng nhớ cần ghi/đọc data
+* **Bước 2:** Cấu hình các tham số chính (sử dụng struct `DMA_InitTypeDef`):
+
+    ◦ **DMA_PeripheralBaseAddr:** Cấu hình địa chỉ ngoại vi cho DMA.
+
+        Đây là địa chỉ mà DMA sẽ lấy data hoặc truyền data tới ngoại vi
+
+    ◦ **DMA_MemoryBaseAddr:** Cấu hình địa chỉ vùng nhớ cần ghi/đọc data
+
+    ◦ **DMA_DIR:** Cấu hình hướng truyền DMA, từ ngoại vi tới vùng nhớ hay từ vùng nhớ tới ngoại vi
+
+        DMA_DIR_PeripheralSRC (từ ngoại vi → nhớ)
+
+        DMA_DIR_PeripheralDST (từ nhớ → ngoại vi)
+
+        DMA_DIR_MemoryToMemory
+
+    ◦ **DMA_BufferSize:** Kích thước buffer (số lượng data cần truyền).
+
+    ◦ **DMA_PeripheralInc:** Cấu hình địa chỉ ngoại vi có tăng sau tăng hay không
+
+        DMA_PeripheralInc_Enable/Disable
+
+    ◦ **DMA_MemoryInc:** Cấu hình địa chỉ bộ nhớ có tăng hay không
+
+        DMA_MemoryInc_Enable/Disable
+
+    ◦ **DMA_PeripheralDataSize:** Kích thước data ngoại vi (Byte, HalfWord, Word).
+
+    ◦ **DMA_MemoryDataSize:** Kích thước data bộ nhớ (Byte, HalfWord, Word).
+
+    ◦ **DMA_Mode:** Chế độ: DMA_Mode_Normal hoặc DMA_Mode_Circular.
+
+    ◦ **DMA_Priority:** Cấu hình độ ưu tiên cho kênh DMA
+
+        DMA_Priority_Low/Medium/High/Very_High
+
+    ◦ **DMA_M2M:** Cấu hình sử dụng truyền từ bộ nhớ đếm bộ nhớ cho kênh DMA
+
+        Truyền giữa bộ nhớ: DMA_M2M_Enable/Disable
+
+* **VD:cấu hình (DMA1_Channel2 cho SPI Rx)**
 
 
-  ◦ **DMA_DIR:** Cấu hình hướng truyền DMA, từ ngoại vi tới vùng nhớ hay từ vùng nhớ tới ngoại vi
-
-  ◦ **DMA_BufferSize:** Cấu hình kích cỡ buffer.Số liệu dữ liệu muốn gửi/nhận qua DMA
-
-  ◦ **DMA_PeripheralInc:** Cấu hình địa chỉ ngoại vi có tăng sau tăng hay không
-
-  ◦ **DMA_MemoryInc:** Cấu hình địa chỉ bộ nhớ có tăng hay không
-
-  ◦ **DMA_PeripheralDataSize:** Cấu hình độ lớn data của ngoại vi
-
-  ◦ **DMA_MemoryDataSize:** Cấu hình độ lớn data của bộ nhớ
-
-  ◦ **DMA_Mode:** Cấu hình chế độ hoạt động
-
-  ◦ **DMA_Priority:** Cấu hình độ ưu tiên cho kênh DMA
-
-  ◦ **DMA_M2M:** Cấu hình sử dụng truyền từ bộ nhớ đếm bộ nhớ cho kênh DMA
-
-  ```
-  void DMA_Config(void){
-
-	DMA_InitTypeDef DMA_InitStructure;
-
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-	DMA_InitStructure.DMA_BufferSize = 35;
-	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)buffer;
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&SPI->DR;
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-	DMA_InitStructure.DMA_Priority = DMA_Priority_Medium
-
-	DMA_Init(DMA1_Channel2, &DMA_InitStructure);
-	DMA_Cmd(DMA1,ENABLE);
-	SPI_I2S_DMACmd(SPI1,SPI_I2S_DMAReq_Rx, ENABLE);
-  }
-  ```
-
-### **9.2.4.Các hàm thông dụng**
-
-* Sau khi lưu những cấu hình DMA_Init() và cho phép bộ DMA hoạt động DMA_Cmd(), ta tiến hành cho phép DMA làm việc với ngoại vi bằng hàm <Periph>_DMACmd() 
-
-`void SPI_I2S_DMACmd(SPI_TypeDef* SPIx, uint16_t SPI_I2S_DMAReq, FunctionState NewState)`
-
-`void I2C_DMACmd(I2C_TypeDef* I2Cx, FunctionalState NewState)`
-
-`void USART_DMACmd(USART_TypeDef* USARTx, uint16_t USART_DMAReq, FunctionalState NewState)`
-
-`void ADC_DMACmd(ADC_TypeDef* ADCx, FunctionalState NewState)`
+        void DMA_Config(void) {
+            DMA_InitTypeDef DMA_InitStructure;
+            
+            DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+            DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;  // Từ ngoại vi → nhớ
+            DMA_InitStructure.DMA_BufferSize = 35;
+            DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)buffer;  // Địa chỉ buffer SRAM
+            DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+            DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+            DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DR;  // Thanh ghi SPI Data
+            DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+            DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+            DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
+            DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+            
+            DMA_Init(DMA1_Channel2, &DMA_InitStructure);
+            DMA_Cmd(DMA1_Channel2, ENABLE);  // Kích hoạt kênh DMA
+            
+            // Kích hoạt DMA cho ngoại vi (ví dụ: SPI)
+            SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Rx, ENABLE);
+        }
 
 
-## **9.3.Giới thiệu về PWM**
+#### **2.4.Các hàm thông dụng**
 
-### **9.3.1.Định nghĩa**
+* Sau khi lưu những cấu hình `DMA_Init()` và cho phép bộ DMA hoạt động `DMA_Cmd()`, ta tiến hành cho phép DMA làm việc với ngoại vi bằng hàm `<Periph>_DMACmd()` 
 
-* **PWM (Pulse Width Modulation)** được sử dụng để chỉ định góc mà động cơ Servo sẽ quay đến.Tín hiệu PWM có 2 yếu tố quyết Định
+    ◦   **`void SPI_I2S_DMACmd(SPI_TypeDef* SPIx, uint16_t SPI_I2S_DMAReq, FunctionState NewState)`** : Cho SPI/I2S.
 
-  ◦ Tần số: Số lần tín hiệu lặp lại 1 giây.Với servo,tần số thông thường là 50HZ
+    ◦   **`void I2C_DMACmd(I2C_TypeDef* I2Cx, FunctionalState NewState)`**  : Cho I2C.
 
-  ◦ Độ rộng xung: Là thời gian tín hiệu ở mức cao trong mỗi chu kỳ. Độ rộng xung thường được đo bằng microsecond và quyết định góc mà servo sẽ xoay đến. **Tỉ lệ độ rộng xung với chu kỳ xung được gọi là Duty Cycle**
+    ◦   **`void USART_DMACmd(USART_TypeDef* USARTx, uint16_t USART_DMAReq, FunctionalState NewState)`** : Cho USART.
+
+    ◦   **`void ADC_DMACmd(ADC_TypeDef* ADCx, FunctionalState NewState)`** : Cho ADC.
+
+* Để xử lý ngắt DMA, sử dụng `DMA_ITConfig()` để kích hoạt ngắt và hàm callback trong NVIC để xử lý sự kiện hoàn tất.
+
+        DMA_ITConfig(DMA1_Channel2, DMA_IT_TC, ENABLE);
+
+### **III.PWM**
+
+#### **3.1.Định nghĩa**
+
+* **PWM (Pulse Width Modulation)** là kỹ thuật tạo tín hiệu xung vuông với độ rộng xung thay đổi để điều khiển công suất hoặc vị trí (ví dụ: góc quay của động cơ Servo).
+
+* Tín hiệu PWM có **2 yếu tố quyết định:**
+
+    ◦ **Tần số (Frequency):** Số lần tín hiệu lặp lại 1 giây. Với servo,tần số thông thường là 50HZ (chu kỳ 20 ms).
+
+    ◦ **Độ rộng xung (Pulse Width):** Thời gian tín hiệu ở mức cao trong mỗi chu kỳ (đo bằng µs). Quyết định góc quay Servo (Duty Cycle = Pulse Width / Chu kỳ).
 
   
 ![Image](https://github.com/user-attachments/assets/4e235026-e41a-4169-87bb-c254b332b343)
 
-### **9.3.2.Đặc điểm**
+#### **3.2.Đặc điểm**
 
-* Độ rộng xung PWM để xoay từ góc 0-180 độ là khoảng 1000µs -> 2000µs
+* Phạm vi độ rộng xung cho Servo (`0° - 180°`): `1000 µs (0°)` → `2000 µs (180°)`.
 
 
 ![Image](https://github.com/user-attachments/assets/d05e1663-c5c9-4627-9f8c-53957de8b4f9)
 
 * Công thức tính độ rộng xung
 
-pulseWidth = MIN_PULSE_WIDTH + (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) * angle / 180;
+        pulseWidth = MIN_PULSE_WIDTH + (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) * (angle / 180);
 
-**MIN_PULSE_WIDTH** là độ rộng xung cho góc 0 độ
+    ◦ **MIN_PULSE_WIDTH:** 1000 µs (góc 0°).
 
-**MAX_PULSE_WIDTH** là độ rộng xung cho góc 180 độ
+    ◦ **MAX_PULSE_WIDTH:** 2000 µs (góc 180°).
 
-**angle** là góc mà servo quay đến
+    ◦ **angle:** Góc mong muốn (0-180°).
+
+* Công thức tính Duty Cycle
+
+        Duty Cycle (%) = (Pulse Width / Chu kỳ) × 100.
+
+    ◦ Với chu kỳ 20 ms, Duty Cycle từ 5% (1000 µs) đến 10% (2000 µs).
+
+#### **3.3.Cấu hình**
+
+* PWM được tạo bởi **Timer (TIM)** và xuất ra chân GPIO ở chế độ **AF_PP (Alternate Function Push-Pull)**.
+
+* **Bước 1:** Cấu hình GPIO.
+
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;  // Ví dụ: PA0 cho TIM2_CH1
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+* **Bước 2:** Cấu hình Timer Time Base (để đạt tần số 50 Hz, tick 1 µs).
+
+    ◦ Sử dụng Prescaler và Period (ARR) để Timer đếm mỗi 1 µs và tràn mỗi 20 ms.
+
+    ◦ Giả sử hệ clock 72 MHz (STM32F1):
+
+        Prescaler = 71 → Tick = 72 MHz / (71+1) = 1 MHz (1 µs/tick).
+
+        Period (ARR) = 19999 → Chu kỳ = 20 ms (20000 ticks).   
 
 
-### **9.3.3.Cấu hình**
+            TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+            RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 
-* Ngõ ra của xung PWM sẽ được xuất trên các chân GPIO. Ta phải cấu hình chân chế độ AF_PP
+            TIM_TimeBaseStructure.TIM_Period = 19999;  // ARR = 20 ms - 1
+            TIM_TimeBaseStructure.TIM_Prescaler = 71;  // 1 µs/tick
+            TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+            TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+            TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+            TIM_ARRPreloadConfig(TIM2, ENABLE);  // Bật preload ARR để tránh giật
 
-```
-GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0; //PA0 là TIM2_CH1
-GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-```
+* **Bước 3:** Cấu hình Timer Output Compare (PWM Mode) (struct `TIM_OCInitTypeDef`):
 
-* Xung với chu kỳ là 20ms, độ rộng xung là 1000us đến 2000us
+    ◦ TIM_OCMode
 
-  ◦ Cấu hình timer mỗi 1us đếm lên 1 lần và tràn mỗi 20ms
+        Chế độ: TIM_OCMode_PWM1 (cao khi đếm < CCR),
 
-* Cấu hình timer chế độ PWM trong struct **TIM_OCInitTypeDef**:
+        TIM_OCMode_PWM2 (ngược lại).
 
-  ◦ **TIM_OCMode:** Chế độ hoạt động cho Output Compare.
 
-         + TIM_OCMode_PWM1: Tín hiệu ở mức cao (1) khi giá trị đếm nhỏ hơn TIM_Pulse, mức thấp (0) khi lớn hơn.
+    ◦ TIM_OutputState
 
-         + TIM_OCMode_PWM2: Ngược lại với PWM1 
+        Kích hoạt đầu ra: TIM_OutputState_Enable/Disable
 
-  ◦ **TIM_OutputState:** 
+    ◦ TIM_OCMode
 
-         + Kích hoạt hoặc vô hiệu hóa đầu ra PWM trên chân GPIO tương ứng.
+        Chế độ: TIM_OCMode_PWM1 (cao khi đếm < CCR),
 
-  ◦ **TIM_Pulse:** 
+        TIM_OCMode_PWM2 (ngược lại).
 
-         + Giá trị so sánh (CCR) , xác định độ rộng xung PWM (duty cycle).
 
-         + Phạm vi: 0 đến TIM_Period
+    ◦ TIM_Pulse
 
-         + Công thức duty cycle: Duty cycle = [TIM_Pulse / (TIM_Period + 1)] x 100%
+        Giá trị CCR (độ rộng xung): 1000-2000 cho Servo. Duty = [CCR / (ARR+1)] × 100%.
 
-  ◦ **TIM_OCPolarity:**
-  
-         + Xác định cực tính tín hiệu đầu ra. 
+    ◦ TIM_OCPolarity
 
-         + TIM_OCPolarity_High: Tín hiệu ở mức **cao** khi giá trị đếm **nhỏ hơn TIM_Pulse** (trong PWM1).
+        Cực tính: TIM_OCPolarity_High (cao khi < CCR)
 
-         + TIM_OCPolarity_Low: Tín hiệu ở mức **thấp** khi giá trị đếm **nhỏ hơn TIM_Pulse**.
+        TIM_OCPolarity_Low (thấp khi < CCR)
 
-  ◦ **TIM_OCIdleState:** (quan trọng cho Timer nâng cao như TIM1)
+    ◦ TIM_OCIdleState
 
-         + Xác định trạng thái tín hiệu PWM khi Timer ở trạng thái "Idle" (không hoạt động, thường dùng trong điều khiển động cơ).
+        Xác định trạng thái tín hiệu PWM khi Timer ở trạng thái "Idle" (không hoạt động, thường dùng trong điều khiển động cơ).
 
-         + TIM_OCIdleState_Set: Mức cao khi Idle.
+        TIM_OCIdleState_Set: Mức cao khi Idle.
 
-         + TIM_OCIdleState_Reset: Mức thấp khi Idle (mặc định).
+        TIM_OCIdleState_Reset: Mức thấp khi Idle (mặc định).
 
-  ◦ **TIM_OutputNState:** (quan trọng cho Timer nâng cao như TIM1)
+    ◦ TIM_OutputNState
 
-         + Kích hoạt hoặc vô hiệu hóa tín hiệu bổ sung (complementary output, ví dụ: TIM1_CH1N)
+        Kích hoạt hoặc vô hiệu hóa tín hiệu bổ sung (complementary output, ví dụ: TIM1_CH1N)
 
-         + TIM_OutputNState_Enable: Bật tín hiệu bổ sung.
+        TIM_OutputNState_Enable: Bật tín hiệu bổ sung.
 
-         + TIM_OutputNState_Disable: Tắt tín hiệu bổ sung
+        TIM_OutputNState_Disable: Tắt tín hiệu bổ sung
 
-  ◦ **TIM_OCNIdleState:** (chỉ áp dụng cho Timer nâng cao)
+    ◦ TIM_OCNIdleState
 
-         + Xác định trạng thái tín hiệu bổ sung khi Timer ở trạng thái Idle.
+        Xác định trạng thái tín hiệu bổ sung khi Timer ở trạng thái Idle.
 
-         + Giá trị: TIM_OCNIdleState_Set hoặc TIM_OCNIdleState_Reset.
+        Giá trị: TIM_OCNIdleState_Set hoặc TIM_OCNIdleState_Reset.
 
 * Ngoài các hàm bạn đã đề cập (TIM_OCxInit, TIM_OCxPreloadConfig, TIM_Cmd, TIM_SetComparex), dưới đây là các hàm SPL bổ sung cần chú ý khi làm việc với PWM:
 
-  ◦ **TIM_ARRPreloadConfig(TIMx, FunctionalState):**
+    ◦ **TIM_ARRPreloadConfig(TIMx, FunctionalState):**
 
-         + Bật/tắt tính năng preload cho thanh ghi ARR
+        Bật/tắt tính năng preload cho thanh ghi ARR
 
-         + Khi bật, giá trị TIM_Period chỉ được cập nhật khi xảy ra Update Event, giúp tránh giật tín hiệu PWM khi thay đổi chu kỳ
-
-  
-  ◦ **TIM_CtrlPWMOutputs(TIMx, FunctionalState) (chỉ áp dụng cho TIM1):**
-
-         + Kích hoạt đầu ra PWM cho Timer nâng cao (TIM1).
-
-         + Cần gọi TIM_CtrlPWMOutputs(TIM1, ENABLE) để đảm bảo tín hiệu PWM được xuất ra chân GPIO.
-
-         + Nếu không gọi, PWM sẽ không hoạt động trên TIM1.
+        Khi bật, giá trị TIM_Period chỉ được cập nhật khi xảy ra Update Event, giúp tránh giật tín hiệu PWM khi thay đổi chu kỳ
 
   
-  ◦ **TIM_SetCounter(TIMx, value):**
+    ◦ **TIM_CtrlPWMOutputs(TIMx, FunctionalState) (chỉ áp dụng cho TIM1):**
 
-         + Đặt giá trị hiện tại của bộ đếm Timer. Dùng để đồng bộ hóa hoặc đặt lại Timer trong các ứng dụng PWM đặc biệt.
+        Kích hoạt đầu ra PWM cho Timer nâng cao (TIM1).
 
-  ◦ **TIM_GetCapturex(TIMx):**
+        Cần gọi TIM_CtrlPWMOutputs(TIM1, ENABLE) để đảm bảo tín hiệu PWM được xuất ra chân GPIO.
 
-         + Lấy giá trị hiện tại của thanh ghi so sánh (CCR) cho kênh x. Hữu ích để kiểm tra duty cycle hiện tại.
+        Nếu không gọi, PWM sẽ không hoạt động trên TIM1.
 
-  ◦ **TIM_BDTRConfig(TIMx, TIM_BDTRInitTypeDef) (chỉ áp dụng cho TIM1):**
+  
+    ◦ **TIM_SetCounter(TIMx, value):**
 
-         +  Cấu hình các tính năng nâng cao như Break and Dead-time (dùng trong điều khiển động cơ hoặc inverter).
+        Đặt giá trị hiện tại của bộ đếm Timer. Dùng để đồng bộ hóa hoặc đặt lại Timer trong các ứng dụng PWM đặc biệt.
 
-         + Các tham số quan trọng trong TIM_BDTRInitTypeDef:
+    ◦ **TIM_GetCapturex(TIMx):**
+
+        Lấy giá trị hiện tại của thanh ghi so sánh (CCR) cho kênh x. Hữu ích để kiểm tra duty cycle hiện tại.
+
+    ◦ **TIM_BDTRConfig(TIMx, TIM_BDTRInitTypeDef) (chỉ áp dụng cho TIM1):**
+
+        Cấu hình các tính năng nâng cao như Break and Dead-time (dùng trong điều khiển động cơ hoặc inverter).
+
+        Các tham số quan trọng trong TIM_BDTRInitTypeDef:
 
            TIM_DeadTime: Thời gian chết giữa tín hiệu chính và bổ sung.
 
@@ -4043,11 +4133,14 @@ GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 
            IM_AutomaticOutput: Tự động khôi phục đầu ra PWM sau sự kiện Break.
   
-  ◦ **TIM_ClearOCxRef(TIMx, TIM_OCx):**
+    ◦ **TIM_ClearOCxRef(TIMx, TIM_OCx):**
 
-         + Xóa tín hiệu PWM trên kênh x, dùng để tạm dừng PWM mà không tắt Timer.
+        Xóa tín hiệu PWM trên kênh x, dùng để tạm dừng PWM mà không tắt Timer.
+
+* **Xử lý ngắt:** Sử dụng `TIM_ITConfig(TIMx, TIM_IT_Update, ENABLE)` cho sự kiện tràn (update event), kết nối với NVIC để cập nhật duty cycle động.
 
   </details>
+
 
  
 <details>
