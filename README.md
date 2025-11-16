@@ -3320,13 +3320,11 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 
 ## BÀI 8: ADC
 
-## **I. ADC**
-
-### **1. Giới thiệu**
+### **I. ADC**
 
 #### **1.1. Định nghĩa**
 
-* ADC (Analog-to-Digital Converter) là 1 mạch điện tử lấy điện áp tương tự làm đầu vào và chuyển đổi nó thành dữ liệu số (1 giá trị đại diện cho mức điện áp trong mã nhị phân).
+* **ADC (Analog-to-Digital Converter)** là một mạch điện tử lấy điện áp tương tự (analog) làm đầu vào và chuyển đổi nó thành dữ liệu số (digital) – một giá trị đại diện cho mức điện áp dưới dạng mã nhị phân.
 
 * ADC có chức năng chuyển đổi tín hiệu analog (liên tục) thành tín hiệu số (rời rạc) để vi điều khiển có thể xử lý.
 
@@ -3336,136 +3334,137 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 
 #### **1.2. Độ phân giải**
 
-* Độ phân giải của ADC xác định số mức (levels) mà tín hiệu analog được chia ra trong quá trình chuyển đổi.
-
 * **Định nghĩa:**
     
-   ◦ Độ phân giải là số bit mà ADC sử dụng để biểu diễn giá trị số. Với  n bit, ADC chia phạm vi điện áp thành 2^n mức
+    ◦ Độ phân giải xác định số mức (levels) mà tín hiệu analog được chia trong quá trình chuyển đổi.
 
-* **VD:** 
+    ◦ Với **n bit**, ADC chia phạm vi điện áp thành **2^n mức**.
 
-   ◦ Với STM32F103C8, ADC có độ phân giải 12 bit, tức là tín hiệu analog được chia thành 2^12 = 4096 mức
+        STM32F103C8 có ADC 12-bit, tức 2^12 = 4096 mức.
 
 * **Ý nghĩa:**
     
-   ◦ Độ phân giải càng cao, tín hiệu analog được biểu diễn càng chính xác.
+    ◦ Độ phân giải cao hơn → biểu diễn tín hiệu chính xác hơn, nhưng tốn nhiều tài nguyên (thời gian chuyển đổi và bộ nhớ).
 
-   ◦ Độ chính xác của mỗi mức được tính bằng:
+* **Độ chính xác của mỗi mức được tính bằng:**
 
         Độ chính xác = Điện áp tham chiếu / Số mức = Vref / 2^n
 
-   ◦ VD:
+    ◦ VD:
 
-        Với điện áp tham chiếu 3.3V, độ phân giải 12bit cho độ chính xác mỗi mức là 33/4096 = 0.805 mV
-
+        Với điện áp tham chiếu 3.3V, độ phân giải 12bit cho độ chính xác mỗi mức là 3.3/4096 ≈ 0.805 mV/mức.
 
 ![Image](https://github.com/user-attachments/assets/893e3052-892a-42b7-bcc0-6fafbabe90ea)
 
+* **Công thức chuyển đổi giá trị ADC sang điện áp thực tế:**
+
+        V_in = (ADC_value × Vref) / 2^n
+
+    ◦ VD:
+
+        ADC_value = 2048 , Vref = 3.3V → V_in = (2048 × 3.3) / 4096 ≈ 1.65V.
 
 #### **1.3. Tần số lấy mẫu**
 
+* **Định nghĩa:** Số lần ADC lấy mẫu tín hiệu analog trong một giây (đơn vị: Hz).
 
-* Tần số lấy mẫu xác định tần suất mà ADC thực hiện việc lấy mẫu tín hiệu analog.
+* **Nguyên lý Nyquist-Shannon:** Để tái tạo chính xác, tần số lấy mẫu `f_s ≥ 2 × f_max`
 
-* **Định nghĩa:** Là số lần ADC lấy mẫu tín hiệu trong một giây, đo bằng đơn vị Hertz (Hz).
-
-* **Nguyên lý Nyquist-Shannon:** Tần số lấy mẫu phải ít nhất gấp đôi tần số cao nhất của tín hiệu analog để tái tạo chính xác tín hiệu:
-
-   ◦  f_s >= 2f_max   
+    ◦  f_max: tần số cao nhất của tín hiệu
 
 * **Trong STM32:** 
 
-   ◦  Tần số lấy mẫu phụ thuộc vào **thời gian lấy mẫu (ADC_SampleTime)** và **tần số clock của ADC.**
+    ◦  Tần số lấy mẫu phụ thuộc vào **thời gian lấy mẫu (ADC_SampleTime)** và **tần số clock của ADC.**
 
-   ◦  Tần số lấy mẫu càng cao, càng thu thập được nhiều mẫu, dẫn đến kết quả chính xác hơn, nhưng tiêu tốn nhiều tài nguyên CPU hơn.   
+    ◦  Tần số lấy mẫu càng cao, càng thu thập được nhiều mẫu, dẫn đến kết quả chính xác hơn, nhưng tiêu tốn nhiều tài nguyên CPU hơn.   
 
 #### **1.4. Các thông số khác**
 
-* **Điện áp tham chiếu:** 
+* **Điện áp tham chiếu (Vref):** 
 
-   ◦  Là phạm vi điện áp analog mà ADC có thể đo, thường là 0 đến 3.3V hoặc 0 đến 5V trên STM32.
+    ◦  Là phạm vi điện áp analog mà ADC có thể đo, thường là 0 đến 3.3V hoặc 0 đến 5V trên STM32.
 
-   ◦  Giá trị đo được sẽ nằm trong khoảng từ 0 đến 2^n - 1
+    ◦  Giá trị ADC nằm từ 0 đến 2^n - 1.
 
 * **Thời gian chuyển đổi:** 
 
-   ◦  Là thời gian cần để ADC hoàn thành một lần chuyển đổi từ tín hiệu analog sang số.
+    ◦  Là thời gian cần để ADC hoàn thành một lần chuyển đổi từ tín hiệu analog sang số.
 
-   ◦  Công thức:
-
-        T_conv = T_sample + T_conversion
-
-        Trong đó:
+    ◦  Công thức: `T_conv = (T_sample / f_ADC) + (12.5 / f_ADC)  [giây]`
 
         T_sample: Thời gian lấy mẫu (có thể cấu hình, ví dụ: 1.5, 7.5, 55.5 chu kỳ).
         T_conversion: Thời gian chuyển đổi cố định (thường 12.5 chu kỳ cho STM32).
 
-### **2. Sử dụng ADC trong STM32**
+### **II. Sử dụng ADC trong STM32**
 
 #### **2.1. Đặc điểm**
 
-* STM32F103C8 được trang bị 2 bộ ADC (ADC1 và ADC2) với các đặc điểm chính:
+* STM32F103C8 được trang bị 2 bộ ADC (`ADC1` và `ADC2`) với các đặc điểm chính:
 
-   ◦ **Độ phân giải:** 12 bit(4096 mức)
+    ◦ **Độ phân giải:** 12 bit(4096 mức)
 
-   ◦ **Thanh ghi dữ liệu:** Giá trị chuyển đổi được lưu trong thanh ghi 16 bit (căn lề trái hoặc phải).
+    ◦ **Thanh ghi dữ liệu:** Giá trị chuyển đổi được lưu trong thanh ghi 16 bit (căn lề trái hoặc phải).
 
-   ◦ **Ngắt (Interrupt):** Hỗ trợ ngắt khi hoàn thành chuyển đổi (EOC), lỗi, hoặc các sự kiện khác.
+    ◦ **Ngắt (Interrupt):** Hỗ trợ ngắt khi hoàn thành chuyển đổi (EOC), lỗi, hoặc các sự kiện khác.
 
-   ◦ **Trigger ngoài:** Có thể kích hoạt chuyển đổi bằng tín hiệu từ timer, GPIO, hoặc nguồn khác.
+    ◦ **Trigger ngoài:** Có thể kích hoạt chuyển đổi bằng tín hiệu từ timer, GPIO, hoặc nguồn khác.
 
-   ◦ **DMA (Direct Memory Access):** Hỗ trợ truyền dữ liệu trực tiếp từ ADC đến bộ nhớ, giảm tải cho CPU.
+    ◦ **DMA (Direct Memory Access):** Hỗ trợ truyền dữ liệu trực tiếp từ ADC đến bộ nhớ, giảm tải cho CPU.
 
-   ◦ **Thời gian chuyển đổi nhanh:** Tùy thuộc vào cấu hình, thường từ vài chu kỳ clock.
+    ◦ **Thời gian chuyển đổi nhanh:** Tùy thuộc vào cấu hình, thường từ vài chu kỳ clock.
 
 #### **2.2. Các chế độ của ADC**
 
 ##### **2.2.1. Regular Conversion(Chuyển đổi tuần tự)**
 
-  * **Single Conversion**: 
+* **Single Conversion**: 
 
-   ◦ ADC chỉ đọc 1 kênh duy nhất và chỉ đọc khi nào được yêu cầu
+    ◦ ADC chỉ đọc 1 kênh duy nhất và chỉ đọc khi nào được yêu cầu
 
-   ◦ Thích hợp cho các ứng dụng chỉ cần đo một tín hiệu cụ thể.
+    ◦ Thích hợp cho đo cảm biến đơn lẻ.
 
-  * **Single Continuous Conversion**: 
+* **Single Continuous Conversion**: 
 
-   ◦ ADC liên tục đọc một kênh duy nhất, tự động lặp lại sau mỗi lần chuyển đổi.
+    ◦ Đọc liên tục 1 kênh, tự lặp sau EOC.
 
-   ◦ Thường kết hợp với DMA để lưu trữ dữ liệu liên tục vào bộ nhớ.
+    ◦ Giám sát liên tục (kết hợp DMA)
 
-  * **Scan Mode (Multi-Channel)** 
+* **Scan Mode (Multi-Channel)** 
 
-   ◦ ADC quét qua nhiều kênh, đọc lần lượt từng kênh khi được yêu cầu.
+    ◦ ADC quét qua nhiều kênh, đọc lần lượt từng kênh khi được yêu cầu.
 
-   ◦ Phù hợp khi cần đo nhiều tín hiệu analog từ các cảm biến khác nhau.
+    ◦ Phù hợp khi cần đo nhiều tín hiệu analog từ các cảm biến khác nhau.
 
-  * **Scan Continuous Mode:** 
+* **Scan Continuous Mode:** 
   
-   ◦ Tương tự Scan Mode, nhưng chuyển đổi liên tục trên nhiều kênh, lặp lại sau khi hoàn thành một chu kỳ quét.
+    ◦ Tương tự Scan Mode, nhưng chuyển đổi liên tục trên nhiều kênh, lặp lại sau khi hoàn thành một chu kỳ quét.
 
+    ◦ Thu thập dữ liệu đa kênh thời gian thực.
 
 ##### **2.2.2. Injected Conversion(Chuyển đổi ưu tiên)**
    
-  * Dùng để xử lý các kênh ưu tiên cao, có thể ngắt các chuyển đổi tuần tự (regular) đang thực hiện.
+* Dùng để xử lý các kênh ưu tiên cao, có thể ngắt các chuyển đổi tuần tự (regular) đang thực hiện.
 
-  * Khi gặp **Injected Trigger** thì ngay lập tức kênh đang hoạt động bị ngưng lại để kênh được ưu tiên kia có thể hoạt động.
+* Khi gặp **Injected Trigger** thì ngay lập tức kênh đang hoạt động bị ngưng lại để kênh được ưu tiên kia có thể hoạt động.
 
-  * Số kênh: Tối đa 4 kênh trong chế độ injected.
-  
-### **3. Cấu hình ADC**
+* Số kênh: Tối đa 4 kênh trong chế độ injected.
+
+        // Cấu hình Injected Channel (ví dụ: kênh 1, rank 1)
+
+        ADC_InjectedChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_55Cycles5);
+        ADC_InjectedSequencerLengthConfig(ADC1, 1);  // Số kênh injected
+        ADC_ExternalTrigInjectedConvConfig(ADC1, ADC_ExternalTrigInjConv_T2_TRGO);  // Trigger từ TIM2
+
+
+### **III. Cấu hình ADC**
 
 #### **3.1. Cấu hình Clock cho ADC**
 
 * **Các bộ ADC được cấp xung từ RCC APB2**
 
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC2, ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_ADC2 | RCC_APB2Periph_GPIOA, ENABLE);
 
-
-
-
-![Image](https://github.com/user-attachments/assets/f59f57ea-5a7a-4fb7-811b-3ea2222a156e)
+    ![Image](https://github.com/user-attachments/assets/f59f57ea-5a7a-4fb7-811b-3ea2222a156e)
 
 #### **3.2. Cấu hình GPIO cho ADC**
 
@@ -3510,13 +3509,9 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
         while (ADC_GetCalibrationStatus(ADC1));
         }
 
-
-* **Các thông số:**
-
 * **ADC_Mode:** 
     
     ◦ **Independent:** ADC hoạt động độc lập, không đồng bộ với ADC khác.
-
 
     ◦ **DualMode:** ADC1 và ADC2 hoạt động đồng thời, dùng cho chế độ kép (dual mode) để đo hai kênh cùng lúc.
 
@@ -3551,16 +3546,29 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 
     ◦ Cấu hình kênh cụ thể (ADC_Channel_?), thứ tự (Rank = ?), và thời gian lấy mẫu (? chu kỳ để đảm bảo độ chính xác).
 
+* **VD2:Multi-channel Scan Mode (2 kênh: PA0, PA1).** 
+
+        ADC_InitStruct.ADC_NbrOfChannel = 2;
+        ADC_InitStruct.ADC_ScanConvMode = ENABLE;
+        ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);  // Rank 1: PA0
+        ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);  // Rank 2: PA1
+
 #### **3.4. Kích hoạt và đọc ADC**
 
 * **Kích hoạt chuyển đổi:**
 
-        ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+        ADC_SoftwareStartConvCmd(ADC1, ENABLE); //(cho single/scan).
 
 * **Đọc giá trị:**
 
-        while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)); // Chờ chuyển đổi hoàn tất
-        uint16_t adc_value = ADC_GetConversionValue(ADC1); // Đọc giá trị
+        while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+        uint16_t adc_value = ADC_GetConversionValue(ADC1);
+        float voltage = (adc_value * 3.3f) / 4096.0f;  // Chuyển sang V
+
+* **Ngắt ADC:**
+
+        ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);  // Bật ngắt EOC
+        // Trong ISR: void ADC1_Seq0_IRQHandler(void) { ... ADC_ClearITPendingBit(ADC1, ADC_IT_EOC); }
 
 
 #### **3.5. Thời gian lấy mẫu**
@@ -3569,19 +3577,19 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 
     ◦ Các giá trị: 1.5, 7.5, 13.5, 28.5, 41.5, 55.5, 71.5, 239.5 chu kỳ.
 
-    ◦ Ví dụ: ADC_SampleTime_55Cycles5 cho thời gian lấy mẫu dài, tăng độ chính xác cho tín hiệu thay đổi chậm (như biến trở).
+    ◦ Ví dụ: `ADC_SampleTime_55Cycles5` cho thời gian lấy mẫu dài, tăng độ chính xác cho tín hiệu thay đổi chậm (như biến trở).
 
 * Công thức thời gian chuyển đổi:
 
-    ◦ Tconv = Tsample + 12.5 chu kỳ
+    ◦ `Tconv = Tsample + 12.5 chu kỳ`
 
-### **4. Các hàm  thông dụng**
+### **IV. Các hàm  thông dụng**
 
 #### **4.1. Hàm cấu hình kênh**
 
-```
- ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel,uint8_t Rank, uint8_t ADC_SampleTime)
-```
+
+        ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel,uint8_t Rank, uint8_t ADC_SampleTime)
+
 
 *  **ADCx:** Con trỏ đến khối ADC (ADC1 hoặc ADC2). Xác định ADC nào được cấu hình.
 
@@ -3593,9 +3601,9 @@ Chọn giá trị sao cho dễ tính toán và phù hợp với ứng dụng.
 
 #### **4.2. Hàm bắt đầu chuyển đổi**
 
-```
-ADC_SoftwareStartConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState);
-```
+
+        ADC_SoftwareStartConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState);
+
 
 *  **ADCx:** Con trỏ đến khối ADC (ADC1 hoặc ADC2). Xác định ADC nào được cấu hình.
 
@@ -3604,9 +3612,9 @@ ADC_SoftwareStartConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState);
 
 #### **4.3. Hàm đọc giá trị ADC**
 
-```
-uint16_t ADC_GetConversionValue(ADC_TypeDef* ADCx);
-```
+
+        uint16_t ADC_GetConversionValue(ADC_TypeDef* ADCx);
+
 
 *  **ADCx:** Con trỏ đến khối ADC (ADC1 hoặc ADC2). Xác định ADC nào được cấu hình.
 
@@ -3615,75 +3623,67 @@ uint16_t ADC_GetConversionValue(ADC_TypeDef* ADCx);
 
 #### **4.4. Hàm đọc giá trị ở chế độ kép**
 
-```
-uint32_t ADC_GetDualModeConversionValue(void);
-```
+
+        uint32_t ADC_GetDualModeConversionValue(void);
+
 
 *  Không có tham số. Trả về giá trị 32-bit kết hợp từ ADC1 (16-bit thấp) và ADC2 (16-bit cao) trong chế độ dual.
 
 #### **4.5. Hàm kiểm tra trạng thái**
 
-```
-FlagStatus ADC_GetFlagStatus(ADC_TypeDef* ADCx, uint8_t ADC_FLAG);
-```
+
+        FlagStatus ADC_GetFlagStatus(ADC_TypeDef* ADCx, uint8_t ADC_FLAG);
+
 *  **ADCx:** Con trỏ đến khối ADC (ADC1 hoặc ADC2). Xác định ADC nào được cấu hình.
 
 *  **ADC_FLAG:** Cờ trạng thái (ví dụ: ADC_FLAG_EOC cho end of conversion, ADC_FLAG_AWD cho analog watchdog).
 
 #### **4.6. Các hàm hiệu chỉnh:**
 
-```
-ADC_ResetCalibration(ADC_TypeDef ADCx)
-```
+        void ADC_ResetCalibration(ADC_TypeDef* ADCx);
 
 *  **Reset thanh ghi hiệu chỉnh để chuẩn bị.**
 
-```
-ADC_GetResetCalibrationStatus(ADC_TypeDef ADCx)
-```
+        FlagStatus ADC_GetResetCalibrationStatus(ADC_TypeDef* ADCx);
 
 *  **Trả về SET nếu đang reset, RESET nếu hoàn tất.**
 
-```
-ADC_StartCalibration(ADC_TypeDef ADCx)
-```
+        void ADC_StartCalibration(ADC_TypeDef* ADCx);
+
 *  **Bắt đầu hiệu chỉnh (đo offset và gain nội bộ).**
 
-```
-ADC_GetCalibrationStatus(ADC_TypeDef ADCx)
-```
+        FlagStatus ADC_GetCalibrationStatus(ADC_TypeDef* ADCx);
+
 *  **Tương tự, kiểm tra tiến trình hiệu chỉnh.**
 
 
-## **II. Bộ lọc Kalman**
+### **V. Bộ lọc Kalman**
 
-### **2.1.Định nghĩa**
+#### **5.1.Định nghĩa**
 
-* Bộ lọc Kalman là một thuật toán toán học dùng để ước lượng trạng thái tối ưu của một hệ thống tuyến tính từ các quan sát bị nhiễu.
+* Bộ lọc Kalman là thuật toán toán học ước lượng trạng thái tối ưu của hệ thống tuyến tính từ các quan sát bị nhiễu (noise).
 
-* Nó được sử dụng rộng rãi trong các ứng dụng như điều khiển, định vị, và xử lý tín hiệu, nhờ khả năng kết hợp thông tin từ mô hình dự đoán và dữ liệu đo lường để giảm thiểu sai số.
+* Ứng dụng: Điều khiển (robot), định vị (GPS), xử lý tín hiệu (lọc nhiễu ADC). Nó kết hợp mô hình dự đoán (dựa trên vật lý) và dữ liệu đo để giảm sai số.
 
-### **2.2.Đặc điểm**
+#### **5.2.Đặc điểm**
 
-* **Bộ lọc Kalman hoạt động dựa trên hai giai đoạn chính**
+##### **5.2.1. Giai đoạn dự đoán(Prediction):** 
 
-#### **2.2.1. Giai đoạn dự đoán(Prediction):** 
+* Dự đoán trạng thái tiếp theo dựa trên mô hình hệ thống và trạng thái trước đó.
 
-    ◦ Dự đoán trạng thái tiếp theo dựa trên mô hình hệ thống và trạng thái trước đó.
-
-    ◦ Tính toán độ không chắc chắn (covariance) của dự đoán.
+* Tính toán độ không chắc chắn (covariance) của dự đoán.
 
 ![Image](https://github.com/user-attachments/assets/f638e348-1525-4589-8793-7e51285f67b4)
 
-#### **2.2.2. Giai đoạn cập nhật(Correction):**
+##### **5.2.2. Giai đoạn cập nhật(Correction):**
 
-    ◦ Kết hợp dữ liệu đo mới (có thể chứa nhiễu) với dự đoán để cập nhật trạng thái.
+* Kết hợp dữ liệu đo mới (có thể chứa nhiễu) với dự đoán để cập nhật trạng thái.
 
-    ◦  Tính toán Kalman Gain để cân bằng giữa dự đoán và đo lường thực tế.
+* Tính toán Kalman Gain để cân bằng giữa dự đoán và đo lường thực tế.
 
 ![Image](https://github.com/user-attachments/assets/22643b2a-9310-4376-a93e-0ae6e8b2b3ee)
 
-#### **2.2.3. Các tham số cần chú ý**
+##### **5.2.3. Các tham số cần chú ý**
 
 * `mea_e (R):` Sai số nhiễu đo lường, đại diện cho độ tin cậy của cảm biến.
 
@@ -3691,79 +3691,75 @@ ADC_GetCalibrationStatus(ADC_TypeDef ADCx)
 
 * `q (Q:` Nhiễu quá trình, biểu thị sự không chắc chắn trong mô hình hệ thống.
 
-#### **2.2.4. Hàm khởi tạo bộ lọc Kalman**
+##### **5.2.4. Hàm khởi tạo bộ lọc Kalman**
 
-```
-void SimpleKalmanFilter(float mea_e, float est_e, float q) {
-    _err_measure = mea_e;
-    _err_estimate = est_e;
-    _q = q;
-    _current_estimate = 0;
-    _last_estimate = 0;
-}
-```
+        void SimpleKalmanFilter(float mea_e, float est_e, float q) {
+            _err_measure = mea_e;
+            _err_estimate = est_e;
+            _q = q;
+            _current_estimate = 0;
+            _last_estimate = 0;
+        }
 
-#### **2.2.5. Hàm cập nhật giá trị ước lượng qua bộ lọc Kalman**
 
-```
-float updateEstimate(float mea) {
-    _kalman_gain = _err_estimate / (_err_estimate + _err_measure);
-    _current_estimate = _last_estimate + _kalman_gain * (mea - _last_estimate);
-    _err_estimate = (1.0 - _kalman_gain) * _err_estimate + fabs(_last_estimate - _current_estimate) * _q;
-    _last_estimate = _current_estimate;
-    return _current_estimate;
-}
-```
+##### **5.2.5. Hàm cập nhật giá trị ước lượng qua bộ lọc Kalman**
 
-#### **2.2.6. VD**
+        #include <math.h>
 
-```
-#include <math.h>
+        float updateEstimate(float mea) {
+            _kalman_gain = _err_estimate / (_err_estimate + _err_measure);
+            _current_estimate = _last_estimate + _kalman_gain * (mea - _last_estimate);
+            _err_estimate = (1.0 - _kalman_gain) * _err_estimate + fabs(_last_estimate - _current_estimate) * _q;
+            _last_estimate = _current_estimate;
+            return _current_estimate;
+        }
 
-// Biến toàn cục cho bộ lọc Kalman
-float _err_measure;     // Sai số nhiễu đo lường (R)
-float _err_estimate;    // Sai số ước lượng (P)
-float _q;               // Nhiễu quá trình (Q)
-float _current_estimate; // Giá trị ước lượng hiện tại
-float _last_estimate;   // Giá trị ước lượng trước đó
-float _kalman_gain;     // Hệ số Kalman Gain
 
-// Hàm khởi tạo bộ lọc Kalman
-void SimpleKalmanFilter(float mea_e, float est_e, float q) {
-    _err_measure = mea_e;
-    _err_estimate = est_e;
-    _q = q;
-    _current_estimate = 0;
-    _last_estimate = 0;
-}
+##### **5.2.6. VD**
 
-// Hàm cập nhật giá trị ước lượng qua bộ lọc Kalman
-float updateEstimate(float mea) {
-    _kalman_gain = _err_estimate / (_err_estimate + _err_measure);
-    _current_estimate = _last_estimate + _kalman_gain * (mea - _last_estimate);
-    _err_estimate = (1.0 - _kalman_gain) * _err_estimate + fabs(_last_estimate - _current_estimate) * _q;
-    _last_estimate = _current_estimate;
-    return _current_estimate;
-}
+        #include "stm32f10x.h"  
+        #include <math.h>
 
-// Hàm chính xử lý dữ liệu từ ADC
-void main(void) {
-    float val;          // Giá trị ADC thô
-    float val_Update;   // Giá trị sau khi lọc Kalman
+        // Biến toàn cục Kalman
+        float _err_measure, _err_estimate, _q;
+        float _current_estimate, _last_estimate, _kalman_gain;
 
-    // Khởi tạo bộ lọc Kalman với R=1, P=2, Q=0.001
-    SimpleKalmanFilter(1, 2, 0.001);
+        void SimpleKalmanFilter(float mea_e, float est_e, float q) {
+            _err_measure = mea_e;
+            _err_estimate = est_e;
+            _q = q;
+            _current_estimate = 0;
+            _last_estimate = 0;
+        }
 
-    while (1) {
-        // Lấy giá trị từ ADC
-        val = ADC_GetConversionValue(ADC1);
-        // Lọc giá trị qua bộ lọc Kalman
-        val_Update = updateEstimate((float)val);
-        // Đợi 100ms trước khi lấy mẫu tiếp theo
-        Delay_ms(100);
-    }
-}
-```
+        float updateEstimate(float mea) {
+            _kalman_gain = _err_estimate / (_err_estimate + _err_measure);
+            _current_estimate = _last_estimate + _kalman_gain * (mea - _last_estimate);
+            _err_estimate = (1.0f - _kalman_gain) * _err_estimate + fabs(_last_estimate - _current_estimate) * _q;
+            _last_estimate = _current_estimate;
+            return _current_estimate;
+        }
+
+        int main(void) {
+
+            ADC_Config();
+            GPIO_Config();
+            RCC_Config();  // Clock
+
+            float val, val_update;
+            SimpleKalmanFilter(1.0f, 2.0f, 0.001f);  // R=1, P=2, Q=0.001
+
+            while (1) {
+                // Đọc ADC (giả sử đã kích hoạt continuous)
+                while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+                val = (float)ADC_GetConversionValue(ADC1);
+
+                // Lọc Kalman (normalize nếu cần: val /= 4096.0f * 3.3f cho voltage)
+                val_update = updateEstimate(val);
+
+                Delay_ms(100); 
+            }
+        }
 
 </details>
 
