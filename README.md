@@ -4639,325 +4639,1355 @@
 </details>
 
 
+
 <details>
-	<summary><strong>BÀI 11: CAN</strong></summary>
+    <summary><strong>BÀI 11: CAN (CONTROLLER AREA NETWORK)</strong></summary>
 
-## Bài 11: CAN (Controller Area Network)
+## **BÀI 11: CAN (CONTROLLER AREA NETWORK)**
 
-## **11.1.Giới thiệu**
+### **PHẦN 1: LÝ THUYẾT**
+
+### **I.  TỔNG QUAN VỀ CAN**
+
+#### **1.1. Khái niệm**
+
+<img width="451" height="348" alt="Image" src="https://github.com/user-attachments/assets/ca97b73f-5a72-4d40-b0f7-e6ecce4e11e9" />
+
+* CAN là một giao thức truyền thông nối tiếp được thiết kế để cho phép nhiều bộ điều khiển điện tử (ECU) hoặc các nút (nodes) giao tiếp với nhau một cách hiệu quả, đáng tin cậy trên cùng một đường truyền bus chung
+
+<img width="733" height="317" alt="Image" src="https://github.com/user-attachments/assets/f6feac89-3dbe-4b0d-87f7-a6683834ea48" />
+
+
+* CAN hoạt động theo nguyên tắc multi-master (đa chủ), không cần máy chủ trung tâm, và sử dụng cơ chế arbitration bitwise (trọng tài theo bit) để giải quyết xung đột khi nhiều nút truyền dữ liệu đồng thời.
+
+<img width="438" height="222" alt="Image" src="https://github.com/user-attachments/assets/9f6ed6d9-3cfd-4b6c-8e94-db08bb279445" />
+
+* CAN sử dụng hai dây dẫn (CAN High và CAN Low) với kỹ thuật truyền differential signaling (tín hiệu vi sai), giúp truyền dữ liệu dưới dạng sự chênh lệch điện áp giữa hai dây.  
+
+#### **1.2. Giới thiệu**
+
+* CAN là giao thức lớp vật lý và lớp liên liên kết dữ liệu (theo mô hình OSI)
+
+*  Nó cho phép các thiết bị trao đổi thông điệp ngắn (thường 0 - 8 byte ở Classical CAN, hoặc cao hơn ở CAN FD) theo kiểu broadcast
+
+	* Mọi nút trên bus đều nhận được thông điệp, nhưng chỉ các nút quan tâm mới xử lý dựa trên ID  
+
+* Không có địa chỉ đích cụ thể, thông điệp được xác định bởi ID 
+	
+	* 11 bit ở CAN 2.0A hoặc 29 bit ở CAN 2.0B
+	
+	* Đồng thời ID cũng quyết định mức ưu tiên
+	
+* Sử dụng các cơ chế phát hiện lỗi:
+
+	* CRC (Cyclic Redundancy Check) 15-bit
+	
+	* Acknowledgment
+	
+	* Error Counters
+	
+	* Các trạng thái lỗi  (Error Active, Error Passive, Bus Off).      
+
+#### **1.3. Ứng dụng**
+
+<img width="678" height="480" alt="Image" src="https://github.com/user-attachments/assets/9d072cc7-529b-41fb-a4ea-8eaf6d269fe0" />
+
+
+* Trong ô tô:
+
+	* CAN là bộ não của xe hơi hiện đại
+	
+	* Một chiếc xe ngày nay có thể có 50-70 ECU hoặc hơn
+		
+		* ECU động cơ (Engine Control Unit)
+		
+		* Hộp số
+		
+		* ABS (phanh chống bó cứng)
+		
+		* Túi khí (Airbag)
+		
+		* ADAS       
+
+	* CAN giúp trao đổi dữ liệu thời gian thực: Tốc độ xe, vị trí ga, góc vô lăng, tình trạng phanh... giữa các ECU.
+	
+	* Chẩn đoán lỗi (Diagnostics) qua OBD-II (On-Board Diagnostics).
+	
+	* Được sử dụng trong hệ thống  thân xe (Body Control Module), hệ thống tiện nghi
+
+<img width="1002" height="436" alt="Image" src="https://github.com/user-attachments/assets/170b6cae-f6d7-4d3a-94d3-dcdc28bbe173" />
+
+* Trong công nghiệp:
+
+	* CAN được sử dụng rộng rãi qua các giao thức lớp ứng dụng như CANopen (phổ biến ở châu Âu), DeviceNet (phổ biến ở Bắc Mỹ), và các biến thể khác.
+	
+		* Dây chuyền sản xuất: Kết nối PLC, cảm biến, actuator, robot, máy CNC, băng chuyền.
+		
+		*  Điều khiển quá trình (Process Control): Nhà máy hóa chất, thực phẩm, giám sát nhiệt độ, áp suất, lưu lượng.
+	
+	*  Trong tự động hóa, CAN cho phép phân tán điều khiển (decentralized control), giảm nhu cầu dây dẫn và tăng tính linh hoạt khi mở rộng hệ thống.   
+
+#### **1.3. Đặc điểm**
+
+<img width="697" height="304" alt="Image" src="https://github.com/user-attachments/assets/4508e67c-1e88-439f-8cab-f544a6ac1587" />
+
+* Giảm đáng kể số lượng dây dẫn:
+
+	* Trước CAN: Mỗi cặp ECU/cảm biến cần dây dẫn riêng (point-to-point), dẫn đến hệ thống dây harness cồng kềnh, nặng nề, chi phí cao và khó bảo trì.
+	
+	* Với CAN: Tất cả các nút chia sẻ chỉ 2 dây dẫn (twisted pair) theo cấu trúc bus. 
+	
+		* Một ECU chỉ cần một giao tiếp CAN duy nhất thay vì hàng chục đường tín hiệu analog/digital riêng lẻ.
+
+<img width="712" height="232" alt="Image" src="https://github.com/user-attachments/assets/3c950042-4ea5-4ea7-b2e0-689343173531" />
+
+* Chống nhiễu tốt:
+
+	* Sử dụng differential signaling trên cặp dây xoắn (twisted pair): 
+	
+		* Dữ liệu được truyền dưới dạng chênh lệch điện áp giữa CAN-H và CAN-L.
+	
+	* Nhiễu điện từ (EMI) thường ảnh hưởng giống nhau lên cả hai dây → nhiễu bị triệt tiêu khi lấy hiệu
+	
+	* CAN vẫn hoạt động ổn định ngay cả khi một dây bị hỏng (có thể chuyển sang chế độ single-wire tạm thời).
+
+* Độ tin cậy cao:
+
+	* Cơ chế phát hiện và xử lý lỗi tốt:
+	
+		* Mỗi frame có CRC 15-bit, bit stuffing, acknowledgment từ receiver, và error confinement (các bộ đếm lỗi dẫn đến các trạng thái Error Active → Passive → Bus Off).
+	
+	* Không có máy chủ trung tâm → hệ thống vẫn hoạt động nếu một nút hỏng (fault-tolerant).
+	
+	* Ưu tiên thông điệp dựa trên ID: Thông điệp quan trọng (ví dụ: phanh, túi khí) luôn được truyền trước.
+	
+	* Tốc độ và độ trễ xác định → phù hợp cho hệ thống thời gian thực và an toàn chức năng 
+
+
+
+### **II.  PHYSICAL LAYER**
+
+#### **2.1. Topology-Bus và Termination Resistor**
+
+<img width="919" height="436" alt="Image" src="https://github.com/user-attachments/assets/93e56512-a77e-45d9-a538-64295e172ca7" />
+
+*  **Bus Topology:**
+
+	*  CAN sử dụng kiến trúc Bus tuyến tính (Linear Bus Topology) hoặc còn gọi là multi-drop bus.
+	
+	*  Tất cả các nút (nodes/ECU) được kết nối song song vào cùng một đường truyền chung gồm 2 dây:
+	
+		* CAN_H (CAN High) và CAN_L (CAN Low)
+		
+		* Đây là cặp dây xoắn đôi (twisted pair) để giảm nhiễu.
+		
+	* Không sử dụng topology dạng sao (star) hoặc vòng (ring) vì dễ gây phản xạ sóng và làm giảm chất lượng tín hiệu.
+	
+	* Các nút có thể được nối vào bus qua các nhánh ngắn (stub), nhưng độ dài stub nên càng ngắn càng tốt (thường < 0.3m ở tốc độ cao) để tránh phản xạ.     
+
+<img width="402" height="335" alt="Image" src="https://github.com/user-attachments/assets/1cf927ba-abf1-4704-a67a-5f9d2417196b" />
+
+* **Termination Resistor:**
+
+	* Để ngăn chặn hiện tượng phản xạ sóng (signal reflection) ở hai đầu bus, cần đặt hai điện trở 120Ω:
+	
+		* Một điện trở 120Ω ở đầu đầu tiên của bus.
+		
+		* Một điện trở 120Ω ở đầu cuối cùng của bus.  
+
+#### **2.2. Các thành phần trên một node CAN**
+
+<img width="696" height="339" alt="Image" src="https://github.com/user-attachments/assets/885d84d7-e368-45cf-8d0a-c41a54c964db" />
+
+
+* Một Node CAN (thường gọi là ECU trong ô tô) bao gồm các thành phần phần cứng chính sau:
+
+
+	*  **1. Sensor (Cảm biến) và Actuator (Bộ chấp hành)**:
+	
+		*  Cảm biến: Thu thập thông tin từ môi trường (nhiệt độ, áp suất, tốc độ, góc quay, gia tốc…).
+		
+		*  Actuator: Thực hiện lệnh (động cơ bước, van điện từ, relay, motor…).
+		
+		*  Chúng giao tiếp với MCU qua các giao tiếp analog, digital (ADC, PWM, GPIO…).  
+
+	*  **2. MCU**:
+	
+		*  Bộ não của node, chạy phần mềm ứng dụng.
+		
+		*  Xử lý dữ liệu từ cảm biến, đưa ra quyết định điều khiển actuator.
+		
+		*  Giao tiếp với CAN Controller qua các chân TXD (Transmit Data) và RXD (Receive Data) ở mức logic (thường 3.3V hoặc 5V).
+	
+	*  **3. CAN Controller**:
+	
+		*  Thực hiện các chức năng của Data Link Layer (tầng liên kết dữ liệu).
+		
+		*  Đóng gói dữ liệu thành frame CAN (thêm SOF, Arbitration ID, Control field, Data, CRC, ACK…).
+		
+		*  Thực hiện cơ chế Arbitration (trọng tài bitwise).
+		
+		*   Phát hiện lỗi, quản lý Error Counters, gửi Error Frame nếu cần.
+		
+		*   Quản lý bộ đệm truyền/nhận (Transmit/Receive buffers).
+
+	*  **4. CAN Transceiver (Bộ thu phát CAN)**:
+	
+		*  Là cầu nối giữa CAN Controller (mức logic) và bus vật lý (mức điện áp vi sai).
+		
+		*  Nhận tín hiệu TXD từ Controller → chuyển thành mức điện áp vi sai trên CAN_H / CAN_L.
+		
+		*  Nhận tín hiệu vi sai từ bus → chuyển về mức logic RXD gửi cho Controller.
+		
+		*  Các chip transceiver phổ biến: TJA1040, TJA1050, MCP2551, SN65HVD23x, TCAN1042… 
+
+
+#### **2.3. Đặc điểm tín hiệu điện áp vi sai**
+
+<img width="901" height="508" alt="Image" src="https://github.com/user-attachments/assets/b0d3eb8b-9434-4117-9b89-5cda8f360f15" />
+
+* CAN sử dụng tín hiệu vi sai (Differential Signaling) giữa CAN_H và CAN_L.
+
+* Logic được xác định bởi hiệu điện áp (`Vdiff = CAN_H − CAN_L`), không phải mức tuyệt đối.
+
+	<img width="852" height="599" alt="Image" src="https://github.com/user-attachments/assets/a251ad42-e5bd-4840-9a7c-acec23e70b2d" />
+
+	*  **Recessive State (Trạng thái Recessive - Logic 1)**:
+	
+		*  CAN_H ≈ 2.5V, CAN_L ≈ 2.5V.
+		
+		*  Hiệu điện áp Vdiff ≈ 0V (thực tế < 0.5V).
+		
+		*  Trạng thái này do hai điện trở  120Ω kéo về mức chung.   
+		
+		*  Tất cả các node đều ở chế độ high-impedance (không chủ động lái bus).  
+
+	*  **Dominant State (Trạng thái Dominant - Logic 0)**:
+	
+		*  CAN_H ≈ 3.5V (thường từ 3.0V đến 4.0V).
+		
+		*  CAN_L ≈ 1.5V (thường từ 1.0V đến 2.0V).
+		
+		*  Hiệu điện áp Vdiff ≈ 2V (tối thiểu 0.9V để nhận diện là Dominant).
+		
+		*  Một hoặc nhiều node chủ động lái: CAN_H kéo lên cao hơn, CAN_L kéo xuống thấp hơn.
+		
+* **Lưu ý:**
+
+	* Dominant luôn thắng Recessive (Wired-AND logic).
+	
+		*  Đây là nền tảng cho cơ chế arbitration bitwise — bit 0 (Dominant) có quyền ưu tiên cao hơn bit 1 (Recessive).
+		
+	* Receiver coi Vdiff < 0.5V là Recessive, Vdiff > 0.9V là Dominant.
+	
+	* Common-mode voltage (điện áp chung) thường nằm trong khoảng 1.5V – 3.5V.        
+
+
+#### **2.4. Đặc tính giao tiếp**
+
+* **Không có máy chủ trung tâm (Multi-Master / No Central Master):**
+
+	* Mọi node đều có quyền ngang nhau để khởi tạo truyền dữ liệu bất kỳ lúc nào (multi-master).
+
+	*  Không phụ thuộc vào một node chủ (master), tăng tính chịu lỗi (fault-tolerant). 
+		
+		* Nếu một node hỏng, các node khác vẫn hoạt động.
+	
+* **Truyền quảng bá (Broadcast Communication):**
+
+	* Khi một node truyền frame, tất cả các node khác trên bus đều nhận được frame đó.
+
+	*  Mỗi node tự quyết định có xử lý frame hay không dựa vào Identifier (ID) của frame (filtering bằng hardware hoặc software).
+		
+	* Không có địa chỉ đích cụ thể.
+
+* **Bán song công (Half-Duplex):**
+
+	* Bus chỉ cho phép truyền hoặc nhận tại một thời điểm trên cùng một cặp dây.
+
+	*  Không thể truyền và nhận đồng thời trên cùng một bus (khác với Full-Duplex như một số giao thức khác).
+		
+	* Tuy nhiên, nhờ cơ chế arbitration, nhiều node có thể cùng cố gắng truyền nhưng chỉ một node thắng và tiếp tục truyền mà không bị phá hủy frame.
+
+
+### **III.  KHUNG DỮ LIỆU CAN (CAN FRAMES)**
+
+#### **3.1. Giới thiệu**
+
+*  CAN định nghĩa 4 loại khung (frames) khác nhau để thực hiện truyền thông, báo lỗi và yêu cầu dữ liệu.
+
+* Tất cả các frame đều được truyền theo kiểu NRZ (Non-Return to Zero) với cơ chế Bit Stuffing (chèn bit ngược sau 5 bit liên tiếp giống nhau) để đảm bảo đồng bộ clock. 
+
+#### **3.2. CAN 2.0A (Standard 11-bit ID) và CAN 2.0B (Extended 29-bit ID)**
+
+*  **CAN 2.0A (Standard Format):**
+
+	* Độ dài Identifier (ID): 11 bit
+	
+	* Số lượng ID tối đa : 2^11 = 2048
+	
+
+*  **CAN 2.0B (Extended Format):**
+
+	* Độ dài Identifier (ID): 29 bit
+	
+	* Số lượng ID tối đa : 2^29 
+
+	* Hỗ trợ cả 11-bit và 29-bit
+	
+	* Identifier 29-bit gồm 11-bit Base ID + 18-bit Extended ID.
+	
+* **IDE (Identifier Extension) bit:**
+
+	* IDE = 0 (Dominant) → Standard Frame (CAN 2.0A)
+	
+	* IDE = 1 (Recessive) → Extended Frame (CAN 2.0B)
+		
+	* Hai định dạng có thể tồn tại cùng trên một bus, nhưng cần thiết kế cẩn thận để tránh xung đột arbitration.
+
+#### **3.3. Các loại khung dữ liệu**
+
+* CAN có đúng 4 loại khung:
+
+	*  **1. Data Frame (Khung dữ liệu)**:
+	
+		*  Loại khung phổ biến nhất.
+		
+		*  Dùng để truyền dữ liệu thực tế (0–8 byte ở Classical CAN).
+		
+		*  Mang thông tin từ nút gửi đến các nút khác.
+
+	*  **2. Remote Frame (Khung yêu cầu từ xa)**:
+	
+		*  Dùng để yêu cầu một Data Frame có cùng Identifier.
+		
+		*  Không chứa trường Data.
+		
+		*  RTR bit = 1 (Recessive) để phân biệt với Data Frame (RTR = 0).
+		
+		*  DLC phải bằng với DLC của Data Frame được yêu cầu.  
+		
+		*  Mục đích: Một nút muốn lấy dữ liệu mới nhất từ nút khác mà không cần nút kia tự động gửi định kỳ. 
+
+	*  **3. Error Frame (Khung báo lỗi)**:
+	
+		*  Được bất kỳ nút nào phát hiện lỗi đều có quyền truyền ngay lập tức.
+		
+		*  Cấu trúc:
+		
+			*  Error Flag: 6 bit đồng pha (tất cả Dominant hoặc tất cả Recessive).
+			
+			*  Error Delimiter: 8 bit Recessive.
+			
+		*   Vi phạm quy tắc Bit Stuffing nên tất cả các nút khác đều phát hiện và đồng bộ lỗi.
+		
+		*  Sau Error Frame thường có Intermission (3 bit Recessive).
+
  
-◦ **CAN:** Giao thức nối tiếp, cho phép vi điều khiển và thiết bị giao tiếp không cần máy tính chủ.
-    
-◦ **Chức năng:** Giảm dây dẫn, hỗ trợ phát hiện và sửa lỗi tự động.
+	*  **4. Overload Frame (Khung quá tải)**:
+	
+		*  Dùng để yêu cầu trì hoãn thêm thời gian giữa các frame (khi nút chưa sẵn sàng xử lý frame tiếp theo).
+		
+		* Cấu trúc tương tự Error Frame: Overload Flag (6 bit Dominant) + Overload Delimiter (8 bit Recessive).
+		
+		* Không được dùng để báo lỗi.   
+
+#### **3.4. Cấu trúc chi tiết của Data Frame**
+
+<img width="1570" height="605" alt="Image" src="https://github.com/user-attachments/assets/dc6b0f72-bc8a-4174-ad8b-dfc384f5edec" />
+
+
+* **1. SOF – Start of Frame (1 bit)**
+
+	*  Luôn là Dominant (0).
+	
+	*  Đánh dấu bắt đầu của một frame mới, dùng để đồng bộ tất cả các nút trên bus.
 
-## **11.2.Kiến trúc**
+* **2. Arbitration Field (Trường trọng tài) – Quyết định quyền ưu tiên truyền**
 
-### **11.2.1.Bus topology**
+	*  Standard Frame (11-bit ID):
+	
+		*  11-bit Identifier
+		
+		*  RTR (Remote Transmission Request) – 1 bit 
 
-* **Cấu trúc:** Topo-bus, các node nối song song qua 2 dây CANH (dây tín hiệu cao) và CANL (dây tín hiệu thấp).
+	*  Extended Frame (29-bit ID):
+	
+		*  11-bit Base Identifier
+		
+		*  SRR (Substitute Remote Request) – 1 bit (luôn Recessive)
+		
+		*  IDE (Identifier Extension) – 1 bit (= 1)
+		
+		* 18-bit Extended Identifier
+		
+		*  RTR – 1 bit
+		
+	* **Lưu ý:** Identifier càng nhỏ (càng nhiều bit 0) → ưu tiên càng cao vì Dominant (0) thắng Recessive (1).     
 
-* **Tín hiệu:** Vi sai, dựa trên chênh lệch điện áp giữa CANH và CANL.
+* **3. Control Field (Trường điều khiển) – 6 bit**
 
-* **Điện trở kết cuối:** 120 Ohm ở mỗi đầu bus để tránh phản xạ tín hiệu.
+	*  **Standard Frame**
+	
+		*  IDE = 0 (1 bit)
+		
+		*  r0 (Reserved bit) = 0 (1 bit)
+		
+		*  DLC (Data Length Code) - 4 bit
+		
+	* **Extended Frame:**  
 
+		*  IDE = 1
+		
+		*  r1 (Reserved bit) = 0 (1 bit)
+		
+		*  r0 = 0
+		
+		*  DLC - 4 bit
+		
+	* DLC (Data Length Code): Chỉ độ dài trường Data (0 đến 8 byte). Giá trị DLC từ 0000 (0 byte) đến 1000 (8 byte).  
 
-### **11.2.2.Các thiết bị trên bus CAN**
+* **4. Data Field (Trường dữ liệu)**
 
-![Image](https://github.com/user-attachments/assets/1caaac10-6b1f-43df-ba3a-9e2033cceb5f)
+	*  Độ dài: 0 đến 8 byte (64 bit).
+	
+	*  Nội dung dữ liệu thực tế của ứng dụng (ví dụ: tốc độ xe, nhiệt độ động cơ…).
+	
+	*  Truyền từ byte cao nhất (MSB) trước.  
 
-* **Sensors:** Cung cấp dữ liệu
+* **5. CRC Field (Cyclic Redundancy Check)**
 
-* **Actuator(Thiết bị kích động):** nhận lệnh từ MCU qua bus CAN để thực hiện các hành động vật lý như (mở van, điều khiển động cơ, bật đèn) 
+	*  15 bit CRC + 1 bit CRC Delimiter (luôn Recessive).
+	
+	*  Dùng để kiểm tra lỗi truyền. CRC được tính trên toàn bộ frame từ SOF đến cuối Data Field.
 
-* **CAN Controller:** 
 
-  ◦ Gửi/nhận thông điệp CAN, điều khiển truy cập bus CAN, xử lý lỗi CAN.
 
-  ◦ Cung cấp giao diện giữa MCU và bus CAN
+* **6. ACK Field (Acknowledgement) – 2 bit**
 
-* **CAN Transceiver:** 
+	*  **ACK Slot (1 bit):**
+	
+		*  Receiver gửi Dominant (0) nếu nhận frame đúng (CRC đúng, định dạng đúng).
+		
+	*  **ACK Delimiter (1 bit):**
+	
+		*  Luôn Recessive.
+		
+	* Transmitter kiểm tra ACK Slot. Nếu vẫn là Recessive → ACK Error.
 
-  ◦ Chuyển đổi tín hiệu số từ bộ điều khiển CAN thành tín hiệu điện áp dạng vi sai để gửi lên bus CAN và ngược lại
+* **7. EOF – End of Frame (7 bit)**
 
-* **MCU:**
+	*  7 bit Recessive.
+	
+	*  Đánh dấu kết thúc frame.
 
-  ◦ Xử lý, tạo thông điệp CAN.
+* **8. Intermission (3 bit Recessive)**
 
-  ◦ Quản lý khung dữ liệu, arbitration, lỗi.
+	*  Không thuộc frame, dùng để phân cách giữa các frame.
+	
+* Tổng số bit tối thiểu của một Data Frame (không có Data):
 
-### **11.2.3.Đặc điểm giao tiếp**
+	* Standard: 44 bit + 8×DLC
+	
+	* Extended: 64 bit + 8×DLC
+	
+* **Bit Stuffing**: Áp dụng từ SOF đến cuối CRC (không áp dụng cho CRC Delimiter, ACK và EOF). 
 
-* **Không cần máy tính chủ**
+	* Sau 5 bit giống nhau phải chèn 1 bit ngược lại.      
 
-* **Truyền thông quảng bá**
-   
-   ◦ Thông điệp phát đến tất cả node, node dùng bộ lọc để chọn thông điệp phù hợp.
 
-* **Arbitration**
+### **IV.  CƠ CHẾ PHÂN XỬ QUYỀN TRUY CẬP BUS (BUS ARBITRATION)**
 
-   ◦ Mỗi thông điệp CAN có một ID ưu tiên. Node nào có ID ưu tiên thấp hơn (tức độ ưu tiên cao hơn) sẽ chiếm quyền truy cập bus và gửi thông điệp trước
+#### **4.1. Giới thiệu**
 
-   ◦ Những Node có ID ưu tiên cao hơn thì tự động dừng lại và chờ đợi lượt tiếp theo để gửi thông điệp
+*  Trong mạng CAN, nhiều nút (node) có thể cố gắng truyền dữ liệu đồng thời vì đây là kiến trúc multi-master
 
-   ◦ Quá trình này không gây mất dữ liệu hay làm gián đoạn đến các thiết bị khác => **non-destructive**
+* Để giải quyết xung đột mà không gây mất dữ liệu hoặc làm hỏng bus, CAN sử dụng cơ chế Arbitration , được thực hiện từng bit một trong trường Arbitration Field của Frame 
 
-* **Giao tiếp song công**
+#### **4.2. Cơ chế ưu tiên dựa trên ID**
 
-* **Phát hiện và sửa lỗi tự động**
+<img width="708" height="398" alt="Image" src="https://github.com/user-attachments/assets/e4d6b91e-dbee-4cbf-8de3-68928ee5e9e8" />
 
-   ◦ Gửi Error Frame khi lỗi, truyền lại thông điệp.
+<img width="748" height="326" alt="Image" src="https://github.com/user-attachments/assets/f8d4f86a-d0c5-4d94-ac4f-2836a1e7139f" />
 
-## **11.3.Khung dữ liệu CAN**
 
-### **11.3.1.Các loại khung dữ liệu**
+*  **ID càng nhỏ (càng nhiều bit 0) thì ưu tiên càng cao**
 
-* **Data Frame**
+* Trong trường Arbitration Field, bit MSB được truyền trước 
 
-   ◦ Chứa ID và dữ liệu (0-8 byte).
+* Identifier được thiết kế sao cho bit 0 (Dominant) có quyền ưu tiên cao hơn bit 1 (Recessive)
 
-   ◦ ID quyết định ưu tiên (ID thấp = ưu tiên cao).
+* **VD:**  
+	
+	* Giả sử có 3 nút muốn truyền cùng lúc:
+	
+		* Node A: ID = 0x100 (binary: 001 0000 0000)
+		
+		* Node B: ID = 0x080 (binary: 000 1000 0000)
+		
+		* Node C: ID = 0x200 (binary: 010 0000 0000)
+		
+	* Khi truyền từ MSB:
+	
+		* Bit đầu tiên (bit 10): Cả 3 đều truyền 0 -> bus = Dominant (0)
+		
+		* Tiếp tục đến bit vị trí khác biệt đầu tiên:
+		
+			* Node B có nhiều bit 0 hơn ở vị trí quan trọng -> Node B thắng arbitration
+			
+			* Node A và Node C phát hiện bus khác với bit chúng truyền -> Chúng ngừng truyền ngay lập tức và chuyển sang chế độ nhận
+			
+	* Thông điệp có ID thấp nhất (ưu tiên cao nhất) sẽ chiếm bus và truyền tiếp mà không bị gián đoạn.          
+	
+#### **4.3. Nguyên lý Wire-And Logic**
 
+<img width="653" height="422" alt="Image" src="https://github.com/user-attachments/assets/65f24ca3-24df-4ee6-acfd-1f987fb421bc" />
 
-* **Remote Frame**
 
-   ◦ Sử dụng khi một node trên mạng CAN **yêu cầu dữ liệu** từ node khác
+*  Cơ chế arbitration của CAN dựa trên Wired-AND Logic nhờ đặc tính điện của bus:
 
-   ◦ **Remote Frame** chứa **ID** của node cần yê cầu và **bit điều khiển RTR**  
+	*  **Dominant (0)** = mức điện áp vi sai mạnh (CAN_H cao, CAN_L thấp) → một node chủ động “kéo” bus về mức Dominant.
+	
+	* **Recessive (1)** = mức điện áp gần như không chủ động (khoảng 2.5V trên cả hai dây). 
 
-* **Error Frame**
+* **Đặc tính:**
 
-   ◦  Báo lỗi 
-   
-   ◦  **Error Flag** là chuỗi từ 6 đến 12 bit dominant, báo hiệu lỗi
+	* Nếu bất kỳ node nào truyền bit Dominant (0), toàn bộ bus sẽ ở mức Dominant
+	
+	* Chỉ khi tất cả các node đều truyền bit Recessive (1) thì bus mới ở mức Recessive
+	
+	* Giống với phép AND logic: **0 AND 1 = 0 (Dominant luôn thắng)**    
 
-   ◦  **Error Delimiter** là chuỗi 8 bit recessive, kết thúc Error Frame
+* Mỗi node vừa truyền bit của mình, vừa giám sát (monitor) liên tục mức điện áp thực tế trên bus (qua transceiver).
 
-* **Overload Frame**
+	* Nếu node truyền Recessive (1) nhưng đọc lại bus là Dominant (0) → node biết có node khác có ưu tiên cao hơn → node thua arbitration và ngừng truyền ngay lập tức.
+	
+	* Node thắng arbitration (ID thấp nhất) sẽ tiếp tục truyền toàn bộ frame mà không bị gián đoạn.
 
-   ◦ Báo node bận, tạm dừng truyền thông.
 
-### **11.3.2.Cấu trúc một khung dữ liệu**
+#### **4.4. Cơ chế Non-destructive Arbitration**
 
-#### **11.3.2.1.Start of Frame(SOF)** 
+<img width="711" height="398" alt="Image" src="https://github.com/user-attachments/assets/69856be9-0581-4549-ba6a-84aec4a5bbc6" />
 
-* Là bit bắt đầu của khung dữ liệu, chỉ có giá trị dominant(0)
+<img width="1032" height="234" alt="Image" src="https://github.com/user-attachments/assets/599d5276-6854-466a-813c-8418a991341b" />
 
-#### **11.3.2.2.Arbitration Field**
+*  **Non-destructive** nghĩa là khi xảy ra xung đột, frame của nút thắng arbitration không bị hỏng hoặc mất dữ liệu
 
-* **ID:** Chứa định danh thông điệp
+* Nút thua chỉ đơn giản ngừng truyền và chờ bus rảnh để thử lại sau
 
-* **RTR:**  Dominant (Data Frame), recessive (Remote Frame).
+* **Quá trình:**
 
-#### **11.3.2.3.Control Field**
+	* 1. Nhiều node bắt đầu truyền cùng lúc (sau khi bus Idle >= 3 bit Recessive)
+	
+	* 2. Chúng truyền Arbitration Field bit by bit
+	
+	* 3. Nút có ID thấp nhất thắng -> tiếp tục truyền Control Field , Data, CRC
+	
+	* 4. Các nút thua arbitration tự động chuyển sang chế độ nghe (receive) và sẽ thử truyền lại khi bus trả về trạng thái Idle
+	
+* **Lưu ý:**
 
-* Chứa thông tin kích thước của phần dữ liệu
+	* Không được phép có hai node cùng truyền một ID (trừ trường hợp Remote Frame)
+	
+	* Arbitration chỉ diễn ra trong Arbitration Field (bao gồm ID + RTR/SRR/IDE)        
 
-* **DLC:** xác định độ dài của dữ liệu(0 đến 8 byte)
+### **V.  CƠ CHẾ XỬ LÝ LỖI TRONG GIAO THỨC CAN**
 
-#### **11.3.2.4.Data Field**
+#### **5.1. Các loại lỗi**
 
-* Chứa thông tin mà node muốn truyền tải
+<img width="436" height="198" alt="Image" src="https://github.com/user-attachments/assets/cf79838b-dabd-4e4f-a3a6-c96dfe29ca2b" />
 
-#### **11.3.2.5.CRC Field**
+*  **Bit Error:**
 
-* Node nhận sử dụng CRC Field để kiểm tra được truyền chính xác hay chưa.Nếu phát hiện, một Error Frame sẽ được gửi
+	* Node truyền bit Dominant nhưng đọc lại trên bus là Recessive hoặc ngược lại (trừ trường hợp Arbitration Field và ACK Slot) 
 
-#### **11.3.2.6.ACK Field**
+	* Điều kiện phát hiện:
+	
+		* Node phát hiện sự không khớp giữa bit truyền và bit đọc về
 
-* Xác nhận thông điệp đã được nhận thành công
- => Gửi bit ACK dominant 
+*  **Stuff Error:**
 
-* Nếu không có node nào gửi ACK,báo hiệu rằng có lỗi xảy ra / truyền không đúng cách
- => Truyền lại thông điệp 
+	* Vi phạm quy tắc Bit Stuffing (xuất hiện 6 bit liên tiếp giống nhau từ SOF đến CRC)
 
-#### **11.3.2.7.EOF**
+	* Điều kiện phát hiện:
+	
+		* Phát hiện 6 bit Dominant hoặc 6 bit Recessive liên tiếp 
 
-* Chuỗi bit recessive báo hiệu kết thúc.
+*  **CRC Error:**
 
-## **11.4. Arbitration**
+	* Giá trị CRC nhận được không khớp với CRC mà node tính toán
+	
+	* Điều kiện phát hiện: 
 
-### **11.4.1.Cơ chế ưu tiên**
+		* Receiver tính CRC và so sánh với CRC trong Frame
 
-#### **Node có ID thấp hơn tương ứng với mức độ ưu tiên cao hơn sẽ thắng Arbitration**
+*  **Form Error:**
 
-#### **Mỗi bit ID có thể ở trạng thái dominant (trạng thái ưu tiên - 0) hoặc recessive (trạng thái không ưu tiên - 1). Khi nhiều node cùng gửi dữ liệu CAN sẽ sử dụng quy tắc AND để xem NODE nào được ưu tiên**
+	* Cấu trúc frame không đúng quy định
 
+	* Điều kiện phát hiện:
+	
+		* Phát hiện 6 bit Dominant hoặc 6 bit Recessive liên tiếp 
 
-![Image](https://github.com/user-attachments/assets/7f8c7fbf-4fb1-4353-98ef-528b624ef2d7)
+*  **ACK Error:**
 
-* **Nguyên lý hoạt động**
+	* Transmitter không nhận được ACK (ACK Slot vẫn ở mức Recessive)
 
-  ◦	Khi nhiều node muốn truyền dữ liệu, chúng đều bắt đầu gửi thông điệp của mình lên bus. Tín hiệu được gửi đồng thời và mỗi node sẽ kiểm tra từng bit của dữ liệu trên bus.
+	* Điều kiện phát hiện:
+	
+		* Không có node nào xác nhận đã nhận đúng frame
+		
+* **Lưu ý:**
 
-  ◦ Mỗi bit truyền từ MSB-LSB.Nếu một node gửi **bit recessive(1)** mà nhận thấy trên bus có **bit dominant(0)** 
+	* Bit Error và Stuff Error chỉ được kiểm tra bởi transmitter (node đang truyền).
+	
+	* CRC Error, Form Error và ACK Error chủ yếu được phát hiện bởi receiver.
+	
+	* Khi bất kỳ lỗi nào được phát hiện, node sẽ ngay lập tức ngừng hoạt động hiện tại và truyền Error Frame.    
 
-  => **Node ngừng truyền và chuyển sang chế độ nghe**
 
-  ◦ Node có **ID thấp hơn(tức có nhiều bit dominant ở đầu)** sẽ tiếp tục truyền cho đến khi toàn bộ ID được gửi, trong khi các node khác ngừng gửi và chuyển sang chế độ chờ
+#### **5.2. Cơ chế phát hiện và sửa lỗi tự động (Truyền lại thông điệp)**
 
-  ◦ Các node **không thắng Arbitration chờ đợi và đợi lượt tiếp theo truyền lại thông điệp của mình**
+*  **Quy trình xử lý lỗi:**
 
-### **11.4.2.Non-destructive Arbitration**
+	* **1. Phát hiện lỗi:**
 
-* Cơ chế có nghĩa là quá trình Arbitrage diễn ra mà **không làm mất dữ liệu** của các node thua nhờ vào **multi-master** và **AND Logic**
-  
-  ◦ Khi một node thua trong quá trình arbitration, nó sẽ **tạm dừng việc truyền nhưng không xóa dữ liệu** của mình.
+		* Bất kỳ node nào trên bus phát hiện lỗi đều có quyền truyền Error Flag ngay lập tức (ngay cả trong lúc đang nhận frame).
 
-  ◦ Node thua sẽ chuyển sang **trạng thái chờ và lắng nghe bus**. Khi bus không còn bận (tức là node thắng đã gửi xong thông điệp), node thua sẽ **thử lại** và tham gia tranh chấp quyền gửi ở lần tiếp theo.
+	* **2. Truyền Error Frame:**
 
-## **11.5.Lỗi trong giao thức CAN**
+		* Gồm Error Flag (6 bit Dominant nếu Error Active) + Error Delimiter (8 bit Recessive).
+		
+		* Error Flag vi phạm quy tắc Bit Stuffing → tất cả các node khác trên bus đều nhanh chóng phát hiện lỗi và đồng bộ.
+	
+	* **3. Hủy frame hiện tại:**
 
-### **11.5.1.Các loại lỗi trong CAN**
+		* Toàn bộ frame đang truyền bị coi là không hợp lệ và bị hủy bỏ.
+		
+	* **4. Tự động truyền lại:**
 
-#### **11.5.1.1.Bit Error**
+		* Node truyền (transmitter) sẽ tự động xếp lại thông điệp vào hàng đợi truyền và thử gửi lại khi bus trở về trạng thái Idle (sau 3 bit Recessive của Intermission).
+		
+		* Quá trình này diễn ra hoàn toàn bởi phần cứng, rất nhanh và trong suốt với lớp ứng dụng.  
+	
+#### **5.3. Bộ đếm lỗi (Transmit Error Counter - TEC & Receive Error Counter - REC)**
 
-* Xảy ra khi một node **gửi một bit** (dominant hay recessive) lên bus mà **không nhận lại giá trị mong đợi**
+* Mỗi node CAN duy trì hai bộ đếm lỗi riêng biệt:
 
-* Mỗi node không chỉ gửi dữ liệu mà còn lắng nghe tín hiệu để kiểm tra sự đồng bộ
+	<img width="743" height="472" alt="Image" src="https://github.com/user-attachments/assets/197a44d1-c321-4732-a1bb-af00d328e13d" />
+	
+	*  **TEC (Transmit Error Counter):** Đếm lỗi liên quan đến việc truyền.
+	
+	* **REC (Receive Error Counter):** Đếm lỗi liên quan đến việc nhận.
 
-* Điều này có thể xảy ra khi một node khác có ưu tiên cao hơn đang truyền trên bus dữ liệu hoặc do nhiễu
+#### **5.4. Các trạng thái hoạt động của Node (Error Active, Error Passive, Bus Off)**
 
-#### **11.5.1.2.Stuff Error**
+<img width="674" height="519" alt="Image" src="https://github.com/user-attachments/assets/a408e11b-2f5a-4994-8047-1015129c884f" />
 
-* Xảy ra khi **có hơn 5 bit liên tiếp cùng giá trị (0 hoặc 1)**
-=> Vi phạm quy tắc **bit stuffing**
+* Dựa trên giá trị của TEC và REC, mỗi node CAN có 3 trạng thái hoạt động:
 
-* **Bit stuffing:** Trong mạng CAN,sau mỗi chuỗi 5 bit giống nhau liên tiếp,một bit ngược giá trị phải được thêm vào
+	*  **Error Active:** 
+	
+		* Điều kiện: TEC <= 127 và REC <= 127
+		
+		* Bình thường (Truyền Error Flag = 6 bit Dominant khi phát hiện lỗi)  
+	
+	*  **Error Passive:** 
+	
+		* Điều kiện: TEC ≥ 128 hoặc REC ≥ 128
+		
+		* Vẫn tham gia bus
+		
+		* Truyền Error Flag = 6 bit Recessive (Passive Error Flag)
+		
+		* Không được khởi tạo truyền mới cho đến khi bus Idle lâu hơn một chút 
 
-#### **11.5.1.3.CRC Error**
+	*  **Bus Off:** 
+	
+		* Điều kiện: TEC ≥ 256
+		
+		* Ngắt hoàn toàn khỏi bus
+		
+		* Không truyền và không nhận bất kỳ frame nào
+		
+		* Phải reset phần cứng để quay lại
+		
+* **Quá trình chuyển trạng thái:**
 
-* Xảy ra khi có **sai lệch trong quá trình kiểm tra CRC**
+	* Khi TEC hoặc REC vượt quá 127 → node chuyển sang Error Passive.
+	
+	* Khi TEC đạt 256 → node vào Bus Off.
+	
+	* Để thoát khỏi Bus Off:
+	
+		* Node phải theo dõi bus Idle (11 bit Recessive liên tiếp) trong khoảng thời gian quy định (thường 128 × 11 bit)
+		
+		* Sau đó reset TEC và REC về 0 và quay lại trạng thái Error Active.     
 
-* Node nhận sẽ tính toán lại giá trị CRC của dữ liệu và so sánh với CRC trong trường CRC Field.Nếu 2 giá trị này này không khớp, lỗi sẽ được phát hiện
+* **Mục đích:**
 
-#### **11.5.1.4.Form Error**
+	* Phát hiện node bị hỏng và cách ly nó ra khỏi bus (Bus Off) để tránh làm ảnh hưởng đến toàn bộ mạng.
+	
+	* Cho phép node bị lỗi tạm thời (do nhiễu) có cơ hội tự phục hồi.
+	
+	* Đảm bảo tính fault-tolerant (chịu lỗi) của hệ thống. 
 
-* Xảy ra khi **cấu trúc khung dữ liệu** không tuân theo quy chuẩn của giao thức CAN
+### **VI.  NGUYÊN LÝ VỀ BAUDRATE VÀ BỘ LỌC CAN**
 
-#### **11.5.1.5.ACK Error**
+#### **6.1. Giới thiệu**
 
-* Xảy ra khi node gửi thông điệp lên bus CAN mà **không nhận được bit ACK** từ bất kỳ node trên mạng
+*  Baudrate (tốc độ truyền) trong CAN là số lượng bit được truyền mỗi giây (thường tính bằng kbps hoặc Mbps)
 
-* Khi một node gửi thành công 1 khung dữ liệu, node **nhận** phải gửi 1 bit **ACK dominant** để xác nhận dữ liệu đã được nhận chính xác
+* Baudrate quyết định thời gian của một bit (Nominal Bit Time) và ảnh hưởng trực tiếp đến tốc độ giao tiếp cũng như khoảng cách truyền tối đa.
 
-* Nếu không có node nào gửi bit ACK => ACK Error => Truyền lại thông điệp
+* VD:
+	
+	* High-Speed CAN: 125 kbps, 250 kbps, 500 kbps, 1 Mbps.
+	
+	* CAN FD: Có thể lên đến 8 Mbps ở phần Data.
+	
+* Để đạt được baudrate chính xác và đồng bộ giữa các node, CAN chia mỗi bit thành nhiều đơn vị thời gian nhỏ gọi là Time Quantum (TQ).   
 
-### **11.5.2.Cơ chế phát hiện lỗi**
 
-* **Kiểm tra Bit**
 
-* **Kiểm tra CRC**
 
-* **Kiểm tra Form**
+#### **6.2. Nguyên lý phân chia Bit Time và Điểm lấy mẫu**
 
-* **Xác nhận**
+<img width="1044" height="271" alt="Image" src="https://github.com/user-attachments/assets/75d869f7-4071-44d1-9150-a29b29424e25" />
 
-### **11.5.3.Cơ chế sửa lỗi**
+*  Mỗi Nominal Bit Time (thời gian của 1 bit) được chia thành 4 phân đoạn (segments) không chồng lấn, mỗi phân đoạn gồm nhiều Time Quantum (TQ)
 
-* **CAN có khả năng tự sửa lỗi một cách tự động thông quá quá trình phát Error Frame và truyền lại thông điệp**
+* Time Quantum là đơn vị thời gian nhỏ nhất, được tạo ra bằng cách chia tần số clock của CAN Controller.
 
-  ◦ **Error Frame:** Khi một node phát hiện lỗi (bit error, CRC error, form error, stuff error, hoặc ACK error), nó sẽ gửi một Error Frame để thông báo cho tất cả các node khác trên bus rằng có lỗi đã xảy ra.
+* Cấu trúc phân chia Bit Time theo tiêu chuẩn:
 
-  ◦ **Truyền lại thông điệp:** Sau khi Error Frame được phát, các node sẽ dừng giao tiếp và node gửi ban đầu sẽ cố gắng truyền lại thông điệp bị lỗi. Việc này sẽ tiếp tục cho đến khi thông điệp được truyền đi thành công hoặc node gửi bị đưa vào trạng thái bus off nếu lỗi quá nhiều.
+	* **1. Sync_Seg (Synchronization Segment):**
 
-### **11.5.4.Các trạng thái lỗi của node**
+		* Độ dài cố định: 1 TQ.
+		
+		* Nhiệm vụ: Đồng bộ cạnh chuyển tiếp (edge) của tín hiệu trên bus với clock nội bộ của các node.
+		
+		* Cạnh chuyển tiếp (từ Recessive sang Dominant hoặc ngược lại) được mong đợi xảy ra trong khoảng này.  
 
- **Phát hiện lỗi => tự chuyển đổi giữa 3 trạng thái => đảm bảo ổn định và không gián đoạn**
+	* **2. Prop_Seg (Propagation Segment):**
 
-#### **11.5.4.1. Error Active**
+		* Độ dài: Có thể lập trình từ 1 đến 8 TQ.
+		
+		* Nhiệm vụ: Bù đắp cho độ trễ truyền lan (propagation delay) trên đường bus và transceiver (bao gồm thời gian lan truyền hai chiều).
+		
+		* Độ dài Prop_Seg càng lớn thì khoảng cách bus có thể càng dài.  
 
-* Node vẫn có khả năng tham gia đầy đủ vào quá trình truyền thông và có thể phát hiện lỗi. Nếu node phát hiện lỗi, nó sẽ gửi một Error Frame để thông báo cho các node khác trên bus rằng đã xảy ra lỗi.
+	* **3. Phase_Seg1 (Phase Segment 1):**
 
-#### **11.5.4.2. Error Passive**
+		* Độ dài: Có thể lập trình từ 1 đến 8 TQ (một số controller lên đến 16 TQ khi kết hợp với Prop_Seg).
+		
+		* Nhiệm vụ: Bù đắp cho sai số pha (phase error) dương. Có thể được kéo dài trong quá trình resynchronization.
 
-* Trong trạng thái này, node vẫn có thể tham gia truyền thông, nhưng nếu phát hiện lỗi, nó sẽ không gửi Error Frame mạnh mẽ như trong trạng thái Error Active. 
+	* **4. Phase_Seg2 (Phase Segment 2):**
 
-#### **11.5.4.3. Error Passive**
+		* Độ dài: Có thể lập trình từ 1 đến 8 TQ.
+		
+		* Nhiệm vụ: Bù đắp cho sai số pha âm. Có thể được rút ngắn trong quá trình resynchronization.
 
-* Khi một node gặp **quá nhiều lỗi** nghiêm trọng, nó sẽ chuyển sang trạng thái Bus Off. Trong trạng thái này, node sẽ hoàn toàn **ngắt kết nối khỏi bus** CAN và không thể tham gia vào quá trình truyền hay nhận dữ liệu. Node chỉ có thể được kết nối lại vào bus sau khi được **khởi động lại (restart) hoặc reset bởi phần mềm.**
+* **Điểm lấy mẫu (Sample Point):**
 
-## **11.6.Cấu hình và thiết lập CAN**
+	* Là vị trí mà node đọc và lấy giá trị logic của bit trên bus.
+	
+	* Vị trí: Cuối cùng của Phase_Seg1 (tức là sau Sync_Seg + Prop_Seg + Phase_Seg1).
+	
+	* Giá trị mẫu điển hình: 75% ~ 87.5% của Bit Time (thường khuyến nghị khoảng 80%). 
+	
+		* Đặt Sample Point ở phía sau giúp có đủ thời gian để tín hiệu ổn định sau các nhiễu và độ trễ, nhưng vẫn để lại đủ Phase_Seg2 để resynchronize. 
 
-### **11.6.1.Thiết lập tốc độ Baud**
+* **Công thức tính Sample Point:**
 
-* **Được tính bằng số bit truyền trên giây(bps)**
+	<img width="748" height="105" alt="Image" src="https://github.com/user-attachments/assets/1764b479-2d00-4ad5-b46d-b0a25e0c2517" />
 
-![Image](https://github.com/user-attachments/assets/2913e085-b302-4c3b-899f-66400a3a34e4)
+* **Synchronization Jump Width (SJW):**
 
-* **Sample Point:** 
+	* Giá trị từ 1 đến 4 TQ (không được lớn hơn Phase_Seg1 hoặc Phase_Seg2).
+	
+	* Quy định mức độ điều chỉnh tối đa cho Phase_Seg1 và Phase_Seg2 trong quá trình đồng bộ lại (resynchronization) để bù đắp sai lệch clock giữa các node.
 
-  ◦ Là thời điểm mà tín hiệu trên bus CAN được đọc để xác định giá trị của 1 bit
 
-  ◦ Mẫu thường được lấy ở vị trí cuối mỗi bit
+#### **6.3. Nguyên lý hoạt động của Mask (Mặt nạ) và Filter (Bộ lọc)**
 
-  ◦ Vị trí của sample point được tính tính toán dựa trên tỷ lệ phần trăm trong 1 khoảng thời gian bit. Lý tương là từ **75% đến 90%**
+*  Vì CAN là giao thức broadcast, mọi node trên bus đều nhận được tất cả các frame.
 
-* **Time Segment:**
+* Để giảm tải cho MCU (không phải xử lý tất cả thông điệp), CAN Controller tích hợp Acceptance Filter (bộ lọc chấp nhận) hoạt động hoàn toàn bằng phần cứng.
 
-  ◦ Là một thành phần quan trọng để đồng bộ hóa và điều chỉnh thời gian truyền thông giữa các node trên bus CAN
+* **Nguyên lý:**
 
-  ◦ **Sync Segment:** 
-  
-  Là đoạn đầu tiên, độ dài cố định là **1 TQ(time quanta)**
+	* Mỗi node chỉ quan tâm đến một số Identifier (ID) nhất định.
+	
+	* Bộ lọc sẽ so sánh ID của frame nhận được với các giá trị đã cấu hình
+	
+	* Chỉ frame đúng mới được đưa vào FIFO/Buffer để MCU xử lý; các frame khác bị loại bỏ ngay tại phần cứng.  
 
-  => Đồng bộ node trên bus
+* **Hai thành phần chính:**
 
-  => Node nhận sẽ phát hiện ra cạnh thay đổi (rising edge hoặc falling edge) của tín hiệu CAN tại đoạn này để điều chỉnh thời gian của chính nó
+	<img width="1356" height="617" alt="Image" src="https://github.com/user-attachments/assets/eb02d267-7bd9-42c8-9b09-8834db6c80ee" />
 
-  ◦ **Propagation Segment:** 
-  
-  **Bù đắp thời gian** cần thiết để tín hiệu lan truyền qua bus CAN từ node gửi đến node nhận.Tín hiệu cần thời gian để di chuyển từ một node đến một node khác, và thời gian này **phụ thuộc vào chiều dài của bus và tốc độ truyền**. Propagation Segment được cấu hình sao cho nó bao gồm **độ trễ lan truyền và thời gian trễ xử lý** của cả phần cứng CAN.
+	* **Filter (Bộ lọc / Acceptance Code):**
+	
+		* Chứa giá trị ID mong muốn (hoặc một phần của ID).
+		
+		* Xác định các bit phải khớp chính xác. 
 
-  ◦ **Phase Segment 1 (PS1) và Phase Segment 2 (PS2):**
+	* **Mask (Mặt nạ / Acceptance Mask):**
 
-    ■	PS1 là đoạn thời gian trước điểm lấy mẫu
+		* Là “mặt nạ bit” quyết định bit nào cần so sánh và bit nào được bỏ qua
+		
+		* Bit 1 trong Mask: Bit tương ứng trong ID phải khớp chính xác với bit trong Filter.
+		
+		* Bit 0 trong Mask: Bit tương ứng được bỏ qua (có thể là 0 hoặc 1 đều chấp nhận). 
 
-    ■	PS2 là đoạn thời gian sau điểm lấy mẫu
+* **Cách hoạt động (Mask Mode):**
 
-**Bit Time = Sync Segment + Propagation Segment + PS1 + PS2**
+	* **Giả sử dùng Standard 11-bit ID:**
+	
+		* Filter = `0000 0100 0000` (ID mong muốn = 0x040)
+		
+		* Mask = `1111 1111 0000`
+		
+	* Chỉ các ID có 8 bit cao nhất giống hệt Filter mới được chấp nhận (4 bit thấp không quan tâm).
+	
+	* Chấp nhận tất cả ID từ `0x040` đến `0x04F`.   
 
+* **Các chế độ lọc phổ biến:**
 
-### **11.6.2.Bộ lọc CAN**
+	* **Mask Filter Mode:**
+	
+		* Một Filter + một Mask → lọc theo vùng ID (range).
+		
+	* **List Filter Mode (Identifier Mode):**
+	
+		* So sánh trực tiếp với nhiều ID cụ thể (không dùng mask).
+		
+	* Hỗ trợ cả Standard (11-bit) và Extended (29-bit) ID.
+	
+	* Nhiều bộ lọc (Filter Banks): Các controller hiện đại có từ 4 đến 32 bộ lọc (ví dụ: STM32 có 28 filter banks).
+	
+* **Lưu ý:**
 
-* Cho phép các node lựa chọn và chỉ nhận những thông điệp cần thiết, dựa trên ID của thông điệp hoặc các tiêu chí khác
+	* Phải cấu hình Filter/Mask đúng trước khi vào chế độ Normal.
+	
+	* Có thể kết hợp nhiều filter để tạo bộ lọc phức tạp (acceptance + rejection).
+	
+	* Sai cấu hình filter là nguyên nhân phổ biến gây ra tình trạng node “không nhận được dữ liệu”.      
 
-* Hoạt động dựa trên 2 phần chính
+### **PHẦN 2: TRIỂN KHAI CAN VỚI STM32F103C8**
 
-  ◦ **Mask:** Quy định những bit nào **trong ID của thông điệp** cần được kiểm tra
+### **VII.  TỔNG QUAN VỀ BXCAN**
 
-  ◦ **Filter:** Được dùng để so sánh các bit của **ID thông điệp** với giá trị quy định trong bộ lọc.Nếu các bit này khớp với **Mask**, thông điệp sẽ được chấp nhận và xử Lý
+#### **7.1. Khái niệm**
 
-#### **11.6.2.1.Mask**
+* STM32F103 sử dụng bộ điều khiển CAN được gọi là bxCAN (basic extended CAN).
 
-* **Mask** là 1 dãy bit mà các bit có giá trị **1** sẽ được **kiểm tra**, **0** sẽ bị bỏ qua
+* Hỗ trợ đầy đủ CAN 2.0A (Standard 11-bit) và CAN 2.0B (Extended 29-bit), tốc độ lên đến 1 Mbps.
 
- **=> Xác định phạm vi ID mà node quan tâm**
+* bxCAN được thiết kế với kiến trúc Mailbox + FIFO giúp giảm tải cho CPU, hỗ trợ thời gian thực tốt và linh hoạt trong việc quản lý truyền/nhận thông điệp.
 
-#### **11.6.2.2.Filter**
+* Các tính năng chính:
 
-* Nếu ID thông điệp **trùng khớp** với giá trị bộ lọc(sau khi đã áp dụng mask),thông điệp sẽ được chấp nhận
+	* 3 Transmit Mailboxes (hộp thư truyền).
+	
+	* 2 Receive FIFOs (hộp thư nhận kiểu FIFO).   
+	
+	* Bộ lọc chấp nhận (Acceptance Filter) với tối đa 28 Filter Banks
+	
+	* Các chế độ hoạt động: Initialization, Normal, Sleep, Loopback, Silent, Loopback + Silent.
+	
+	* Hỗ trợ ngắt (Interrupt) cho truyền, nhận, lỗi.   
 
-* Nếu **không trùng khớp**,thông điệp sẽ bị bỏ qua,node sẽ không xử lý nó
+#### **7.2. Kiến trúc bxCAN (Hộp thư truyền - Tx Mailboxes, Hộp thư nhận - Rx FIFOs)**
 
-* **Cấu hình bộ lọc**
+##### **7.2.1. Transmit Mailboxes (Hộp thư truyền)**
 
-  ●	**Mask (Mặt nạ):** 0x700-chỉ kiểm tra **3 bit đầu tiên** của ID
+* **bxCAN có 3 Transmit Mailboxes độc lập:**
 
-  ●	**Filter (Bộ lọc):** 0x100- chỉ nhận thông điệp có ID bắt đầu bằng 0x001
+	* Mỗi mailbox có thể chứa 1 frame CAN hoàn chỉnh (Identifier, DLC, Data, RTR…).
+	
+	* CPU chỉ cần nạp dữ liệu vào mailbox → bxCAN tự động xử lý việc truyền.
+	
+	* Hỗ trợ priority-driven transmission: Mailbox có thể được cấu hình mức ưu tiên
+	
+	* Nếu nhiều mailbox đều có dữ liệu sẵn sàng, bxCAN sẽ tự động chọn mailbox có ID ưu tiên cao nhất để truyền trước (theo cơ chế arbitration của CAN).
 
-* **Phân tích cấu hình**
+	* Khi một mailbox truyền xong (nhận được ACK), nó sẽ tự động báo ngắt Transmit Interrupt (nếu được bật) và chuyển sang trạng thái Empty.
 
-  ●	**Mask:** 0x700 (111 0000 0000) có nghĩa là **3 bit đầu tiên** của ID thông điệp sẽ được so sánh với **filter**.Các bit khác(bit từ 8 trở xuống) sẽ không được kiểm tra
+* **Cấu trúc một Transmit Mailbox bao gồm các thanh ghi chính:**
+	
+	* TIxR (Identifier Register)
+	
+	* TDTxR (Data Length and Time Stamp)
+	
+	* TDLxR / TDHxR (Data Low/High)
+	
+##### **7.2.2. Receive FIFOs (Hộp thư nhận)**
 
-  ●	**Filter:** 0x100 (001 0000 0000) có nghĩa là node sẽ chấp nhận những thông điệp có **3 bit đầu tiên là 001**,tức thông điệp có ID nằm trong khoảng từ **0x100** đến **0x1FF**
+* **bxCAN có 2 Receive FIFOs (FIFO0 và FIFO1):**
 
-```
-●	ID 0x0F0: Bị bỏ qua vì 3 bit đầu tiên là 000, không trùng khớp với 001 trong filter.
-●	ID 0x100: Được chấp nhận vì 3 bit đầu tiên là 001, trùng khớp với filter.
-●	ID 0x180: Được chấp nhận vì 3 bit đầu tiên là 001, trùng khớp với filter.
-●	ID 0x200: Bị bỏ qua vì 3 bit đầu tiên là 010, không trùng khớp với filter.
+	* Mỗi FIFO là một hàng đợi kiểu FIFO (First In First Out) với độ sâu 3 messages.
+	
+	* Toàn bộ thông điệp nhận được từ bus sẽ được đưa vào một trong hai FIFO tùy thuộc vào Acceptance Filter (bộ lọc).
+	
+	* Giảm nguy cơ overrun (mất dữ liệu) khi có nhiều thông điệp đến nhanh.
+	
+	* Mỗi FIFO có ngắt riêng: FMPx (FIFO Message Pending) – báo khi có ít nhất 1 message trong FIFO. 
 
+* **Quy trình nhận:**
 
-```
-</details>
-  
+	* 1. Frame đến bus → Acceptance Filter kiểm tra ID.
+	
+	* 2. Nếu khớp → frame được lưu vào FIFO0 hoặc FIFO1.
+	
+	* 3. Khi FIFO có dữ liệu → sinh ngắt (nếu bật).
+	
+	* 4. CPU đọc message từ FIFO → bxCAN tự động giải phóng slot.  
+
+
+#### **7.3. Các chân GPIO hỗ trợ CAN**
+
+* Trên STM32F103, khối CAN1 (bxCAN) có hai bộ chân GPIO có thể sử dụng:
+
+	* Cấu hình mặc định (No Remap):
+	
+		* CAN_RX: PA11
+		
+		* CAN_TX: PA12
+		
+	* Cấu hình Remap (Remapped):
+		
+		* CAN_RX: PB8
+		
+		* CAN_TX: PB9
+		
+	* Để chuyển sang bộ chân PB8/PB9, cần bật remapping thông qua thanh ghi AFIO_MAPR.
+
+* Lưu ý:
+	
+	* Cả hai chân đều phải được cấu hình ở chế độ Alternate Function.
+	
+	* CAN_TX (PA12 hoặc PB9): Alternate function Push-Pull, tốc độ cao (High Speed - 50MHz khuyến nghị).
+	
+	* CAN_RX (PA11 hoặc PB8): Floating Input hoặc Input Pull-Up (thường để Floating Input).
+
+	* Khi sử dụng PA11/PA12, cần chú ý xung đột với USB (vì USB_DM = PA11, USB_DP = PA12)
+	
+### **VIII.  KHỞI TẠO VÀ CẤU HÌNH CAN**
+
+#### **8.1. Cấu hình Clock cho CAN và GPIO**
+
+		// Bật Clock cho CAN1 và AFIO 
+		RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE); 
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+
+#### **8.2. Cấu hình GPIO cho CAN**
+
+
+			GPIO_InitTypeDef GPIO_InitStructure;
+
+			// ----------CAN_TX----------
+			GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+			GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz'
+			GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+			GPIO_Init(GPIOA, &GPPIO_InitStructure);
+
+			// ----------CAN_RX---------- 
+			GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
+			GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+			GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+
+* Nếu bật remap CAN sang PB8/PB9
+
+		//Bật Remap
+		GPIO_PinRemapConfig(GPIO_Remap_CAN1, ENABLE);
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+
+
+#### **8.3. Khởi tạo các tham số CAN (CAN_InitTypeDef)**
+
+		CAN_InitTypeDef CAN_InitStructure;
+		CAN_DeInit(CAN1);			//Reset bxCAN trước khi khởi tạo
+
+		CAN_InitStructure.CAN_TTCM = DISABLE;
+		CAN_InitStructure.CAN_ABOM = ENABLE;			// Auto Bus-Off Management
+		CAN_InitStructure.CAN_AWUM = DISABLE;
+		CAN_InitStructure.CAN_NART = DISABLE;			// Tự động retransmission
+		CAN_InitStructure.CAN_RFLM = DISABLE;
+		CAN_InitStructure.CAN_TXFP = DISABLE; 			// Ưu tiên theo ID 
+			
+		// Cấu hình Baudrate 
+		CAN_InitStructure.CAN_Mode = CAN_Mode_Normal;
+		CAN_InitStructure.CAN_SJW = CAN_SJW_1tq;
+		CAN_InitStructure.CAN_BS1 = CAN_BS1_8tq;			// TimeSeg1
+		CAN_InitStructure.CAN_BS2 = CAN_BS2_3tq;			// TimeSeg2
+		CAN_InitStructure.CAN_Prescaler = 6; 				// Prescaler = 6
+
+
+		// Tính baudrate:
+		// TQ = PCLK1 / PRESCALER = 36MHz / 6 = 6MHz
+		// Tổng TQ = 1 + 8 + 3 = 12 TQ
+		// Baudrate = 6MHz / 12 = 500 kbps
+		
+		if (CAN_Init(CAN1, &CAN_InitStructure) != CAN_InitStatus_Success) { 
+		// Xử lý lỗi 
+		}
+
+
+#### **8.4. Các chế độ hoạt động (CAN_Mode)**
+
+* SPL hỗ trợ 4 chế độ chính:
+
+		CAN_InitStructure.CAN_Mode = CAN_Mode_Normal;           // Chế độ thực tế
+		// CAN_InitStructure.CAN_Mode = CAN_Mode_LoopBack;      // Test nội bộ
+		// CAN_InitStructure.CAN_Mode = CAN_Mode_Silent;        // Chỉ nghe
+		// CAN_InitStructure.CAN_Mode = CAN_Mode_Silent_LoopBack;
+
+#### **8.5. Các thông số quản lý nâng cao**
+
+* **CAN_ABOM:**
+
+	*  Tự động thoát Bus-Off
+	
+	*  Khuyến khích: ENABLE 
+
+* **CAN_NART:**
+
+	*  Tự động retransmission khi lỗi
+	
+	*  Khuyến khích: DISABLE 
+
+* **CAN_TXFP:**
+
+	*  Ưu tiên truyền theo FIFO hay theo ID
+	
+	*  Khuyến khích: DISABLE (theo ID)
+
+* **CAN_RFLM:**
+
+	*  Khi FIFO đầy thì Lock hay Overwrite
+	
+	*  Khuyến khích: DISABLE
+
+* **CAN_AWUM:**
+
+	*  Auto Wake Up
+	
+	*  Khuyến khích: DISABLE
+
+* **CAN_TTCM:**
+
+	*  Time Triggered Mode
+	
+	*  Khuyến khích: DISABLE
+
+
+#### **8.6. Trình tự khởi tạo CAN bằng SPL**
+
+* 1. Cấu hình System Clock → PCLK1 = 36 MHz
+
+* 2. Bật Clock CAN1 + AFIO
+	
+* 3. Cấu hình GPIO (TX: AF_PP, RX: IPU/Floating)
+
+* 4. Remap CAN nếu cần
+
+* 5. Khởi tạo CAN_InitTypeDef
+
+* 6. Gọi CAN_Init(CAN1, &CAN_InitStructure)
+
+* 7. Cấu hình Acceptance Filter
+
+* 8. Bật CAN: CAN_ITConfig() và CAN_Cmd(CAN1, ENABLE)
+
+### **IX.  CẤU HÌNH BỘ LỌC CAN**
+
+#### **9.1. Các chế độ lọc**
+
+* bxCAN hỗ trợ hai chế độ lọc chính:
+
+	*  **Mask Mode (CAN_FilterMode_IdMask)**
+	
+		* Sử dụng Mask để bỏ qua một số bit
+		
+		* Nguyên lý: `(Received ID & Mask) == Filter_ID`
+		
+		* Phù hợp khi muốn nhận một dải ID (range).
+		
+		*  Ví dụ: Nhận tất cả ID từ 0x200 đến 0x2FF → Mask sẽ che 8 bit thấp.     
+
+	*  **Identifier List Mode (CAN_FilterMode_IdList)**
+	
+		* So sánh chính xác với danh sách các ID đã liệt kê.
+		
+		* Không dùng Mask, mỗi vị trí chứa một ID cụ thể cần khớp.
+		
+		* Phù hợp khi chỉ nhận một số ID rời rạc (discrete IDs).
+
+#### **9.2. Kích thước bộ lọc**
+
+* Mỗi Filter Bank có thể được cấu hình với hai mức độ rộng:
+
+	* **32-bit Scale (CAN_FilterScale_32bit):**
+	
+		*  Mỗi Filter Bank chỉ chứa 1 filter.
+		
+		*  Hỗ trợ cả Standard (11-bit) và Extended (29-bit) ID.
+		
+		*  Phù hợp khi cần lọc Extended ID hoặc lọc chính xác cao.
+		
+	* **16-bit Scale (CAN_FilterScale_16bit):**
+	
+		* Mỗi Filter Bank chứa 2 filter độc lập.
+		
+		* Chỉ hỗ trợ tốt nhất cho Standard ID (11-bit).
+		
+		* Tiết kiệm Filter Bank, cho phép lọc nhiều ID hơn (tối đa 56 filter nếu tất cả dùng 16-bit).        
+
+#### **9.3. Phân bổ dữ liệu vào FIFO (FIFO0 hoặc FIFO1)**
+
+* Mỗi Filter Bank có thể được gán vào một trong hai FIFO:
+
+	* **CAN_Filter_FIFO0:**
+	
+		*  Thông điệp khớp filter sẽ được đưa vào Receive FIFO0.
+
+	* **CAN_Filter_FIFO1:**
+	
+		*  Thông điệp khớp filter sẽ được đưa vào Receive FIFO1.
+		
+* Mỗi FIFO có ngắt riêng (`CAN_IT_FMP0, CAN_IT_FMP1`).
+
+#### **9.4. Triển khai Code**
+
+* Cấu trúc:
+
+			CAN_FilterInitTypeDef CAN_FilterInitStructure;
+
+* **Ví dụ 1: Mask Mode 32-bit – Nhận tất cả Standard ID (thường dùng để test):**
+	
+		void CAN_Filter_Config(void)
+		{
+		    CAN_FilterInitStructure.CAN_FilterNumber = 0;                    // Filter Bank 0
+		    CAN_FilterInitStructure.CAN_FilterMode = CAN_FilterMode_IdMask;  // Mask Mode
+		    CAN_FilterInitStructure.CAN_FilterScale = CAN_FilterScale_32bit;
+		    
+		    CAN_FilterInitStructure.CAN_FilterIdHigh = 0x0000;               // ID muốn nhận
+		    CAN_FilterInitStructure.CAN_FilterIdLow = 0x0000;
+		    
+		    CAN_FilterInitStructure.CAN_FilterMaskIdHigh = 0x0000;           // Mask = 0 → nhận tất cả
+		    CAN_FilterInitStructure.CAN_FilterMaskIdLow = 0x0000;
+		    
+		    CAN_FilterInitStructure.CAN_FilterFIFOAssignment = CAN_Filter_FIFO0;
+		    CAN_FilterInitStructure.CAN_FilterActivation = ENABLE;
+		    
+		    CAN_FilterInit(&CAN_FilterInitStructure);
+		}
+
+* **Ví dụ 2: Mask Mode 32-bit – Nhận ID từ 0x200 đến 0x2FF (Standard ID)**
+	
+	    CAN_FilterInitStructure.CAN_FilterNumber = 0;
+	    CAN_FilterInitStructure.CAN_FilterMode = CAN_FilterMode_IdMask;
+	    CAN_FilterInitStructure.CAN_FilterScale = CAN_FilterScale_32bit;
+	    
+	    CAN_FilterInitStructure.CAN_FilterIdHigh = (0x200 << 5);     // ID cơ sở
+	    CAN_FilterInitStructure.CAN_FilterIdLow  = 0x0000;
+	    
+	    CAN_FilterInitStructure.CAN_FilterMaskIdHigh = (0x700 << 5); // Mask che 9 bit thấp → nhận 0x200~0x2FF
+	    CAN_FilterInitStructure.CAN_FilterMaskIdLow  = 0x0000;
+	    
+	    CAN_FilterInitStructure.CAN_FilterFIFOAssignment = CAN_Filter_FIFO0;
+	    CAN_FilterInitStructure.CAN_FilterActivation = ENABLE;
+	    
+	    CAN_FilterInit(&CAN_FilterInitStructure);
+
+* **Ví dụ 3: List Mode 16-bit – Nhận 4 ID cụ thể (0x100, 0x200, 0x300, 0x400)**
+	
+	        CAN_FilterInitStructure.CAN_FilterNumber = 1;
+		    CAN_FilterInitStructure.CAN_FilterMode = CAN_FilterMode_IdList;   // List Mode
+		    CAN_FilterInitStructure.CAN_FilterScale = CAN_FilterScale_16bit;  // 2 ID mỗi bank
+		    
+		    // Filter 1A: ID 0x100
+		    CAN_FilterInitStructure.CAN_FilterIdHigh = (0x100 << 5);
+		    CAN_FilterInitStructure.CAN_FilterIdLow  = (0x200 << 5);   // Filter 1B: ID 0x200
+		    
+		    // Filter 2A: ID 0x300
+		    CAN_FilterInitStructure.CAN_FilterMaskIdHigh = (0x300 << 5);
+		    CAN_FilterInitStructure.CAN_FilterMaskIdLow  = (0x400 << 5); // Filter 2B: ID 0x400
+		    
+		    CAN_FilterInitStructure.CAN_FilterFIFOAssignment = CAN_Filter_FIFO0;
+		    CAN_FilterInitStructure.CAN_FilterActivation = ENABLE;
+		    
+		    CAN_FilterInit(&CAN_FilterInitStructure);
+
+
+* **Lưu ý:**
+
+	* Phải gọi `CAN_FilterInit()` sau `CAN_Init()`. 
+	
+	* Filter Activation = `ENABLE`. 
+	
+	* Sau khi cấu hình xong tất cả filter → bật CAN: `CAN_Cmd(CAN1, ENABLE)`; 
+	
+	* Nếu muốn nhận tất cả thông điệp → dùng Mask = 0x0000. 
+
+
+### **X.  KỸ THUẬT GỬI VÀ NHẬN DỮ LIỆU CAN**
+
+#### **10.1. Gửi dữ liệu (Hàm CAN_Transmit và quản lý Tx Mailbox)**
+
+* Để gửi một frame CAN, ta sử dụng hàm `CAN_Transmit()`
+
+	*  **Cấu trúc dữ liệu:**
+
+			CanTxMsg TxMessage;
+
+			TxMessage.StdId = 0x123;					// Standard ID (11 bit)
+			TxMessage.ExtId = 0x00;					// Không dùng nếu là Standard
+			TxMessage.IDE  = CAN_Id_Standard;			// Hoặc CAN_Id_Extended
+			TxMessage.RTR = CAN_RTR_Data;				// CAN_RTR_Remote nếu là Remote Frame
+			TxMessage.DLC = 8;							// Độ dài dữ liệu: 0 - 8
+
+			// Dữ liệu
+			TxMessage.Data[0] = 0x01; 
+			TxMessage.Data[1] = 0x02; 
+			TxMessage.Data[2] = 0x03; 
+			TxMessage.Data[3] = 0x04; 
+			TxMessage.Data[4] = 0x05; 
+			TxMessage.Data[5] = 0x06; 
+			TxMessage.Data[6] = 0x07; 
+			TxMessage.Data[7] = 0x08;			
+	  
+	*  **Hàm gửi dữ liệu:**
+	
+				uint8_t CAN_Send_Message(uint32_t id, uint8_t *data, uint8_t len){
+				CanTxMsg TxMessage;
+				if (len > 8) len = 8;
+
+				TxMessage.StdId = id;
+				TxMessage.ExtId = 0;
+				TxMessage.IDE = CAN_Id_Standard;
+				TxMessage.RTR = CAN_RTR_Data;
+				TxMessage.DLC = len;
+
+				for(uint8_t i = 0; i < len; i++){
+					TxMessage.Data[i] = data[i];
+				}
+
+				// Gửi và trả về Mailbox được sử dụng (0,1,2) hoặc CAN_TxStatus_NoMailBox nếu đầy
+				uint8_t mailbox = CAN_Transmit(CAN1, &TxMessage);
+				return mailbox;
+				}
+
+
+	*  **Kiểm tra trạng thái Mailbox:**
+	
+			// Giả sử đã gọi: uint8_t mailbox = CAN_Transmit(CAN1, &TxMessage);
+			
+			// 1. Kiểm tra xem thông điệp có được đưa vào Mailbox thành công không
+			if(mailbox == CAN_TxStatus_NoMailBox){
+				// Cả 3 Transmit Mailbox đều đang đầy, thông điệp chưa được gửi.
+				
+				// Xử lý: Đưa vào buffer mềm hoặc thử lại sau
+			}else{
+			
+				// 2. Chờ cho đến khi Mailbox truyền xong dữ liệu ra Bus
+				// Trong hệ thống lớn, nên dùng ngắt truyền (Transmit Interrupt)
+					uint8_t status = CAN_TxStatus_Pending;
+					while(status == CAN_TxStatus_Pending){
+						status = CAN_TransmitStatus(CAN1, mailbox);	 // Kiểm tra Mailbox đang dùng
+					}
+
+				// 3. Đánh giá kết quả truyền
+				if (status == CAN_TxStatus_Ok){
+					// Truyền thành công (Đã nhận được cờ ACK từ các Node khác)
+				}
+				else if( status == CAN_TxStatus_Failed){
+					// Truyền thất bại
+				}
+			}
+
+*  **Lưu ý:**
+
+	* Nếu cả 3 Mailbox dều đầy -> `CAN_Transmit()` trả về `CAN_TxStatus_NoMailBox`
+	
+	* Nên kiểm tra trước khi gửi hoặc dùng ngắt Transmit Complete  
+
+#### **10.2. Nhận dữ liệu bằng phương pháp Polling**
+
+			void CAN_Receive_Polling(void){
+				if(CAN_MessagePending(CAN1, CAN_FIFO0) > 0){   // Kiểm tra FIFO có dữ liệu không
+					CAN_Receive(CAN1, CAN_FIFO0, &RxMessage);  // Đọc dữ liệu từ FIFO0
+
+					// Xử lý dữ liệu nhận được
+					printf("ID: 0x%X, DLC: %d, Data: ", RxMessage.StdId, RxMessage.DLC);
+					for(uint8_t i = 0; i < RxMessage.DLC; i++){
+						printf("%02X ", RxMessage.Data[i]);
+					}
+					printf("\r\n");
+				}
+				// Có thể kiểm tra thêm FIFO1 nếu cần
+				// if (CAN_MessagePending(CAN1, CAN_FIFO1) > 0) ...
+			}
+					
+#### **10.3. Nhận dữ liệu bằng phương pháp Interrupt**
+
+* **Bước 1: Cấu hình ngắt trong hàm khởi tạo**
+
+			void CAN_Interrupt_Config(void){
+				// Bật ngắt cho FIFO0 (có message pending)
+				CAN_ITConfig(CAN1, CAN_IT_FMP0, ENABLE);		// FIFO0 Message Pending
+				// CAN_ITConfig(CAN1, CAN_IT_FMP1, ENABLE);		// Nếu dùng FIFO1
+
+				// Tùy chọn: Bật ngắt lỗi và Bus-Off
+				CAN_ITConfig(CAN1, CAN_IT_ERR | CAN_IT_BOF, ENABLE);
+			}
+
+* **Bước 2: Viết hàm xử lý ngắt (IRQ Handler)**
+
+			void USB_LP_CAN1_RX0_IRQHandler(void){			// Ngắt FIFO0
+				CanRxMsg  RxMessage;
+
+				if (CAN_GetITStatus(CAN1, CAN_IT_FMP0) != RESET){
+					CAN_Receive(CAN1, CAN_FIFO0, &RxMessage);			// Đọc dữ liệu
+					// Xử lý dữ liệu ở đây
+					CAN_Process_RxMessage(&RxMessage);
+					CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);				// Xóa cờ ngắt
+				}
+			}				
+
+	* **Hàm xử lý dữ liệu nhận được**
+
+			void CAN_Process_RxMessage(CanRxMsg *RxMessage){
+				switch(RxMessage->StdId){
+					case 0x100:
+						// Xử lý thông điệp ID 0x100
+						break;
+					case 0x200:
+						// Xử lý thông điệp ID 0x200
+						break;
+					default:
+						break;
+					}
+			}
+
+* **Bước 3: Bật ngắt toàn cục trong NVIC**
+
+		NVIC_InitTypeDef NVIC_InitStructure;
+
+		NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;   // Ngắt CAN RX0
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+
+							
+   </details> 
+
+
