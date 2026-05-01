@@ -5288,33 +5288,82 @@
 
 	*  **Error Active:** 
 	
-		* Điều kiện: TEC <= 127 và REC <= 127
+		* **Điều kiện:**
+  
+  				`TEC <= 127` và `REC <= 127`
 		
-		* Bình thường (Truyền Error Flag = 6 bit Dominant khi phát hiện lỗi)  
-	
+			* Thực tế kỹ thuật: Bộ đếm thường ở mức 0, hoặc dao động nhẹ quanh 0 nếu thỉnh thoảng có lỗi CRC do nhiễu. 
+
+		* **Hành vi khi phát hiện lỗi:**
+
+  			* Node sẽ gửi Active Error Flag, bao gồm 6 bit Dominant liên tiếp. 
+  
+		* **Tác động lên bus:**
+
+  			* Tín hiệu Dominant sẽ ghi đè lên tín hiệu Recessive trên bus
+     
+	 		* Việc xuất hiện 6 bit Dominant liên tiếp vi phạm quy tắc nhồi bit (Bit Stuffing), do đó toàn bộ các node khác trên mạng đều phát hiện được lỗi và đồng loạt gửi Active Error Flag
+    
+			* Hệ quả là frame hiện tại bị hủy bỏ hoàn toàn và node gửi phải thực hiện truyền lại.    
+ 
+  
 	*  **Error Passive:** 
-	
-		* Điều kiện: TEC ≥ 128 hoặc REC ≥ 128
-		
-		* Vẫn tham gia bus
-		
-		* Truyền Error Flag = 6 bit Recessive (Passive Error Flag)
-		
-		* Không được khởi tạo truyền mới cho đến khi bus Idle lâu hơn một chút 
+
+		* **Điều kiện:**
+  
+  				`TEC ≥ 128 hoặc REC ≥ 128.`
+
+		* **Hành vi khi phát hiện lỗi:**
+
+  			* Node gửi Passive Error Flag, bao gồm 6 bit Recessive liên tiếp.
+  
+		* **Đặc điểm khác biệt:**
+
+  			* Do các bit Recessive không có khả năng ghi đè bit Dominant, node trong trạng thái Error Passive không thể tự mình hủy bỏ frame của node khác.
+     
+	 		* Chỉ khi các node Error Active khác cùng phát hiện lỗi và gửi Active Error Flag, frame mới bị hủy.
+    
+			* Sau khi kết thúc quá trình truyền một frame, node Error Passive phải tuân thủ thời gian Suspend Transmission (tạm dừng truyền) kéo dài 8 bit Recessive trước khi được phép khởi tạo frame tiếp theo.
+   
+   			* Quy định này nhằm ưu tiên quyền truy nhập bus cho các node đang ở trạng thái Error Active. 
+ 
+   
+		* **Khả năng phục hồi:**
+
+			* Nếu nguyên nhân gây lỗi chỉ là nhiễu tạm thời, sau một số lần truyền/nhận thành công, giá trị TEC và REC sẽ giảm dần và node sẽ tự động quay trở lại trạng thái Error Active.
 
 	*  **Bus Off:** 
-	
-		* Điều kiện: TEC ≥ 256
+
+		* **Điều kiện:**
+  
+  				`TEC ≥ 256`. (Lưu ý: chỉ có TEC gây ra trạng thái Bus Off, REC không có khả năng này).
+ 
+    		* Khi một node liên tục gửi lỗi, nó phá hủy frame của các node khác, gây ảnh hưởng nghiêm trọng đến toàn bộ mạng.
+      
+	  		* Vì vậy, mức phạt cho lỗi truyền (TEC tăng 8 đơn vị) cao hơn lỗi nhận (REC tăng 1 đơn vị) và TEC là chỉ số để quyết định trục xuất node.  
+
+		* **Hành vi khi phát hiện lỗi:**
+
+  			* Node bị ngắt kết nối logic hoàn toàn khỏi bus, không được phép gửi bất kỳ bit nào (kể cả Error Flag hay Acknowledge) và thường chuyển sang chế độ chỉ giám sát bus.
+
+    
+		* **Quy trình phục hồi:**
+
+			* **1.** Phần mềm ứng dụng ghi nhận sự kiện Bus Off (thường thông qua ngắt) và lưu mã lỗi chẩn đoán (DTC).
+ 
+			* **2.** Chờ một khoảng thời gian trễ do người lập trình quy định (ví dụ 100ms đến 200ms).
+     
+			* **3.** Xóa cờ Bus Off trong thanh ghi điều khiển.
+ 
+			* **4.** Giám sát bus cho đến khi phát hiện 128 lần liên tiếp chuỗi 11 bit Recessive.
 		
-		* Ngắt hoàn toàn khỏi bus
-		
-		* Không truyền và không nhận bất kỳ frame nào
-		
-		* Phải reset phần cứng để quay lại
+			* **5.** Sau khi điều kiện trên thỏa mãn, phần cứng tự động đặt lại TEC và REC về 0 và node chuyển sang trạng thái Error Active.
+ 
+			* **6.** Nếu node liên tục rơi vào Bus Off sau các lần phục hồi, phần mềm có thể quyết định dừng nỗ lực phục hồi và xác nhận đây là lỗi vĩnh viễn.
 		
 * **Quá trình chuyển trạng thái:**
 
-	* Khi TEC hoặc REC vượt quá 127 → node chuyển sang Error Passive.
+	* Khi TEC hoặc REC vượt quá 127 → node lập tức chuyển từ trạng thái Error Active sang Error Passive
 	
 	* Khi TEC đạt 256 → node vào Bus Off.
 	
@@ -5456,18 +5505,133 @@
 
 * **Các chế độ lọc phổ biến:**
 
-	* **Mask Filter Mode:**
+	* **Mask Filter Mode: Lọc theo vùng ID (range)**
 	
-		* Một Filter + một Mask → lọc theo vùng ID (range).
-		
+		* Một bộ lọc gồm:
+
+  			* **Filter ID (giá trị mẫu)**
+     
+	 		* **Mask (bit nào cần so sánh)**
+    
+		* Mask bit = 1 -> bắt buộc phải khớp Filter ID tại bit đó
+
+  		* Mask bit = 0 -> bỏ qua (không quan tâm bit đó)
+    
+		* VD:
+
+  			* **VD1: Nhận tất cả ID từ 0x100 đến 0x1FF**
+ 
+     			* Filter ID: 0x100 = 001 0000 0000
+        
+				* Mask: 0x700 = 111 0000 0000
+     
+	 			* Cách tính vùng ID:   	
+ 
+							Filter ID: 001 0000 0000
+							Mask:      111 0000 0000
+							          ↓↓↓ ↓↓↓↓ ↓↓↓↓
+							Bắt buộc: 001 xxxx xxxx
+
+       			* Các ID từ `001 0000 0000` (0x100) đến `001 1111 1111` (0x1FF) đều khớp
+
+    			* Một ECU nhận tất cả thông báo chẩn đoán từ gateway, gateway dùng ID vùng 0x100-0x1FF cho dịch vụ chẩn đoán. 
+           
+  			* **VD2: Chỉ nhận đúng một ID duy nhất (0x123)**
+ 
+     			* Filter ID: 0x123 = 001 0010 0011
+        
+				* Mask: 0x7FF = 111 1111 1111
+     
+	 			* Cách tính vùng ID:   	
+ 
+							Filter ID: 001 0010 0011
+							Mask:      111 1111 1111
+							          ↓↓↓ ↓↓↓↓ ↓↓↓↓
+							Bắt buộc: 001 0010 0011  → Chỉ đúng 0x123
+
+       			* Mask toàn bit 1 nghĩa là không bỏ qua bit nào, nên chỉ khớp chính xác 0x123.
+
+  			* **VD3: Nhận tất cả ID có bit 7:6 = 01**
+ 
+     			* Filter ID: 0x040 = 000 0100 0000
+        
+				* Mask: 0x060 = 000 0110 0000
+     
+	 			* Cách tính vùng ID:   	
+ 
+							Filter ID: 000 01 00 0000
+							Mask:      000 11 00 0000
+							            ↑   ↑
+							         bit [7:6]
+
+       			* Tất cả ID có dạng `xxx 01xx xxxx` đều khớp.
+
+    			* Nhận tất cả frame từ 2 module có cùng chức năng (mỗi module dùng 1 bit còn lại để phân biệt). 
+   
+  			* **VD4: Extended ID 29-bit – Nhận vùng ECU thân xe (0x18DA00F0 - 0x18DA00FF)**
+ 
+     			* Filter ID (29-bit): 0x18DA00F0
+        
+				* Mask (29-bit): 0x1FFFFF00
+     
+	 			* Cách tính vùng ID:   	
+ 
+							Filter ID:   1 1000 1101 1010 0000 0000 1111 0000
+							Mask:        1 1111 1111 1111 1111 1111 0000 0000
+							                                          ↓↓↓↓ ↓↓↓↓
+							                                      bỏ qua byte cuối
+  
+     
+     
 	* **List Filter Mode (Identifier Mode):**
 	
 		* So sánh trực tiếp với nhiều ID cụ thể (không dùng mask).
 		
-	* Hỗ trợ cả Standard (11-bit) và Extended (29-bit) ID.
-	
-	* Nhiều bộ lọc (Filter Banks): Các controller hiện đại có từ 4 đến 32 bộ lọc (ví dụ: STM32 có 28 filter banks).
-	
+		* Hỗ trợ cả Standard (11-bit) và Extended (29-bit) ID.
+		
+		* Nhiều bộ lọc (Filter Banks): Các controller hiện đại có từ 4 đến 32 bộ lọc (ví dụ: STM32 có 28 filter banks).
+
+  		* VD: 
+
+
+  			* **VD1: STM32 chế độ 32-bit Standard ID (2 ID trong 1 bank)**
+ 
+     			* Một filter bank 32-bit chứa được 2 ID chuẩn 11-bit.
+        
+					* ID 1: 0x123 → gán vào STDID[10:0] của thanh ghi filter thứ nhất
+	     
+		 			* ID 2: 0x456 → gán vào STDID[10:0] của thanh ghi filter thứ hai
+ 
+							[31:16] STDID2[10:0] + RTR + IDE + EXID[17:15]
+							[15:0]  STDID1[10:0] + RTR + IDE + EXID[17:15]
+
+       			* Ứng dụng: ECU chỉ nhận đúng 2 ID điều khiển từ BCM: 0x123 (lệnh bật đèn) và 0x456 (lệnh tắt đèn).
+
+  			* **VD2: STM32 chế độ 32-bit Extended ID (1 ID extended trong 1 bank)**
+ 
+     			* Cần nhận chính xác ID extended 0x18FFA123.
+        
+				* Chỉ một ID được lưu, toàn bộ 29-bit được so sánh.
+     
+	 			* Filter bank chỉ khớp đúng 0x18FFA123.
+     
+	 			* Ứng dụng: Nhận frame cấu hình riêng từ nhà sản xuất, không muốn lẫn với bất kỳ node nào khác.    	
+ 
+  			* **VD3: STM32 chế độ 16-bit (4 ID Standard trong 1 bank)**
+ 
+     			* Mỗi filter bank chia thành 4 phần 16-bit, mỗi phần chứa 1 ID 11-bit + bit điều khiển.
+        
+					* ID 1: 0x300
+	     
+		 			* ID 2: 0x301
+	     
+		 			* ID 3: 0x302
+        
+					* ID 4: 0x303
+        
+				* Ứng dụng: Nhận 4 ID phản hồi từ 4 cảm biến nhiệt độ giống hệt nhau, đánh địa chỉ tuần tự từ 0x300 - 0x303. 
+  
+
 * **Lưu ý:**
 
 	* Phải cấu hình Filter/Mask đúng trước khi vào chế độ Normal.
@@ -5651,41 +5815,94 @@
 
 #### **8.5. Các thông số quản lý nâng cao**
 
-* **CAN_ABOM:**
+* **CAN_ABOM (Automatic Bus-Off Management):**
 
-	*  Tự động thoát Bus-Off
+	*  Bit này điều khiển cơ chế tự động phục hồi khi node rơi vào trạng thái Bus-Off.
 	
-	*  Khuyến khích: ENABLE 
+	*  Khi được ENABLE:
+ 
+ 		* Phần cứng sẽ tự động giám sát bus, phát hiện điều kiện 128 lần liên tiếp chuỗi 11 bit Recessive và tự động đặt lại TEC, REC về 0 để đưa node quay lại trạng thái Error Active mà không cần sự can thiệp của phần mềm  
 
-* **CAN_NART:**
+	*  Khi được DISABLE:
+ 
+ 		* Việc phục hồi từ Bus-Off phải do phần mềm chủ động thực hiện bằng cách ghi vào thanh ghi điều khiển.
+ 
 
-	*  Tự động retransmission khi lỗi
+* **CAN_NART (No Automatic Re-Transmission):**
+
+	*  Bit này điều khiển hành vi tự động truyền lại frame khi quá trình truyền bị thất bại.
 	
-	*  Khuyến khích: DISABLE 
+	*  Khi ở mặc định (DISABLE):
+ 
+ 		* Phần cứng sẽ tự động xếp lại frame thất bại vào hàng đợi và cố gắng truyền lại ngay khi bus rảnh.
 
-* **CAN_TXFP:**
+	*  Khi được ENABLE:
+ 
+ 		*  Frame thất bại sẽ bị loại bỏ khỏi bộ đệm truyền
+ 
+   		*  Phần mềm có trách nhiệm quyết định có truyền lại frame đó hay không.  
 
-	*  Ưu tiên truyền theo FIFO hay theo ID
+* **CAN_TXFP (Transmit FIFO Priority):**
+
+	*  Bit này quyết định phương thức phân xử quyền ưu tiên truyền giữa các mailbox đang chờ trong cùng một hộp thư truyền (Transmit Mailbox).
 	
-	*  Khuyến khích: DISABLE (theo ID)
+	*  Khi được ENABLE:
+ 
+ 		* Ưu tiên truyền được xác định theo cơ chế FIFO (First-In, First-Out).
+   
+   		* Mailbox nào được nạp frame vào trước sẽ được truyền trước, bất kể giá trị ID của frame đó.
 
-* **CAN_RFLM:**
+	*  Khi được DISABLE:
+ 
+ 		*  Ưu tiên truyền được xác định theo giá trị CAN ID.
+   
+   		*  Mailbox nào chứa frame có ID nhỏ hơn (mức ưu tiên cao hơn trong phân xử bus CAN) sẽ được truyền trước, bất kể thứ tự nạp vào hộp thư.   
 
-	*  Khi FIFO đầy thì Lock hay Overwrite
+* **CAN_RFLM (Receive FIFO Locked Mode):**
+
+	*  Bit này điều khiển hành vi của bộ đệm nhận FIFO khi bộ đệm đã đầy (tràn FIFO).
 	
-	*  Khuyến khích: DISABLE
+	*  Khi được ENABLE:
+ 
+ 		* Chế độ Lock
+   
+   		* Khi FIFO đầy, frame mới đến sẽ bị từ chối (lock) cho đến khi phần mềm đọc và giải phóng ít nhất một ô nhớ trong FIFO.
 
-* **CAN_AWUM:**
+	*  Khi được DISABLE:
+ 
+ 		*  Chế độ Overwrite
+   
+   		*  Khi FIFO đầy, frame mới nhất đến sẽ ghi đè lên frame cũ nhất đang được lưu trong FIFO.
+     
+	 	*  Frame cũ nhất sẽ bị mất vĩnh viễn.
 
-	*  Auto Wake Up
+* **CAN_AWUM (Automatic Wake-Up Mode):**
+
+	*  Bit này điều khiển khả năng tự động đánh thức vi điều khiển (MCU) từ chế độ ngủ (Sleep/Standby) khi có hoạt động trên bus CAN.
 	
-	*  Khuyến khích: DISABLE
+	*  Khi được ENABLE:
+ 
+ 		* Bộ thu phát CAN sẽ giám sát bus ngay cả khi MCU đang ở chế độ tiết kiệm năng lượng.
+   
+   		* Khi phát hiện có tín hiệu Dominant trên bus (báo hiệu có frame đang được truyền), nó sẽ tạo ra tín hiệu đánh thức MCU.
 
-* **CAN_TTCM:**
+	*  Khi được DISABLE:
+ 
+ 		*  Tính năng tự động đánh thức bị vô hiệu hóa.
 
-	*  Time Triggered Mode
+* **CAN_TTCM (Time Triggered Communication Mode):**
+
+	*  Bit này kích hoạt chế độ giao tiếp CAN theo cơ chế Time-Triggered, được định nghĩa trong chuẩn ISO 11898-4 (TTCAN).
 	
-	*  Khuyến khích: DISABLE
+	*  Khi được ENABLE:
+ 
+ 		* Bộ điều khiển CAN hoạt động trong chế độ TTCAN, sử dụng Time Master để đồng bộ thời gian toàn cục và tạo lịch trình truyền thông theo khe thời gian (Time Slot)
+   
+   		* Chế độ này đòi hỏi cấu hình phức tạp và chỉ hoạt động khi tất cả các node trên mạng cùng hỗ trợ TTCAN.
+
+	*  Khi được DISABLE:
+ 
+ 		*  Bộ điều khiển CAN hoạt động trong chế độ Event-Triggered truyền thống theo chuẩn CAN 2.0B.
 
 
 #### **8.6. Trình tự khởi tạo CAN bằng SPL**
@@ -5714,21 +5931,56 @@
 
 	*  **Mask Mode (CAN_FilterMode_IdMask)**
 	
-		* Sử dụng Mask để bỏ qua một số bit
-		
-		* Nguyên lý: `(Received ID & Mask) == Filter_ID`
-		
-		* Phù hợp khi muốn nhận một dải ID (range).
-		
-		*  Ví dụ: Nhận tất cả ID từ 0x200 đến 0x2FF → Mask sẽ che 8 bit thấp.     
+		* Chế độ Mask Mode hoạt động dựa trên phép toán so sánh có che bit.
 
+  		* Mỗi bộ lọc được cấu hình với hai giá trị:
+    
+			* Filter_ID (Giá trị mẫu): Chứa giá trị ID mong muốn tại các vị trí bit quan trọng.
+    
+			* Mask (Mặt nạ che): Xác định bit nào cần so sánh và bit nào được bỏ qua.  
+		
+		* Nguyên lý: `(Received_ID & Mask) == (Filter_ID & Mask)`
+		
+		* Chế độ này đặc biệt phù hợp khi một node cần nhận toàn bộ frame thuộc về một dải ID liên tục (ID range).
+		
+		* Ví dụ: Giả sử node cần nhận tất cả các frame có ID từ 0x200 đến 0x2FF (tương đương dải 256 ID liên tục).
+
+  			* Phân tích dải ID: 
+
+	  			* 0x200 = 010 0000 0000 (nhị phân 11 bit)
+	
+	  			* 0x2FF = 010 1111 1111 (nhị phân 11 bit)
+	
+				* Nhận xét: 3 bit cao (bit [10:8]) cố định là 010, toàn bộ 8 bit thấp (bit [7:0]) thay đổi từ 00000000 đến 11111111. 
+
+  			* Cấu hình bộ lọc:
+
+	  			* Filter_ID = 0x200 (010 0000 0000)
+	
+	  			* Mask = 0x700 (111 0000 0000)
+
+  			* Kiểm tra nguyên lý với ID 0x2A5 (010 1010 0101):
+
+					(010 1010 0101 & 111 0000 0000) == (010 0000 0000 & 111 0000 0000)
+					→ 010 0000 0000 == 010 0000 0000   → Kết quả: Đúng → Frame được nhận.
+        
 	*  **Identifier List Mode (CAN_FilterMode_IdList)**
 	
-		* So sánh chính xác với danh sách các ID đã liệt kê.
+		* Chế độ Identifier List Mode thực hiện so sánh chính xác tuyệt đối giữa ID của frame nhận được với từng ID trong một danh sách đã được lập trình sẵn.
 		
-		* Không dùng Mask, mỗi vị trí chứa một ID cụ thể cần khớp.
+		* Không sử dụng mặt nạ che (Mask), mỗi vị trí trong bộ lọc chứa một giá trị ID cụ thể.
 		
-		* Phù hợp khi chỉ nhận một số ID rời rạc (discrete IDs).
+		* Frame được chấp nhận nếu ID của nó khớp hoàn toàn với bất kỳ ID nào trong danh sách.
+
+  		* Chế độ này phù hợp khi node chỉ cần nhận một số lượng nhỏ các ID rời rạc, không liên tục (discrete IDs).
+    
+		* VD: Một ECU điều khiển đèn trên ô tô chỉ cần nhận đúng ba lệnh từ BCM (Body Control Module)
+
+  			* 0x310: Lệnh bật đèn pha.
+     
+	 		* 0x315: Lệnh bật đèn sương mù.
+    
+			* 0x3A2: Lệnh bật đèn xi-nhan.     
 
 #### **9.2. Kích thước bộ lọc**
 
@@ -5736,19 +5988,51 @@
 
 	* **32-bit Scale (CAN_FilterScale_32bit):**
 	
-		*  Mỗi Filter Bank chỉ chứa 1 filter.
+		*  Nguyên lý hoạt động:
+ 
+  			* Trong chế độ này, toàn bộ không gian lưu trữ của một Filter Bank (32 bit cho phần ID và các bit điều khiển) được sử dụng như một bộ lọc duy nhất.
+     
+	 		* Bộ lọc này có khả năng chứa và so sánh toàn bộ 29 bit của Extended ID hoặc 11 bit của Standard ID (được đặt trong trường tương ứng của thanh ghi).   
 		
-		*  Hỗ trợ cả Standard (11-bit) và Extended (29-bit) ID.
+		*  Đặc điểm:
+
+  			* Mỗi Filter Bank chỉ chứa 1 filter duy nhất.
+     
+	 		* Hỗ trợ đầy đủ cả Standard ID (11-bit) và Extended ID (29-bit).
+    
+			* Khi hoạt động ở chế độ Identifier List Mode, một filter bank 32-bit có thể lưu trữ 2 ID Standard (mỗi ID chiếm 16 bit trong trường dữ liệu) hoặc 1 ID Extended (chiếm toàn bộ 32 bit).      
 		
-		*  Phù hợp khi cần lọc Extended ID hoặc lọc chính xác cao.
+		*  Chế độ 32-bit được khuyến nghị sử dụng trong các trường hợp sau:
+
+  			* Mạng CAN sử dụng Extended ID (29-bit), ví dụ trong giao thức J1939 (xe tải, máy nông nghiệp) hoặc CANopen.
+     
+	 		* Yêu cầu lọc có độ chính xác rất cao, cần kiểm tra toàn bộ các bit của ID mà không bỏ qua bất kỳ bit nào.
+    
+			* Ứng dụng cần lọc Extended ID theo cơ chế Mask Mode với phạm vi che linh hoạt trên toàn bộ 29 bit.     
 		
 	* **16-bit Scale (CAN_FilterScale_16bit):**
 	
-		* Mỗi Filter Bank chứa 2 filter độc lập.
+		*  Nguyên lý hoạt động:
+ 
+  			* Trong chế độ này, không gian lưu trữ 32 bit của một Filter Bank được chia thành hai nửa độc lập, mỗi nửa 16 bit hoạt động như một bộ lọc riêng biệt.
+     
+	 		* Như vậy, mỗi Filter Bank cung cấp 2 filter có thể cấu hình với các tham số lọc khác nhau.  
 		
-		* Chỉ hỗ trợ tốt nhất cho Standard ID (11-bit).
+		*  Đặc điểm:
+
+  			* Mỗi Filter Bank chứa 2 filter độc lập.
+     
+	 		* Mỗi filter 16 bit chỉ chứa trường dữ liệu đủ cho Standard ID (11-bit) cùng các bit điều khiển liên quan.
+    
+			* Khi tất cả các Filter Bank trong bxCAN đều được cấu hình ở chế độ 16-bit, tổng số filter tối đa có thể đạt được là 56 filter (28 Filter Bank × 2 filter mỗi bank).
 		
-		* Tiết kiệm Filter Bank, cho phép lọc nhiều ID hơn (tối đa 56 filter nếu tất cả dùng 16-bit).        
+		*  Chế độ 16-bit được khuyến nghị sử dụng trong các trường hợp sau:
+
+  			* Mạng CAN chỉ sử dụng Standard ID (11-bit).
+     
+	 		* Ứng dụng cần lọc nhiều ID rời rạc và muốn tối đa hóa số lượng filter khả dụng để không bị giới hạn bởi số lượng Filter Bank vật lý.
+    
+			* Tiết kiệm tài nguyên Filter Bank, cho phép một Filter Bank phục vụ đồng thời hai nhu cầu lọc độc lập.        
 
 #### **9.3. Phân bổ dữ liệu vào FIFO (FIFO0 hoặc FIFO1)**
 
